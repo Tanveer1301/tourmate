@@ -1,0 +1,963 @@
+{% extends "base.html" %}
+
+{% block title %}আমার ট্যুরসমূহ - TourMate{% endblock %}
+
+{% block content %}
+<div x-data="dashboardPage()" class="flex-1 flex flex-col pb-24">
+
+    <!-- Top App Navigation Bar with Language Toggle -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-500/20">
+                <span x-text="userInitials">TM</span>
+            </div>
+            <div>
+                <h1 class="text-xs font-medium text-slate-400" x-text="lang === 'bn' ? 'স্বাগতম,' : 'Welcome,'"></h1>
+                <p class="text-sm font-bold text-slate-900 leading-tight" x-text="userName"></p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Add Tour Button -->
+            <button @click="openCreateModal()"
+                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shadow-md shadow-blue-500/20 active:scale-95 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                </svg>
+                <span x-text="lang === 'bn' ? 'নতুন ট্যুর' : 'New Tour'"></span>
+            </button>
+
+            <!-- Settings Button (Opens Modal with Language, Theme, Profile & Admin) -->
+            <button id="header-settings-btn"
+                    @click="openSettingsModal()"
+                    :title="lang === 'bn' ? 'সেটিংস ও প্রোফাইল' : 'Settings & Profile'"
+                    class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 flex items-center justify-center active:scale-95 transition-all">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="px-4 py-4 flex-1 flex flex-col">
+
+        <!-- Top Header: Simple Total Tours Count -->
+        <div class="flex items-center justify-between mb-4 px-1 pt-1">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900" x-text="lang === 'bn' ? 'আপনার ট্যুরসমূহ' : 'Your Tours'"></h2>
+                <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'চলমান ও সম্পন্ন হওয়া সব ট্রিপ' : 'Active & completed trips'"></p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-full text-xs font-bold"
+                      x-text="lang === 'bn' ? `মোট ${tours.length} টি ট্যুর` : `Total ${tours.length} Tour(s)`"></span>
+            </div>
+        </div>
+
+        <!-- Loading Skeleton -->
+        <template x-if="loading">
+            <div class="space-y-3">
+                <div class="h-28 bg-slate-200/70 rounded-3xl animate-pulse"></div>
+                <div class="h-28 bg-slate-200/70 rounded-3xl animate-pulse"></div>
+            </div>
+        </template>
+
+        <!-- Empty State -->
+        <template x-if="!loading && tours.length === 0">
+            <div class="flex-1 flex flex-col items-center justify-center text-center py-16 px-4">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-3">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-sm font-bold text-slate-800" x-text="lang === 'bn' ? 'কোনো ট্যুর নেই' : 'No tours yet'"></h3>
+                <p class="text-xs text-slate-400 mt-1 max-w-xs" x-text="lang === 'bn' ? 'নতুন ট্যুর তৈরি করে বন্ধুদের সাথে খরচ ট্র্যাকিং শুরু করুন।' : 'Create a tour to start tracking group expenses.'"></p>
+                <button @click="openCreateModal()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-2xl text-xs font-semibold shadow-md active:scale-95 transition-all">
+                    + <span x-text="lang === 'bn' ? 'প্রথম ট্যুর যোগ করুন' : 'Create First Tour'"></span>
+                </button>
+            </div>
+        </template>
+
+        <!-- Tour Cards List -->
+        <template x-if="!loading && tours.length > 0">
+            <div class="space-y-3.5">
+                <template x-for="tour in tours" :key="tour.id">
+                    <div @click="goToTour(tour.id)"
+                         class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-blue-300 active:scale-[0.99] transition-all relative overflow-hidden flex flex-col justify-between cursor-pointer group">
+                        
+                        <!-- Left Theme Color Stripe -->
+                        <div class="absolute left-0 top-0 bottom-0 w-2.5" :style="`background-color: ${tour.color_theme || '#2563EB'}`"></div>
+
+                        <!-- Top Title & Quick Actions -->
+                        <div class="flex items-start justify-between gap-3 pl-1.5">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-sm font-bold text-slate-900 leading-snug hover:text-blue-600" x-text="tour.title"></h3>
+                                    <template x-if="tour.is_archived">
+                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
+                                              x-text="lang === 'bn' ? '🔒 আর্কাইভড' : '🔒 Archived'"></span>
+                                    </template>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-0.5" x-text="formatDate(tour.created_at)"></p>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                                    <span x-text="lang === 'bn' ? `${tour.members_count} জন` : `${tour.members_count} members`"></span>
+                                </span>
+                                <!-- 3-Dot Action Menu -->
+                                <div class="relative" x-data="{ openMenu: false }">
+                                    <button @click.stop="openMenu = !openMenu"
+                                            class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors active:scale-95"
+                                            :title="lang === 'bn' ? 'মেনু' : 'Menu'">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="5" r="2" />
+                                            <circle cx="12" cy="12" r="2" />
+                                            <circle cx="12" cy="19" r="2" />
+                                        </svg>
+                                    </button>
+
+                                    <!-- Dropdown Menu -->
+                                    <div x-show="openMenu"
+                                         @click.away="openMenu = false"
+                                         x-transition:enter="transition ease-out duration-150"
+                                         x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                         x-transition:leave="transition ease-in duration-100"
+                                         x-transition:leave-start="opacity-100 scale-100"
+                                         x-transition:leave-end="opacity-0 scale-95"
+                                         class="absolute right-0 top-full mt-1 w-44 bg-white rounded-2xl shadow-xl border border-slate-200/80 py-1.5 z-30"
+                                         x-cloak>
+                                        <!-- Edit Tour Details -->
+                                        <button @click.stop="openMenu = false; openEditTour(tour)"
+                                                class="w-full px-3 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors">
+                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                            <span x-text="lang === 'bn' ? 'ট্যুর এডিট করুন' : 'Edit Tour Details'"></span>
+                                        </button>
+                                        <div class="my-1 border-t border-slate-100"></div>
+                                        <!-- Delete Tour -->
+                                        <button @click.stop="openMenu = false; confirmDeleteTour(tour)"
+                                                class="w-full px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors">
+                                            <svg class="w-3.5 h-3.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            <span x-text="lang === 'bn' ? 'ট্যুর মুছে ফেলুন' : 'Delete Tour'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Summary Badges -->
+                        <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-slate-100 pl-1.5 text-center">
+                            <div class="bg-slate-50 p-1.5 rounded-2xl">
+                                <span class="text-[9px] font-semibold uppercase text-slate-400 block" x-text="lang === 'bn' ? 'মোট জমা' : 'Credit'"></span>
+                                <span class="text-xs font-bold text-emerald-600 block mt-0.5" x-text="`৳ ${formatMoney(tour.total_credit)}`"></span>
+                            </div>
+                            <div class="bg-slate-50 p-1.5 rounded-2xl">
+                                <span class="text-[9px] font-semibold uppercase text-slate-400 block" x-text="lang === 'bn' ? 'মোট খরচ' : 'Debit'"></span>
+                                <span class="text-xs font-bold text-rose-500 block mt-0.5" x-text="`৳ ${formatMoney(tour.total_debit)}`"></span>
+                            </div>
+                            <div class="bg-blue-50/80 p-1.5 rounded-2xl border border-blue-100/60">
+                                <span class="text-[9px] font-semibold uppercase text-blue-500 block" x-text="lang === 'bn' ? 'অবশিষ্ট' : 'Remaining'"></span>
+                                <span class="text-xs font-bold text-blue-700 block mt-0.5" x-text="`৳ ${formatMoney(tour.remaining_balance)}`"></span>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+        </template>
+
+    </div>
+
+    <!-- Create Tour Bottom Sheet Modal -->
+    <div x-show="showCreateModal"
+         class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center"
+         x-cloak>
+        <div class="absolute inset-0" @click="showCreateModal = false"></div>
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[90vh] overflow-y-auto no-scrollbar pb-safe">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900" x-text="lang === 'bn' ? 'নতুন ট্যুর যোগ করুন' : 'Create New Tour'"></h3>
+                    <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'ট্যুরের নাম ও প্রাথমিক বাজেট নির্ধারণ করুন' : 'Set title, theme color and optional budget'"></p>
+                </div>
+                <button @click="showCreateModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form @submit.prevent="submitCreateTour()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" x-text="lang === 'bn' ? 'ট্যুরের নাম *' : 'Tour Title *'"></label>
+                    <input type="text"
+                           x-model="newTour.title"
+                           required
+                           :placeholder="lang === 'bn' ? 'যেমন: বান্দরবান ট্র্যাকিং ২০২৬' : 'e.g. Mountain Expedition 2026'"
+                           class="w-full min-h-[48px] px-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" x-text="lang === 'bn' ? 'বিবরণ / নোট (ঐচ্ছিক)' : 'Description (Optional)'"></label>
+                    <textarea x-model="newTour.description"
+                              rows="2"
+                              :placeholder="lang === 'bn' ? 'ট্যুরের পরিকল্পনা বা স্থান...' : 'Notes or itinerary...'"
+                              class="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" x-text="lang === 'bn' ? 'বাজেট লিমিট (৳) (ঐচ্ছিক)' : 'Budget Limit (৳) (Optional)'"></label>
+                    <input type="number"
+                           step="0.01"
+                           x-model="newTour.budget_limit"
+                           :placeholder="lang === 'bn' ? '০.০০' : '0.00'"
+                           class="w-full min-h-[48px] px-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-2" x-text="lang === 'bn' ? 'কালার থিম নির্বাচন করুন' : 'Select Color Theme'"></label>
+                    <div class="flex items-center gap-3">
+                        <template x-for="color in themePresets" :key="color">
+                            <button type="button"
+                                    @click="newTour.color_theme = color"
+                                    :style="`background-color: ${color}`"
+                                    :class="newTour.color_theme === color ? 'ring-4 ring-offset-2 ring-blue-500 scale-110' : 'opacity-80 hover:opacity-100'"
+                                    class="w-9 h-9 rounded-full transition-all active:scale-95 shadow-sm"></button>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit"
+                            :disabled="saving"
+                            class="w-full min-h-[50px] bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all text-sm disabled:opacity-60">
+                        <span x-text="saving ? (lang === 'bn' ? 'তৈরি হচ্ছে...' : 'Creating...') : (lang === 'bn' ? 'ট্যুর তৈরি করুন' : 'Create Tour')"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Tour Details Bottom Sheet Modal -->
+    <div x-show="showEditTourModal"
+         class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center"
+         x-cloak>
+        <div class="absolute inset-0" @click="showEditTourModal = false"></div>
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[90vh] overflow-y-auto no-scrollbar pb-safe">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900" x-text="lang === 'bn' ? 'ট্যুর তথ্য এডিট করুন' : 'Edit Tour Details'"></h3>
+                    <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'নাম, বিবরণ, বাজেট ও থিম পরিবর্তন করুন' : 'Update title, description, budget & theme'"></p>
+                </div>
+                <button @click="showEditTourModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form @submit.prevent="submitEditTour()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" x-text="lang === 'bn' ? 'ট্যুরের নাম *' : 'Tour Title *'"></label>
+                    <input type="text"
+                           x-model="editTourForm.title"
+                           required
+                           class="w-full min-h-[48px] px-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" x-text="lang === 'bn' ? 'বিবরণ / নোট (ঐচ্ছিক)' : 'Description (Optional)'"></label>
+                    <textarea x-model="editTourForm.description"
+                              rows="2"
+                              class="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5" x-text="lang === 'bn' ? 'বাজেট লিমিট (৳) (ঐচ্ছিক)' : 'Budget Limit (৳) (Optional)'"></label>
+                    <input type="number"
+                           step="0.01"
+                           x-model="editTourForm.budget_limit"
+                           :placeholder="lang === 'bn' ? '০.০০' : '0.00'"
+                           class="w-full min-h-[48px] px-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-2" x-text="lang === 'bn' ? 'কালার থিম নির্বাচন করুন' : 'Select Color Theme'"></label>
+                    <div class="flex items-center gap-3">
+                        <template x-for="color in themePresets" :key="color">
+                            <button type="button"
+                                    @click="editTourForm.color_theme = color"
+                                    :style="`background-color: ${color}`"
+                                    :class="editTourForm.color_theme === color ? 'ring-4 ring-offset-2 ring-blue-500 scale-110' : 'opacity-80 hover:opacity-100'"
+                                    class="w-9 h-9 rounded-full transition-all active:scale-95 shadow-sm"></button>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit"
+                            :disabled="editTourForm.saving"
+                            class="w-full min-h-[50px] bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all text-sm disabled:opacity-60">
+                        <span x-text="editTourForm.saving ? (lang === 'bn' ? 'সংরক্ষণ হচ্ছে...' : 'Saving...') : (lang === 'bn' ? 'পরিবর্তন সংরক্ষণ করুন' : 'Save Changes')"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings & Profile Modal (Clickable List Layout) -->
+    <div x-show="showSettingsModal"
+         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+         x-cloak>
+        <!-- Backdrop -->
+        <div x-show="showSettingsModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="showSettingsModal = false"
+             class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+
+        <!-- Sheet Modal Content -->
+        <div x-show="showSettingsModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-full sm:translate-y-4 sm:scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-full sm:translate-y-4 sm:scale-95"
+             class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col z-10">
+
+            <!-- Drag Handle for Mobile -->
+            <div class="pt-3 pb-1 flex justify-center sm:hidden">
+                <div class="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+            </div>
+
+            <!-- Dynamic Header with Back Button for Sub-Views -->
+            <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <!-- Back Button if not in main view -->
+                    <template x-if="settingsView !== 'main'">
+                        <button type="button"
+                                @click="settingsView = 'main'"
+                                class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center active:scale-95 transition-all mr-1">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                    </template>
+
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                        <template x-if="settingsView === 'main'">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </template>
+                        <template x-if="settingsView === 'profile'">
+                            <span class="text-sm">👤</span>
+                        </template>
+                        <template x-if="settingsView === 'feedback'">
+                            <span class="text-sm">💬</span>
+                        </template>
+                    </div>
+
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100"
+                            x-text="settingsView === 'profile' ? (lang === 'bn' ? 'প্রোফাইল সেটিংস' : 'Profile Settings') : (settingsView === 'feedback' ? (lang === 'bn' ? 'পরামর্শ ও অভিযোগ' : 'Send Suggestions / Complaints') : (lang === 'bn' ? 'সেটিংস' : 'Settings'))"></h3>
+                        <p class="text-[11px] text-slate-400"
+                            x-text="settingsView === 'profile' ? (lang === 'bn' ? 'নাম ও ব্যক্তিগত তথ্য পরিবর্তন করুন' : 'Edit name & details') : (settingsView === 'feedback' ? (lang === 'bn' ? 'পরামর্শ বা অভিযোগ পাঠান' : 'Send Suggestions / Complaints') : (lang === 'bn' ? 'ভাষা, থিম ও অ্যাকাউন্ট নিয়ন্ত্রণ' : 'Preferences & account controls'))"></p>
+                    </div>
+                </div>
+
+                <button @click="showSettingsModal = false" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center justify-center active:scale-95 transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 space-y-4 overflow-y-auto max-h-[70vh]">
+
+                <!-- ================= VIEW 1: Main Settings & Clickable List ================= -->
+                <div x-show="settingsView === 'main'" class="space-y-4">
+                    <!-- 1. Language Preference -->
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-2" x-text="lang === 'bn' ? 'ভাষা (Language)' : 'App Language'"></label>
+                        <div class="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
+                            <button type="button"
+                                    @click="setLang('bn')"
+                                    :class="lang === 'bn' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+                                    class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                                <span>🇧🇩</span>
+                                <span>বাংলা (BN)</span>
+                            </button>
+                            <button type="button"
+                                    @click="setLang('en')"
+                                    :class="lang === 'en' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+                                    class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                                <span>🇬🇧</span>
+                                <span>English (EN)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Appearance / Theme -->
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-2" x-text="lang === 'bn' ? 'থিম / মোড (Appearance)' : 'Theme Mode'"></label>
+                        <div class="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
+                            <button type="button"
+                                    @click="setTheme('light')"
+                                    :class="theme === 'light' ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+                                    class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                                <span>☀️</span>
+                                <span>Light Mode</span>
+                            </button>
+                            <button type="button"
+                                    @click="setTheme('dark')"
+                                    :class="theme === 'dark' ? 'bg-white dark:bg-slate-700 text-indigo-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+                                    class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                                <span>🌙</span>
+                                <span>Dark Mode</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3. Clickable List Layout Under Theme Mode -->
+                    <div class="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                        <label class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1" x-text="lang === 'bn' ? 'অ্যাকাউন্ট ও সেটিংস' : 'Account & Options'"></label>
+
+                        <!-- Clickable Item: Profile Settings -->
+                        <button type="button"
+                                @click="settingsView = 'profile'"
+                                class="w-full p-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/70 dark:hover:bg-slate-800 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between transition-all group active:scale-[0.99]">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-base">
+                                    👤
+                                </div>
+                                <div class="text-left">
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" x-text="lang === 'bn' ? 'প্রোফাইল সেটিংস' : 'Profile Settings'"></h4>
+                                    <p class="text-[10px] text-slate-400" x-text="lang === 'bn' ? 'নাম ও প্রোফাইল তথ্য এডিট করুন' : 'Edit name and profile information'"></p>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+
+                        <!-- Clickable Item: Send Suggestions / Complaints -->
+                        <button type="button"
+                                @click="settingsView = 'feedback'; loadFeedbacks();"
+                                class="w-full p-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/70 dark:hover:bg-slate-800 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between transition-all group active:scale-[0.99]">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-base">
+                                    💬
+                                </div>
+                                <div class="text-left">
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" x-text="lang === 'bn' ? 'পরামর্শ ও অভিযোগ' : 'Send Suggestions / Complaints'"></h4>
+                                    <p class="text-[10px] text-slate-400" x-text="lang === 'bn' ? 'পরামর্শ বা সমস্যা থাকলে জানান' : 'Send Suggestions / Complaints'"></p>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+
+                        <!-- Clickable Item: Super Admin Panel Link -->
+                        <a href="/admin/"
+                           target="_blank"
+                           class="w-full p-3 bg-slate-50 hover:bg-purple-50/60 dark:bg-slate-800/70 dark:hover:bg-purple-900/30 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between transition-all group active:scale-[0.99]">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-base">
+                                    🛡️
+                                </div>
+                                <div class="text-left">
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" x-text="lang === 'bn' ? 'সাইট অ্যাডমিন প্যানেল (/admin/)' : 'Django Site Admin Panel (/admin/)'"></h4>
+                                    <p class="text-[10px] text-slate-400" x-text="lang === 'bn' ? 'মাস্টার ডাটাবেজ কন্ট্রোল (Staff / Superuser)' : 'Database control panel (Staff / Superuser)'"></p>
+                                </div>
+                            </div>
+                            <span class="text-purple-400 font-bold">↗</span>
+                        </a>
+
+                        <!-- Clickable Item: Logout -->
+                        <button type="button"
+                                @click="logout()"
+                                class="w-full p-3 bg-rose-50/60 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 rounded-2xl border border-rose-200/60 dark:border-rose-900/50 flex items-center justify-between transition-all group active:scale-[0.99]">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold text-base">
+                                    🚪
+                                </div>
+                                <div class="text-left">
+                                    <h4 class="text-xs font-bold text-rose-600 dark:text-rose-400" x-text="lang === 'bn' ? 'লগআউট করুন' : 'Log Out'"></h4>
+                                    <p class="text-[10px] text-rose-400" x-text="lang === 'bn' ? 'অ্যাকাউন্ট থেকে প্রস্থান করুন' : 'Sign out of your account'"></p>
+                                </div>
+                            </div>
+                            <svg class="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ================= VIEW 2: Profile Edit Form ================= -->
+                <div x-show="settingsView === 'profile'" class="space-y-4">
+                    <div class="flex items-center gap-3 p-3 bg-blue-50/60 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/40">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-lg shadow-sm" x-text="userInitials"></div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate" x-text="userName"></h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" x-text="profileForm.email"></p>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="saveProfile()" class="space-y-3">
+                        <!-- Email (Disabled / Readonly) -->
+                        <div>
+                            <label class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1" x-text="lang === 'bn' ? 'ইমেইল এড্রেস (পরিবর্তনযোগ্য নয়)' : 'Email Address (Read-only)'"></label>
+                            <input type="email"
+                                   :value="profileForm.email"
+                                   disabled
+                                   class="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl text-xs font-mono cursor-not-allowed border border-slate-200 dark:border-slate-700">
+                        </div>
+
+                        <!-- First Name -->
+                        <div>
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1" x-text="lang === 'bn' ? 'নামের প্রথম অংশ' : 'First Name'"></label>
+                            <input type="text"
+                                   x-model="profileForm.first_name"
+                                   required
+                                   :placeholder="lang === 'bn' ? 'উদা: Alex' : 'e.g. Alex'"
+                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Last Name -->
+                        <div>
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1" x-text="lang === 'bn' ? 'নামের শেষ অংশ' : 'Last Name'"></label>
+                            <input type="text"
+                                   x-model="profileForm.last_name"
+                                   :placeholder="lang === 'bn' ? 'উদা: Smith' : 'e.g. Smith'"
+                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Save Profile Button -->
+                        <button type="submit"
+                                :disabled="profileSaving"
+                                class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            <template x-if="profileSaving">
+                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            </template>
+                            <span x-text="profileSaving ? (lang === 'bn' ? 'সংরক্ষণ হচ্ছে...' : 'Saving...') : (lang === 'bn' ? 'প্রোফাইল আপডেট করুন' : 'Update Profile')"></span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ================= VIEW 3: Send Suggestions / Complaints ================= -->
+                <div x-show="settingsView === 'feedback'" class="space-y-4">
+                    <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                        <span class="text-base">💡</span>
+                        <div>
+                            <span class="font-bold block" x-text="lang === 'bn' ? 'পরামর্শ ও অভিযোগ পাঠান' : 'Send Suggestions / Complaints'"></span>
+                            <span class="text-[11px] text-amber-700 dark:text-amber-300 block" x-text="lang === 'bn' ? 'আপনার নাম ও ইমেইল সহ মতামত সরাসরি অ্যাডমিনদের কাছে পৌঁছাবে।' : 'Your feedback will be delivered directly with your name and email.'"></span>
+                        </div>
+                    </div>
+
+                    <!-- Submission Form -->
+                    <form @submit.prevent="submitFeedback()" class="space-y-3">
+                        <div>
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1" x-text="lang === 'bn' ? 'ধরনের ধরণ' : 'Type'"></label>
+                            <div class="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                <button type="button"
+                                        @click="feedbackForm.feedback_type = 'SUGGESTION'"
+                                        :class="feedbackForm.feedback_type === 'SUGGESTION' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+                                        class="py-1.5 rounded-lg text-xs flex items-center justify-center gap-1 transition-all">
+                                    <span>💡</span>
+                                    <span x-text="lang === 'bn' ? 'পরামর্শ' : 'Suggestion'"></span>
+                                </button>
+                                <button type="button"
+                                        @click="feedbackForm.feedback_type = 'COMPLAINT'"
+                                        :class="feedbackForm.feedback_type === 'COMPLAINT' ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-sm font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'"
+                                        class="py-1.5 rounded-lg text-xs flex items-center justify-center gap-1 transition-all">
+                                    <span>⚠️</span>
+                                    <span x-text="lang === 'bn' ? 'অভিযোগ' : 'Complaint'"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[11px] font-semibold text-slate-700 dark:text-slate-300 block mb-1" x-text="lang === 'bn' ? 'আপনার বক্তব্য / বিবরণ' : 'Your Message / Description'"></label>
+                            <textarea x-model="feedbackForm.message"
+                                      required
+                                      rows="3"
+                                      :placeholder="lang === 'bn' ? 'আপনার পরামর্শ বা অভিযোগ বিস্তারিত লিখুন...' : 'Write your suggestion or complaint in detail...'"
+                                      class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+
+                        <button type="submit"
+                                :disabled="feedbackSaving || !feedbackForm.message.trim()"
+                                class="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            <template x-if="feedbackSaving">
+                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            </template>
+                            <span x-text="feedbackSaving ? (lang === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending...') : (lang === 'bn' ? 'মতামত সাবমিট করুন' : 'Submit Feedback')"></span>
+                        </button>
+                    </form>
+
+                    <!-- Feed of recent feedback -->
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300" x-text="lang === 'bn' ? 'সাম্প্রতিক মতামতসমূহ' : 'Recent Feedback'"></span>
+                            <button type="button" @click="loadFeedbacks()" class="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline">
+                                ↻ <span x-text="lang === 'bn' ? 'রিফ্রেশ' : 'Refresh'"></span>
+                            </button>
+                        </div>
+
+                        <template x-if="loadingFeedbacks">
+                            <div class="py-4 text-center text-xs text-slate-400 animate-pulse" x-text="lang === 'bn' ? 'লোড হচ্ছে...' : 'Loading...'"></div>
+                        </template>
+
+                        <template x-if="!loadingFeedbacks && feedbacks.length === 0">
+                            <div class="py-4 text-center text-xs text-slate-400" x-text="lang === 'bn' ? 'এখনো কোনো মতামত জমা হয়নি।' : 'No feedback submitted yet.'"></div>
+                        </template>
+
+                        <template x-if="!loadingFeedbacks && feedbacks.length > 0">
+                            <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                <template x-for="item in feedbacks" :key="item.id">
+                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 text-xs space-y-1">
+                                        <div class="flex items-center justify-between gap-1">
+                                            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold"
+                                                  :class="item.feedback_type === 'COMPLAINT' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-blue-100 text-blue-700 border border-blue-200'"
+                                                  x-text="item.feedback_type === 'COMPLAINT' ? (lang === 'bn' ? '⚠️ অভিযোগ' : '⚠️ Complaint') : (lang === 'bn' ? '💡 পরামর্শ' : '💡 Suggestion')"></span>
+                                            <span class="text-[10px] text-slate-400" x-text="new Date(item.created_at).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })"></span>
+                                        </div>
+                                        <p class="text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-medium" x-text="item.message"></p>
+                                        <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                                            <span class="font-bold text-slate-700 dark:text-slate-300" x-text="`${lang === 'bn' ? 'প্রেরক:' : 'From:'} ${item.user_name}`"></span>
+                                            <span class="font-mono text-slate-400 truncate max-w-[140px]" x-text="item.user_email"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function dashboardPage() {
+    return {
+        loading: true,
+        saving: false,
+        lang: localStorage.getItem('tourmate_lang') || 'en',
+        tours: [],
+        userName: 'User',
+        userInitials: 'TM',
+        showCreateModal: false,
+        showSettingsModal: false,
+        theme: localStorage.getItem('tourmate_theme') || 'light',
+        settingsView: 'main',
+        showEditTourModal: false,
+        editTourForm: {
+            id: '',
+            title: '',
+            description: '',
+            budget_limit: '',
+            color_theme: '#2563EB',
+            saving: false
+        },
+        profileForm: {
+            first_name: '',
+            last_name: '',
+            email: '',
+            is_staff: false
+        },
+        profileSaving: false,
+        feedbackForm: {
+            feedback_type: 'SUGGESTION',
+            message: ''
+        },
+        feedbackSaving: false,
+        feedbacks: [],
+        loadingFeedbacks: false,
+        themePresets: ['#2563EB', '#059669', '#E11D48', '#D97706', '#7C3AED'],
+
+        newTour: {
+            title: '',
+            description: '',
+            budget_limit: '',
+            color_theme: '#2563EB'
+        },
+
+        init() {
+            if (!TourMateAPI.ensureAuth()) return;
+
+            const user = TourMateAPI.getUser();
+            if (user) {
+                this.userName = user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.email;
+                this.userInitials = (user.first_name ? user.first_name[0] : user.email[0]).toUpperCase();
+            }
+
+            // SWR Instant Paint: Render cached tours in 0ms
+            try {
+                const cached = localStorage.getItem('tm_cache_tours');
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        this.tours = parsed;
+                        this.loading = false;
+                    }
+                }
+            } catch (e) {}
+
+            this.loadTours();
+
+            window.addEventListener('tourmate-synced-refresh', () => {
+                this.loadTours();
+            });
+        },
+
+        openSettingsModal(tab = 'main') {
+            this.settingsView = tab;
+            const user = TourMateAPI.getUser() || {};
+            this.profileForm.first_name = user.first_name || '';
+            this.profileForm.last_name = user.last_name || '';
+            this.profileForm.email = user.email || '';
+            this.profileForm.is_staff = !!(user.is_staff || user.is_superuser);
+            this.theme = localStorage.getItem('tourmate_theme') || 'light';
+            this.showSettingsModal = true;
+            if (tab === 'feedback') {
+                this.loadFeedbacks();
+            }
+        },
+
+        openEditTour(tour) {
+            this.editTourForm = {
+                id: tour.id,
+                title: tour.title || '',
+                description: tour.description || '',
+                budget_limit: tour.budget_limit || '',
+                color_theme: tour.color_theme || '#2563EB',
+                saving: false
+            };
+            this.showEditTourModal = true;
+        },
+
+        async submitEditTour() {
+            if (!this.editTourForm.title || !this.editTourForm.id) return;
+            this.editTourForm.saving = true;
+            try {
+                const payload = {
+                    title: this.editTourForm.title.trim(),
+                    description: this.editTourForm.description ? this.editTourForm.description.trim() : '',
+                    color_theme: this.editTourForm.color_theme
+                };
+                if (this.editTourForm.budget_limit !== '' && this.editTourForm.budget_limit !== null) {
+                    payload.budget_limit = parseFloat(this.editTourForm.budget_limit);
+                } else {
+                    payload.clear_budget = true;
+                }
+
+                const updated = await TourMateAPI.updateTour(this.editTourForm.id, payload);
+                const idx = this.tours.findIndex(t => t.id === this.editTourForm.id);
+                if (idx !== -1) {
+                    this.tours[idx].title = updated.title;
+                    this.tours[idx].description = updated.description;
+                    this.tours[idx].color_theme = updated.color_theme;
+                    this.tours[idx].budget_limit = updated.budget_limit;
+                }
+                window.showToast(this.lang === 'bn' ? 'ট্যুর সফলভাবে আপডেট হয়েছে!' : 'Tour updated successfully!', 'success');
+                this.showEditTourModal = false;
+            } catch (err) {
+                window.showToast(err.message || 'আপডেট করতে সমস্যা হয়েছে', 'error');
+            } finally {
+                this.editTourForm.saving = false;
+            }
+        },
+
+        setTheme(val) {
+            this.theme = val;
+            localStorage.setItem('tourmate_theme', val);
+            if (val === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        },
+
+        setLang(val) {
+            this.lang = val;
+            localStorage.setItem('tourmate_lang', val);
+        },
+
+        toggleLang() {
+            this.setLang(this.lang === 'bn' ? 'en' : 'bn');
+        },
+
+        async saveProfile() {
+            if (!this.profileForm.first_name.trim()) return;
+            this.profileSaving = true;
+            try {
+                const updated = await TourMateAPI.updateProfile({
+                    first_name: this.profileForm.first_name.trim(),
+                    last_name: this.profileForm.last_name.trim()
+                });
+                this.userName = updated.first_name ? `${updated.first_name} ${updated.last_name || ''}`.trim() : updated.email;
+                this.userInitials = (updated.first_name ? updated.first_name[0] : updated.email[0]).toUpperCase();
+                window.showToast(this.lang === 'bn' ? 'প্রোফাইল সফলভাবে আপডেট করা হয়েছে!' : 'Profile updated successfully!', 'success');
+                this.showSettingsModal = false;
+            } catch (err) {
+                window.showToast(err.message || 'Error updating profile', 'error');
+            } finally {
+                this.profileSaving = false;
+            }
+        },
+
+        async loadFeedbacks() {
+            this.loadingFeedbacks = true;
+            try {
+                const data = await TourMateAPI.getFeedbacks();
+                this.feedbacks = data || [];
+            } catch (err) {
+                console.warn('Could not load feedbacks:', err);
+            } finally {
+                this.loadingFeedbacks = false;
+            }
+        },
+
+        async submitFeedback() {
+            if (!this.feedbackForm.message.trim()) return;
+            this.feedbackSaving = true;
+            try {
+                const res = await TourMateAPI.submitFeedback({
+                    feedback_type: this.feedbackForm.feedback_type,
+                    message: this.feedbackForm.message.trim()
+                });
+                if (res && res.id) {
+                    this.feedbacks.unshift(res);
+                } else {
+                    this.loadFeedbacks();
+                }
+                this.feedbackForm.message = '';
+                window.showToast(this.lang === 'bn' ? 'আপনার মতামত পাঠানো হয়েছে! ধন্যবাদ।' : 'Thank you! Your feedback has been sent.', 'success');
+            } catch (err) {
+                window.showToast(err.message || 'Error submitting feedback', 'error');
+            } finally {
+                this.feedbackSaving = false;
+            }
+        },
+
+        async loadTours() {
+            if (this.tours.length === 0) {
+                this.loading = true;
+            }
+            try {
+                const data = await TourMateAPI.getTours();
+                this.tours = data;
+                try {
+                    localStorage.setItem('tm_cache_tours', JSON.stringify(data));
+                } catch (e) {}
+            } catch (err) {
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        openCreateModal() {
+            this.newTour = {
+                title: '',
+                description: '',
+                budget_limit: '',
+                color_theme: '#2563EB'
+            };
+            this.showCreateModal = true;
+        },
+
+        async submitCreateTour() {
+            if (!this.newTour.title.trim()) return;
+            this.saving = true;
+
+            const payload = {
+                title: this.newTour.title.trim(),
+                description: this.newTour.description.trim(),
+                color_theme: this.newTour.color_theme,
+                budget_limit: this.newTour.budget_limit ? parseFloat(this.newTour.budget_limit) : null
+            };
+
+            try {
+                const created = await TourMateAPI.createTour(payload);
+                window.showToast(this.lang === 'bn' ? 'নতুন ট্যুর তৈরি হয়েছে!' : 'New tour created!', 'success');
+                this.showCreateModal = false;
+                setTimeout(() => {
+                    window.location.href = `/tours/${created.id}`;
+                }, 300);
+            } catch (err) {
+                this.saving = false;
+            }
+        },
+
+        async confirmDeleteTour(tour) {
+            const msg = this.lang === 'bn' 
+                ? `আপনি কি নিশ্চিত যে '${tour.title}' ট্যুরটি সম্পূর্ণ মুছে ফেলতে চান?` 
+                : `Are you sure you want to permanently delete '${tour.title}'?`;
+            if (confirm(msg)) {
+                try {
+                    await TourMateAPI.deleteTour(tour.id);
+                    window.showToast(this.lang === 'bn' ? 'ট্যুর মুছে ফেলা হয়েছে' : 'Tour deleted', 'info');
+                    await this.loadTours();
+                } catch (e) {}
+            }
+        },
+
+        goToTour(id) {
+            const clicked = this.tours.find(t => t.id === id);
+            if (clicked) {
+                try {
+                    const raw = localStorage.getItem(`tm_cache_dash_${id}`);
+                    let cached = {};
+                    if (raw) {
+                        try { cached = JSON.parse(raw); } catch (e) {}
+                    }
+                    cached.tour = clicked;
+                    if (clicked.summary) cached.summary = clicked.summary;
+                    localStorage.setItem(`tm_cache_dash_${id}`, JSON.stringify(cached));
+                } catch (e) {}
+            }
+            window.location.href = `/tours/${id}`;
+        },
+
+        logout() {
+            if (confirm(this.lang === 'bn' ? 'আপনি কি নিশ্চিত যে লগআউট করতে চান?' : 'Are you sure you want to log out?')) {
+                TourMateAPI.logout();
+            }
+        },
+
+        formatMoney(val) {
+            const num = parseFloat(val || 0);
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+
+        formatDate(isoStr) {
+            if (!isoStr) return '';
+            const d = new Date(isoStr);
+            return d.toLocaleDateString(this.lang === 'bn' ? 'bn-BD' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+    };
+}
+</script>
+{% endblock %}

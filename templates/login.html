@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}লগইন - TourMate{% endblock %}
+
+{% block content %}
+<div x-data="loginPage()" x-init="init()" class="flex-1 flex flex-col justify-between px-6 py-8 relative">
+
+    <!-- Language Toggle Top Right -->
+    <div class="flex justify-end">
+        <button @click="toggleLang()"
+                class="px-2.5 py-1.5 rounded-xl bg-white/80 shadow-xs hover:bg-slate-100 text-slate-700 text-xs font-bold transition-all active:scale-95 border border-slate-200 flex items-center gap-1">
+            <span :class="lang === 'bn' ? 'text-blue-600 font-extrabold' : 'text-slate-400'">BN</span>
+            <span class="text-slate-300">/</span>
+            <span :class="lang === 'en' ? 'text-blue-600 font-extrabold' : 'text-slate-400'">EN</span>
+        </button>
+    </div>
+
+    <!-- Top Branding & Mascot / Icon -->
+    <div class="pt-4 flex flex-col items-center text-center">
+        <!-- Logo Emblem -->
+        <div class="w-20 h-20 bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 rounded-3xl flex items-center justify-center shadow-xl shadow-blue-500/25 mb-6 ring-4 ring-blue-50">
+            <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+
+        <h1 class="text-3xl font-extrabold font-display tracking-tight text-slate-900">TourMate</h1>
+        <p class="text-slate-500 text-sm mt-1.5 font-medium" x-text="lang === 'bn' ? 'ট্যুর হোক সহজ, হিসাব থাকুক নির্ভুল' : 'Effortless group trips, flawless math'"></p>
+
+        <!-- Feature Highlights Badges -->
+        <div class="mt-8 flex flex-wrap justify-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Common Fund</span>
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span>Selective Split</span>
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/60">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Zero Discrepancy</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Login Options Card -->
+    <div class="w-full bg-white p-6 rounded-3xl shadow-xl shadow-slate-200/70 border border-slate-100 my-8 flex flex-col gap-4">
+        
+        <div class="text-center mb-1">
+            <h2 class="text-base font-semibold text-slate-800" x-text="lang === 'bn' ? 'অ্যাকাউন্টে প্রবেশ করুন' : 'Sign in to Account'"></h2>
+            <p class="text-xs text-slate-400 mt-0.5" x-text="lang === 'bn' ? 'আপনার ট্যুর ও খরচের হিসাব এক জায়গায়' : 'Track your group tours and expenses together'"></p>
+        </div>
+
+        <!-- Official Google GIS Button Container -->
+        <div class="flex justify-center w-full min-h-[48px]">
+            <div id="google-signin-btn" class="w-full flex justify-center"></div>
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3 my-1">
+            <div class="flex-1 h-px bg-slate-200"></div>
+            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider" x-text="lang === 'bn' ? 'অথবা' : 'OR'"></span>
+            <div class="flex-1 h-px bg-slate-200"></div>
+        </div>
+
+        <!-- 1-Click Instant Demo Login Button -->
+        <button @click="loginWithDemo()"
+                :disabled="loading"
+                class="w-full min-h-[48px] px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2.5 active:scale-95 transition-all text-sm disabled:opacity-60">
+            <template x-if="!loading">
+                <svg class="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                </svg>
+            </template>
+            <template x-if="loading">
+                <svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+            </template>
+            <span x-text="loading ? (lang === 'bn' ? 'প্রবেশ করা হচ্ছে...' : 'Signing in...') : (lang === 'bn' ? 'এক ক্লিকে ডেমো লগইন (Alex - Owner)' : 'Instant Demo Login (Alex - Owner)')"></span>
+        </button>
+
+        <p class="text-[11px] text-center text-slate-400 leading-tight" x-text="lang === 'bn' ? 'লগইন করার মাধ্যমে আপনি TourMate-এর সাধারণ নির্দেশিকা মেনে নিচ্ছেন।' : 'By signing in, you agree to TourMate group trip guidelines.'"></p>
+    </div>
+
+    <!-- Footer Note -->
+    <div class="text-center pb-safe">
+        <p class="text-xs text-slate-400 font-medium">TourMate 2026 • Travel with Peace of Mind</p>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loginPage() {
+    return {
+        loading: false,
+        lang: localStorage.getItem('tourmate_lang') || 'en',
+        googleClientId: "{{ google_client_id|default:'' }}",
+
+        getNextUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const next = urlParams.get('next');
+            return (next && next.startsWith('/')) ? next : '/tours';
+        },
+
+        init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('logout') === '1') {
+                TourMateAPI.clearAuth();
+            }
+            // Auto redirect if already logged in
+            if (TourMateAPI.isAuthenticated()) {
+                window.location.href = this.getNextUrl();
+                return;
+            }
+
+            this.initGoogleGIS();
+        },
+
+        toggleLang() {
+            this.lang = this.lang === 'bn' ? 'en' : 'bn';
+            localStorage.setItem('tourmate_lang', this.lang);
+        },
+
+        initGoogleGIS() {
+            if (!this.googleClientId) return;
+
+            const checkGisInterval = setInterval(() => {
+                if (window.google && window.google.accounts) {
+                    clearInterval(checkGisInterval);
+
+                    window.google.accounts.id.initialize({
+                        client_id: this.googleClientId,
+                        callback: this.handleGoogleCredentialResponse.bind(this),
+                        auto_select: false,
+                        cancel_on_tap_outside: true
+                    });
+
+                    const btnEl = document.getElementById('google-signin-btn');
+                    if (btnEl) {
+                        window.google.accounts.id.renderButton(btnEl, {
+                            theme: 'outline',
+                            size: 'large',
+                            type: 'standard',
+                            text: 'signin_with',
+                            shape: 'pill',
+                            logo_alignment: 'left',
+                            width: 280
+                        });
+                    }
+                }
+            }, 100);
+        },
+
+        async handleGoogleCredentialResponse(response) {
+            this.loading = true;
+            try {
+                await TourMateAPI.authGoogle(response.credential);
+                window.showToast(this.lang === 'bn' ? 'গুগল লগইন সফল হয়েছে!' : 'Google sign-in successful!', 'success');
+                const targetUrl = this.getNextUrl();
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 400);
+            } catch (error) {
+                this.loading = false;
+            }
+        },
+
+        async loginWithDemo() {
+            this.loading = true;
+            try {
+                await TourMateAPI.authDemo();
+                window.showToast(this.lang === 'bn' ? 'ডেমো অ্যাকাউন্ট দিয়ে সফলভাবে লগইন হয়েছে!' : 'Logged in as Demo User (Alex)!', 'success');
+                const targetUrl = this.getNextUrl();
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 400);
+            } catch (error) {
+                this.loading = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}
