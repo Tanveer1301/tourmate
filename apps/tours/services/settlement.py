@@ -123,11 +123,11 @@ class SettlementService:
                 })
 
             tagged = list(expense.tagged_members.all())
-            target_member_ids = (
-                [tm.id for tm in tagged if tm.id in member_lookup]
-                if tagged
-                else all_member_ids
-            )
+            is_split_all = getattr(expense, "split_all", True)
+            if is_split_all or not tagged:
+                target_member_ids = all_member_ids
+            else:
+                target_member_ids = [tm.id for tm in tagged if tm.id in member_lookup]
 
             if not target_member_ids:
                 continue

@@ -70,33 +70,34 @@ class Command(BaseCommand):
                 purpose="Resort Cottage Booking",
                 amount=Decimal("450.00"),
                 paid_by=None,  # Common pool
+                split_all=True,
                 created_by=alex,
             )
-            exp1.tagged_members.set([m_alex, m_sam, m_maya])
 
             exp2 = Expense.objects.create(
                 tour=tour,
                 purpose="Off-road 4x4 Chander Gari",
                 amount=Decimal("180.00"),
                 paid_by=None,  # Common pool
+                split_all=True,
                 created_by=alex,
             )
-            exp2.tagged_members.set([m_alex, m_sam, m_maya])
 
             exp3 = Expense.objects.create(
                 tour=tour,
                 purpose="Hilltop Tribal BBQ Dinner",
                 amount=Decimal("120.00"),
                 paid_by=m_alex,  # Out-of-pocket by Alex
+                split_all=True,
                 created_by=alex,
             )
-            exp3.tagged_members.set([m_alex, m_sam, m_maya])
 
             exp4 = Expense.objects.create(
                 tour=tour,
                 purpose="Kayaking & Gear Rental",
                 amount=Decimal("60.00"),
                 paid_by=m_sam,  # Out-of-pocket by Sam
+                split_all=False,
                 created_by=sam,
             )
             exp4.tagged_members.set([m_alex, m_sam])  # Selective split: Alex & Sam only

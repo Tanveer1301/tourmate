@@ -213,6 +213,7 @@ class ExpenseCreateIn(Schema):
         default=None,
         description="IDs of members who share this expense. If empty or None, splits across ALL members.",
     )
+    split_all: Optional[bool] = None
     note: Optional[str] = ""
     receipt_image: Optional[str] = ""
 
@@ -222,6 +223,7 @@ class ExpenseUpdateIn(Schema):
     amount: Optional[Decimal] = None
     paid_by_id: Optional[int] = None
     tagged_member_ids: Optional[List[int]] = None
+    split_all: Optional[bool] = None
     note: Optional[str] = None
     receipt_image: Optional[str] = None
 
@@ -233,6 +235,7 @@ class ExpenseOut(Schema):
     amount: Decimal
     paid_by: Optional[TourMemberOut] = None
     tagged_members: List[TourMemberOut]
+    split_all: bool = True
     note: str = ""
     receipt_image: str
     created_by: UserOut

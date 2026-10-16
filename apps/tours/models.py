@@ -153,6 +153,11 @@ class Expense(models.Model):
         blank=True,
         help_text="Members sharing this expense. If empty, split among all tour members.",
     )
+    split_all = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="True if split equally among all current and future tour members. If False, split only among tagged_members.",
+    )
     receipt_image = models.URLField(
         max_length=1024,
         blank=True,

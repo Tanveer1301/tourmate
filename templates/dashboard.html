@@ -560,14 +560,23 @@
                             <input type="text"
                                    x-model="profileForm.name"
                                    required
+                                   :disabled="isDemoUser"
                                    :placeholder="lang === 'bn' ? 'যেমন: Alex বা তানভীর আহমেদ' : 'e.g. Alex or Tanvir Ahmed'"
-                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
                         </div>
+
+                        <!-- Demo Account Lock Notice -->
+                        <template x-if="isDemoUser">
+                            <div class="p-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/40 rounded-xl text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                                <span>🔒</span>
+                                <span x-text="lang === 'bn' ? 'ডেমো অ্যাকাউন্টে নাম পরিবর্তন লক রাখা হয়েছে।' : 'Name change is locked for demo account.'"></span>
+                            </div>
+                        </template>
 
                         <!-- Save Profile Button -->
                         <button type="submit"
-                                :disabled="profileSaving"
-                                class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                :disabled="profileSaving || isDemoUser"
+                                class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             <template x-if="profileSaving">
                                 <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                             </template>
@@ -1226,7 +1235,16 @@ function dashboardPage() {
             this.setLang(this.lang === 'bn' ? 'en' : 'bn');
         },
 
+        get isDemoUser() {
+            const u = TourMateAPI.getUser();
+            return !!(u && u.email === 'alex@tourmate.test');
+        },
+
         async saveProfile() {
+            if (this.isDemoUser) {
+                window.showToast(this.lang === 'bn' ? 'ডেমো অ্যাকাউন্টে নাম পরিবর্তন করা যাবে না' : 'Demo account name is locked', 'warning');
+                return;
+            }
             const rawName = (this.profileForm.name || '').trim();
             if (!rawName) return;
             this.profileSaving = true;

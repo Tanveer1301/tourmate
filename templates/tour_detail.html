@@ -201,20 +201,10 @@
                             </div>
                         </div>
 
-                        <!-- Right Summary: Share Button & Total Deposited Badge -->
-                        <div class="flex items-center gap-2 flex-shrink-0">
-                            <button type="button"
-                                    @click.stop="shareWithMember(item.member)"
-                                    class="p-2 rounded-2xl bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800/60 flex items-center justify-center transition-all active:scale-90"
-                                    :title="lang === 'bn' ? `${item.member.name}-এর ইনভাইটেশন লিংক শেয়ার` : `Share invite link for ${item.member.name}`">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                </svg>
-                            </button>
-                            <div class="text-right">
-                                <span class="text-[9px] text-slate-400 font-semibold uppercase block" x-text="lang === 'bn' ? 'মোট ফান্ড' : 'Total Deposited'"></span>
-                                <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-display" x-text="`৳ ${formatMoney(item.total_deposited)}`"></span>
-                            </div>
+                        <!-- Right Summary: Total Deposited Badge -->
+                        <div class="text-right flex-shrink-0">
+                            <span class="text-[9px] text-slate-400 font-semibold uppercase block" x-text="lang === 'bn' ? 'মোট ফান্ড' : 'Total Deposited'"></span>
+                            <span class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 font-display" x-text="`৳ ${formatMoney(item.total_deposited)}`"></span>
                         </div>
                     </div>
 
@@ -1467,14 +1457,23 @@
                             <input type="text"
                                    x-model="profileForm.name"
                                    required
+                                   :disabled="isDemoUser"
                                    :placeholder="lang === 'bn' ? 'যেমন: Alex বা তানভীর আহমেদ' : 'e.g. Alex or Tanvir Ahmed'"
-                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
                         </div>
+
+                        <!-- Demo Account Lock Notice -->
+                        <template x-if="isDemoUser">
+                            <div class="p-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/40 rounded-xl text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                                <span>🔒</span>
+                                <span x-text="lang === 'bn' ? 'ডেমো অ্যাকাউন্টে নাম পরিবর্তন লক রাখা হয়েছে।' : 'Name change is locked for demo account.'"></span>
+                            </div>
+                        </template>
 
                         <!-- Save Profile Button -->
                         <button type="submit"
-                                :disabled="profileSaving"
-                                class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                                :disabled="profileSaving || isDemoUser"
+                                class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             <template x-if="profileSaving">
                                 <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                             </template>
@@ -2420,6 +2419,11 @@ function tourDetailPage(tourId) {
                    (this.tourId === '6c718b10-c0e7-4ca7-9c71-66b320f94a8d');
         },
 
+        get isDemoUser() {
+            const u = TourMateAPI.getUser();
+            return !!(u && u.email === 'alex@tourmate.test');
+        },
+
         checkDemoLock() {
             if (this.isDemoTour) {
                 this.showDemoLockModal = true;
@@ -2912,7 +2916,9 @@ function tourDetailPage(tourId) {
                 (this.recentExpenses || []).forEach(exp => {
                     const amt = parseFloat(exp.amount || 0);
                     const tagged = exp.tagged_members || [];
-                    const isAll = tagged.length === 0 || tagged.length >= allMembers.length;
+                    const isAll = (exp.split_all !== undefined && exp.split_all !== null)
+                        ? !!exp.split_all
+                        : (tagged.length === 0 || tagged.length >= allMembers.length);
 
                     let isIncluded = false;
                     let splitCount = 1;
@@ -3031,6 +3037,10 @@ function tourDetailPage(tourId) {
         },
 
         async saveProfile() {
+            if (this.isDemoUser) {
+                window.showToast(this.lang === 'bn' ? 'ডেমো অ্যাকাউন্টে নাম পরিবর্তন করা যাবে না' : 'Demo account name is locked', 'warning');
+                return;
+            }
             const rawName = (this.profileForm.name || '').trim();
             if (!rawName) return;
             this.profileSaving = true;
@@ -3191,11 +3201,13 @@ function tourDetailPage(tourId) {
         // Requirement: If split is for all, just show 'সবাই' / 'All Members'. If individual, show at most 2 nicknames with '...'.
         formatSplitDisplay(exp) {
             if (!exp) return '';
-            const tagged = exp.tagged_members || [];
-            if (tagged.length === 0 || tagged.length === this.members.length) {
+            const isAll = (exp.split_all !== undefined && exp.split_all !== null)
+                ? !!exp.split_all
+                : (!exp.tagged_members || exp.tagged_members.length === 0 || exp.tagged_members.length >= this.members.length);
+            if (isAll) {
                 return this.lang === 'bn' ? 'সবাই' : 'All Members';
             }
-            const names = tagged.map(m => m.name);
+            const names = (exp.tagged_members || []).map(m => m.name);
             if (names.length <= 2) {
                 return names.join(', ');
             }
@@ -3204,19 +3216,24 @@ function tourDetailPage(tourId) {
 
         getExpenseMemberCountText(exp) {
             if (!exp) return '';
-            const tagged = exp.tagged_members || [];
-            const count = tagged.length === 0 ? this.members.length : tagged.length;
+            const isAll = (exp.split_all !== undefined && exp.split_all !== null)
+                ? !!exp.split_all
+                : (!exp.tagged_members || exp.tagged_members.length === 0 || exp.tagged_members.length >= this.members.length);
+            const count = isAll ? this.members.length : (exp.tagged_members ? exp.tagged_members.length : 1);
             return this.lang === 'bn' ? `মোট ${count} জনের মাঝে সমবণ্টন` : `Split equally among ${count} members`;
         },
 
         getExpenseSplitMembersList(exp) {
             if (!exp) return [];
-            const tagged = (exp.tagged_members && exp.tagged_members.length > 0)
-                ? exp.tagged_members
-                : this.members.map(m => m.member);
-            const count = tagged.length || 1;
+            const isAll = (exp.split_all !== undefined && exp.split_all !== null)
+                ? !!exp.split_all
+                : (!exp.tagged_members || exp.tagged_members.length === 0 || exp.tagged_members.length >= this.members.length);
+            const list = isAll
+                ? this.members.map(m => m.member)
+                : (exp.tagged_members && exp.tagged_members.length > 0 ? exp.tagged_members : this.members.map(m => m.member));
+            const count = list.length || 1;
             const share = parseFloat(exp.amount || 0) / count;
-            return tagged.map(m => ({
+            return list.map(m => ({
                 id: m.id,
                 name: m.name,
                 share: share.toFixed(2)
@@ -3404,7 +3421,9 @@ function tourDetailPage(tourId) {
                 return;
             }
             const taggedIds = (exp.tagged_members || []).map(m => m.id);
-            const isAll = taggedIds.length === 0 || taggedIds.length >= this.members.length;
+            const isAll = (exp.split_all !== undefined && exp.split_all !== null)
+                ? !!exp.split_all
+                : (taggedIds.length === 0 || taggedIds.length >= this.members.length);
             this.expenseForm = {
                 isEdit: true,
                 expenseId: exp.id,
@@ -3413,7 +3432,7 @@ function tourDetailPage(tourId) {
                 note: exp.note || '',
                 paid_by_id: null,
                 tagAll: isAll,
-                tagged_member_ids: isAll ? this.members.map(m => m.member.id) : taggedIds,
+                tagged_member_ids: isAll ? this.members.map(m => m.member.id) : [...taggedIds],
                 saving: false
             };
             this.showExpenseModal = true;
@@ -3422,7 +3441,9 @@ function tourDetailPage(tourId) {
         toggleSelectAllMembers() {
             if (this.expenseForm.tagAll) {
                 this.expenseForm.tagAll = false;
-                this.expenseForm.tagged_member_ids = this.members.length > 0 ? [this.members[0].member.id] : [];
+                if (!this.expenseForm.tagged_member_ids || this.expenseForm.tagged_member_ids.length === 0) {
+                    this.expenseForm.tagged_member_ids = this.members.map(m => m.member.id);
+                }
             } else {
                 this.expenseForm.tagAll = true;
                 this.expenseForm.tagged_member_ids = this.members.map(m => m.member.id);
@@ -3430,11 +3451,16 @@ function tourDetailPage(tourId) {
         },
 
         toggleMemberTag(memberId) {
-            this.expenseForm.tagAll = false;
+            if (this.expenseForm.tagAll) {
+                this.expenseForm.tagAll = false;
+                this.expenseForm.tagged_member_ids = this.members.map(m => m.member.id);
+            }
             const idx = this.expenseForm.tagged_member_ids.indexOf(memberId);
             if (idx >= 0) {
                 if (this.expenseForm.tagged_member_ids.length > 1) {
                     this.expenseForm.tagged_member_ids.splice(idx, 1);
+                } else {
+                    window.showToast(this.lang === 'bn' ? 'কমপক্ষে ১ জন মেম্বার সিলেক্ট থাকতে হবে' : 'At least 1 member must be selected', 'warning');
                 }
             } else {
                 this.expenseForm.tagged_member_ids.push(memberId);
@@ -3445,12 +3471,13 @@ function tourDetailPage(tourId) {
         },
 
         isMemberTagged(memberId) {
-            return this.expenseForm.tagAll || this.expenseForm.tagged_member_ids.includes(memberId);
+            if (this.expenseForm.tagAll) return true;
+            return (this.expenseForm.tagged_member_ids || []).includes(memberId);
         },
 
         calculatePerHeadShare() {
             const amt = parseFloat(this.expenseForm.amount || 0);
-            const count = this.expenseForm.tagAll ? this.members.length : this.expenseForm.tagged_member_ids.length;
+            const count = this.expenseForm.tagAll ? this.members.length : (this.expenseForm.tagged_member_ids || []).length;
             if (amt <= 0 || count <= 0) return '৳ 0.00';
             const perHead = amt / count;
             return `৳ ${perHead.toFixed(2)} (${count} ${this.lang === 'bn' ? 'জনের মাঝে' : 'members'})`;
@@ -3465,21 +3492,23 @@ function tourDetailPage(tourId) {
             if (!this.expenseForm.purpose || !this.expenseForm.amount) return;
             this.expenseForm.saving = true;
 
+            const isAll = !!this.expenseForm.tagAll;
             const payload = {
                 purpose: this.expenseForm.purpose.trim(),
                 amount: parseFloat(this.expenseForm.amount),
                 note: this.expenseForm.note ? this.expenseForm.note.trim() : '',
                 paid_by_id: null,
-                tagged_member_ids: this.expenseForm.tagAll ? null : this.expenseForm.tagged_member_ids
+                split_all: isAll,
+                tagged_member_ids: isAll ? [] : this.expenseForm.tagged_member_ids
             };
 
             const payerItem = payload.paid_by_id ? this.members.find(m => m.member.id === payload.paid_by_id) : null;
             const payerObj = payerItem ? { id: payerItem.member.id, name: payerItem.member.name } : null;
-            const taggedObjs = payload.tagged_member_ids ? 
-                this.members.filter(m => payload.tagged_member_ids.includes(m.member.id)).map(m => ({ id: m.member.id, name: m.member.name })) : [];
+            const taggedObjs = isAll
+                ? []
+                : this.members.filter(m => payload.tagged_member_ids.includes(m.member.id)).map(m => ({ id: m.member.id, name: m.member.name }));
 
             // Optimistic in-memory update (0ms immediate paint)
-            const resolvedTagged = payload.tagged_member_ids ? taggedObjs : [];
             if (this.expenseForm.isEdit) {
                 const expIdx = this.recentExpenses.findIndex(e => e.id === this.expenseForm.expenseId);
                 if (expIdx >= 0) {
@@ -3490,7 +3519,8 @@ function tourDetailPage(tourId) {
                         amount: payload.amount,
                         note: payload.note,
                         paid_by: payerObj,
-                        tagged_members: resolvedTagged
+                        split_all: isAll,
+                        tagged_members: taggedObjs
                     };
                 }
             } else {
@@ -3500,7 +3530,8 @@ function tourDetailPage(tourId) {
                     amount: payload.amount,
                     note: payload.note,
                     paid_by: payerObj,
-                    tagged_members: resolvedTagged,
+                    split_all: isAll,
+                    tagged_members: taggedObjs,
                     created_at: new Date().toISOString()
                 };
                 this.recentExpenses.unshift(optimisticExp);

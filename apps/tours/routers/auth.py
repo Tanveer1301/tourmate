@@ -80,6 +80,9 @@ def update_profile(request, payload: ProfileUpdateIn):
     if not user:
         raise HttpError(401, "Authentication required.")
 
+    if getattr(user, "email", None) == "alex@tourmate.test":
+        raise HttpError(403, "ডেমো অ্যাকাউন্টে নাম পরিবর্তন করা যাবে না (Demo account profile name is locked).")
+
     updates = []
     if payload.name is not None:
         clean_name = payload.name.strip()

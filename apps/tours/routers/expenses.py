@@ -75,17 +75,38 @@ def create_expense(request, tour_id: UUID, payload: ExpenseCreateIn):
     if not all_tour_members:
         raise HttpError(400, "Tour must have at least one member to record an expense.")
 
-    if payload.tagged_member_ids:
-        valid_member_map = {m.id: m for m in all_tour_members}
-        invalid_ids = [mid for mid in payload.tagged_member_ids if mid not in valid_member_map]
-        if invalid_ids:
-            raise HttpError(400, f"Member IDs {invalid_ids} do not belong to this tour.")
-        if len(payload.tagged_member_ids) >= len(all_tour_members):
-            selected_members = []
-        else:
-            selected_members = [valid_member_map[mid] for mid in payload.tagged_member_ids]
-    else:
+    valid_member_map = {m.id: m for m in all_tour_members}
+    is_split_all = True
+    selected_members = []
+
+    if payload.split_all is True:
+        is_split_all = True
         selected_members = []
+    elif payload.split_all is False:
+        if payload.tagged_member_ids:
+            invalid_ids = [mid for mid in payload.tagged_member_ids if mid not in valid_member_map]
+            if invalid_ids:
+                raise HttpError(400, f"Member IDs {invalid_ids} do not belong to this tour.")
+            selected_members = [valid_member_map[mid] for mid in payload.tagged_member_ids]
+            is_split_all = False
+        else:
+            is_split_all = True
+            selected_members = []
+    else:
+        # payload.split_all is None: infer from tagged_member_ids
+        if payload.tagged_member_ids:
+            invalid_ids = [mid for mid in payload.tagged_member_ids if mid not in valid_member_map]
+            if invalid_ids:
+                raise HttpError(400, f"Member IDs {invalid_ids} do not belong to this tour.")
+            if len(payload.tagged_member_ids) < len(all_tour_members):
+                selected_members = [valid_member_map[mid] for mid in payload.tagged_member_ids]
+                is_split_all = False
+            else:
+                is_split_all = True
+                selected_members = []
+        else:
+            is_split_all = True
+            selected_members = []
 
     with transaction.atomic():
         expense = Expense.objects.create(
@@ -93,11 +114,12 @@ def create_expense(request, tour_id: UUID, payload: ExpenseCreateIn):
             purpose=payload.purpose.strip(),
             amount=amount,
             paid_by=paid_by_member,
+            split_all=is_split_all,
             note=payload.note.strip() if payload.note else "",
             receipt_image=payload.receipt_image or "",
             created_by=request.auth,
         )
-        if selected_members:
+        if selected_members and not is_split_all:
             expense.tagged_members.set(selected_members)
         else:
             expense.tagged_members.clear()
@@ -176,15 +198,32 @@ def update_expense(request, tour_id: UUID, expense_id: int, payload: ExpenseUpda
             expense.receipt_image = payload.receipt_image
             updates.append("receipt_image")
 
-        if updates:
-            expense.save(update_fields=updates)
-
-        if payload.tagged_member_ids is not None:
-            if payload.tagged_member_ids and len(payload.tagged_member_ids) < len(all_tour_members):
-                selected_members = [valid_member_map[mid] for mid in payload.tagged_member_ids if mid in valid_member_map]
-                expense.tagged_members.set(selected_members)
-            else:
+        if payload.split_all is not None or payload.tagged_member_ids is not None:
+            if payload.split_all is True:
+                expense.split_all = True
                 expense.tagged_members.clear()
+                updates.append("split_all")
+            elif payload.split_all is False:
+                expense.split_all = False
+                updates.append("split_all")
+                if payload.tagged_member_ids:
+                    selected_members = [valid_member_map[mid] for mid in payload.tagged_member_ids if mid in valid_member_map]
+                    expense.tagged_members.set(selected_members)
+                else:
+                    expense.tagged_members.clear()
+            else:
+                # split_all not given, but tagged_member_ids provided
+                if payload.tagged_member_ids and len(payload.tagged_member_ids) < len(all_tour_members):
+                    expense.split_all = False
+                    selected_members = [valid_member_map[mid] for mid in payload.tagged_member_ids if mid in valid_member_map]
+                    expense.tagged_members.set(selected_members)
+                else:
+                    expense.split_all = True
+                    expense.tagged_members.clear()
+                updates.append("split_all")
+
+        if updates:
+            expense.save(update_fields=list(set(updates)))
 
         tagged_names = [m.name for m in expense.tagged_members.all()]
         payer_desc = expense.paid_by.name if expense.paid_by else "Common Tour Fund"
