@@ -468,172 +468,185 @@
     <!-- DRAWER 1: Expense Details & Actions Drawer (Slide-up) -->
     <div x-show="showExpenseDetailModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showExpenseDetailModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[90vh] overflow-y-auto no-scrollbar pb-safe">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl shadow-2xl border-t border-slate-200 h-[88dvh] max-h-[88dvh] flex flex-col overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-3 mb-2 flex-shrink-0"></div>
 
-            <div class="flex items-start justify-between pb-3 border-b border-slate-100 mb-4">
-                <div>
+            <div class="flex items-start justify-between px-6 pb-3 pt-1 border-b border-slate-100 flex-shrink-0 bg-white/95 backdrop-blur-md">
+                <div class="flex-1 pr-2 min-w-0">
                     <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400" x-text="lang === 'bn' ? 'খরচের বিবরণ' : 'Expense Details'"></span>
-                    <h3 class="text-lg font-bold text-slate-900 leading-snug" x-text="selectedExpense?.purpose"></h3>
-                    <p class="text-xs text-slate-400 mt-0.5" x-text="formatDate(selectedExpense?.created_at)"></p>
+                    <h3 class="text-base font-bold text-slate-900 leading-snug truncate" x-text="selectedExpense?.purpose"></h3>
+                    <p class="text-xs text-slate-400 mt-0.5 truncate" x-text="formatDate(selectedExpense?.created_at)"></p>
                 </div>
-                <div class="text-right">
-                    <span class="text-xl font-extrabold text-slate-900 font-display block" x-text="`৳ ${formatMoney(selectedExpense?.amount)}`"></span>
-                    <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-                          :class="selectedExpense?.paid_by ? 'bg-amber-50 text-amber-700 border border-amber-200/60' : 'bg-blue-50 text-blue-700 border border-blue-200/60'"
-                          x-text="selectedExpense?.paid_by ? `${lang === 'bn' ? 'প্রদানকারী:' : 'Paid by:'} ${selectedExpense.paid_by.name}` : 'Common Fund'"></span>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="text-right">
+                        <span class="text-lg font-extrabold text-slate-900 font-display block" x-text="`৳ ${formatMoney(selectedExpense?.amount)}`"></span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                              :class="selectedExpense?.paid_by ? 'bg-amber-50 text-amber-700 border border-amber-200/60' : 'bg-blue-50 text-blue-700 border border-blue-200/60'"
+                              x-text="selectedExpense?.paid_by ? `${lang === 'bn' ? 'প্রদানকারী:' : 'Paid by:'} ${selectedExpense.paid_by.name}` : 'Common Fund'"></span>
+                    </div>
+                    <button type="button" @click="showExpenseDetailModal = false"
+                            class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0 ml-1"
+                            aria-label="Close">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
             </div>
 
-            <!-- Note / Memo -->
-            <template x-if="selectedExpense?.note">
-                <div class="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
-                    <span class="text-[10px] text-slate-400 font-semibold uppercase block mb-0.5" x-text="lang === 'bn' ? 'মেমো / নোট:' : 'Memo / Remarks:'"></span>
-                    <p class="text-slate-700 font-medium italic" x-text="selectedExpense.note"></p>
-                </div>
-            </template>
+            <div class="flex-1 overflow-y-auto px-6 py-4 overscroll-contain no-scrollbar">
+                <!-- Note / Memo -->
+                <template x-if="selectedExpense?.note">
+                    <div class="mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
+                        <span class="text-[10px] text-slate-400 font-semibold uppercase block mb-0.5" x-text="lang === 'bn' ? 'মেমো / নোট:' : 'Memo / Remarks:'"></span>
+                        <p class="text-slate-700 font-medium italic" x-text="selectedExpense.note"></p>
+                    </div>
+                </template>
 
-            <!-- Tagged Members & Individual Share Breakdown -->
-            <div class="mb-6">
-                <div class="flex items-center justify-between mb-2">
-                    <h4 class="text-xs font-bold text-slate-800" x-text="lang === 'bn' ? 'কারা কত টাকা শেয়ার করেছে:' : 'Split Members & Shares:'"></h4>
-                    <span class="text-[10px] text-slate-400 font-semibold"
-                          x-text="getExpenseMemberCountText(selectedExpense)"></span>
-                </div>
+                <!-- Tagged Members & Individual Share Breakdown -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-xs font-bold text-slate-800" x-text="lang === 'bn' ? 'কারা কত টাকা শেয়ার করেছে:' : 'Split Members & Shares:'"></h4>
+                        <span class="text-[10px] text-slate-400 font-semibold"
+                              x-text="getExpenseMemberCountText(selectedExpense)"></span>
+                    </div>
 
-                <div class="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
-                    <template x-for="tm in getExpenseSplitMembersList(selectedExpense)" :key="tm.id">
-                        <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-[11px]">
-                                    <span x-text="tm.name.charAt(0).toUpperCase()"></span>
+                    <div class="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar">
+                        <template x-for="tm in getExpenseSplitMembersList(selectedExpense)" :key="tm.id">
+                            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-[11px]">
+                                        <span x-text="tm.name.charAt(0).toUpperCase()"></span>
+                                    </div>
+                                    <span class="font-bold text-slate-800" x-text="tm.name"></span>
                                 </div>
-                                <span class="font-bold text-slate-800" x-text="tm.name"></span>
+                                <span class="font-bold text-slate-900 font-display" x-text="`৳ ${formatMoney(tm.share)}`"></span>
                             </div>
-                            <span class="font-bold text-slate-900 font-display" x-text="`৳ ${formatMoney(tm.share)}`"></span>
-                        </div>
-                    </template>
+                        </template>
+                    </div>
                 </div>
             </div>
 
-            <!-- Action Buttons Inside Expense Drawer (Edit & Delete) -->
-            <template x-if="!tour.is_archived">
-                <div class="pt-2 border-t border-slate-100 flex items-center gap-2">
-                    <button type="button" @click="editExpenseFromDrawer()"
-                            class="flex-1 min-h-[48px] bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm active:scale-95 transition-all">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                        <span x-text="lang === 'bn' ? 'খরচ এডিট করুন' : 'Edit Expense'"></span>
-                    </button>
-                    <button type="button" @click="deleteExpenseFromDrawer()"
-                            class="px-4 min-h-[48px] bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-2xl border border-rose-200 flex items-center justify-center gap-1.5 text-sm active:scale-95 transition-all">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        <span x-text="lang === 'bn' ? 'ডিলিট' : 'Delete'"></span>
-                    </button>
-                </div>
-            </template>
-            <template x-if="tour.is_archived">
-                <div class="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-center text-xs text-amber-800 font-semibold">
-                    🔒 <span x-text="lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে। কোনো পরিবর্তন সম্ভব নয়।' : 'Tour is archived. Calculations are locked.'"></span>
-                </div>
-            </template>
+            <!-- Sticky Bottom Actions -->
+            <div class="px-6 py-3 border-t border-slate-100 bg-white/95 backdrop-blur-md flex-shrink-0">
+                <template x-if="!tour.is_archived">
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="editExpenseFromDrawer()"
+                                class="flex-1 min-h-[46px] bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            <span x-text="lang === 'bn' ? 'খরচ এডিট করুন' : 'Edit Expense'"></span>
+                        </button>
+                        <button type="button" @click="deleteExpenseFromDrawer()"
+                                class="px-4 min-h-[46px] bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-2xl border border-rose-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm active:scale-95 transition-all">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span x-text="lang === 'bn' ? 'ডিলিট' : 'Delete'"></span>
+                        </button>
+                    </div>
+                </template>
+                <template x-if="tour.is_archived">
+                    <div class="p-2.5 bg-amber-50 rounded-2xl border border-amber-200 text-center text-xs text-amber-800 font-semibold">
+                        🔒 <span x-text="lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে। কোনো পরিবর্তন সম্ভব নয়।' : 'Tour is archived. Calculations are locked.'"></span>
+                    </div>
+                </template>
+            </div>
         </div>
     </div>
 
     <!-- DRAWER 2: Member Deposits Detail Drawer (Slide-up with individual entries & Edit/Delete) -->
     <div x-show="showMemberDetailModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showMemberDetailModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[90vh] overflow-y-auto no-scrollbar pb-safe">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl shadow-2xl border-t border-slate-200 h-[88dvh] max-h-[88dvh] flex flex-col overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-3 mb-2 flex-shrink-0"></div>
 
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base ring-1 ring-blue-100">
+            <div class="flex items-center justify-between px-6 pb-3 pt-1 border-b border-slate-100 flex-shrink-0 bg-white/95 backdrop-blur-md">
+                <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base ring-1 ring-blue-100 flex-shrink-0">
                         <span x-text="selectedMemberDetail?.member?.name?.charAt(0).toUpperCase()"></span>
                     </div>
-                    <div>
-                        <h3 class="text-base font-bold text-slate-900" x-text="selectedMemberDetail?.member?.name"></h3>
+                    <div class="truncate">
+                        <h3 class="text-base font-bold text-slate-900 truncate" x-text="selectedMemberDetail?.member?.name"></h3>
                         <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
                             <template x-if="selectedMemberDetail?.member?.designation">
-                                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/70"
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/70 truncate"
                                       x-text="selectedMemberDetail.member.designation"></span>
                             </template>
                             <span class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200/60"
                                   x-text="selectedMemberDetail?.member?.role"></span>
-                            <span class="text-[11px] text-slate-400" x-text="selectedMemberDetail?.member?.email"></span>
+                            <span class="text-[11px] text-slate-400 truncate" x-text="selectedMemberDetail?.member?.email"></span>
                         </div>
                     </div>
                 </div>
-                <button @click="showMemberDetailModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @click="showMemberDetailModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            <!-- Total Deposit & Formula Breakdown -->
-            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 mb-4 flex items-center justify-between">
-                <div>
-                    <span class="text-[10px] text-slate-400 font-semibold uppercase block" x-text="lang === 'bn' ? 'জমার হিসাব (Breakdown)' : 'Deposit Breakdown'"></span>
-                    <span class="text-xs font-bold text-slate-800 font-mono tracking-tight" x-text="selectedMemberDetail?.breakdown_str || '৳ 0.00'"></span>
-                </div>
-                <div class="text-right">
-                    <span class="text-[10px] text-slate-400 font-semibold uppercase block" x-text="lang === 'bn' ? 'মোট ফান্ড' : 'Total Deposited'"></span>
-                    <span class="text-base font-extrabold text-emerald-600 font-display" x-text="`৳ ${formatMoney(selectedMemberDetail?.total_deposited)}`"></span>
-                </div>
-            </div>
-
-            <!-- List of Individual Deposit Entries with Edit / Delete -->
-            <div class="mb-5">
-                <div class="flex items-center justify-between mb-2">
-                    <h4 class="text-xs font-bold text-slate-800" x-text="lang === 'bn' ? 'পৃথক জমার এন্ট্রি তালিকা:' : 'Individual Deposit Entries:'"></h4>
-                    <span class="text-[10px] text-slate-400 font-semibold" x-text="`${selectedMemberDetail?.deposits?.length || 0} ${lang === 'bn' ? 'টি এন্ট্রি' : 'entries'}`"></span>
-                </div>
-
-                <template x-if="!selectedMemberDetail?.deposits || selectedMemberDetail.deposits.length === 0">
-                    <div class="py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                        <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'কোনো টাকা জমা দেওয়া হয়নি' : 'No deposits recorded yet'"></p>
+            <div class="flex-1 overflow-y-auto px-6 py-4 overscroll-contain no-scrollbar space-y-4">
+                <!-- Total Deposit & Formula Breakdown -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] text-slate-400 font-semibold uppercase block" x-text="lang === 'bn' ? 'জমার হিসাব (Breakdown)' : 'Deposit Breakdown'"></span>
+                        <span class="text-xs font-bold text-slate-800 font-mono tracking-tight" x-text="selectedMemberDetail?.breakdown_str || '৳ 0.00'"></span>
                     </div>
-                </template>
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-400 font-semibold uppercase block" x-text="lang === 'bn' ? 'মোট ফান্ড' : 'Total Deposited'"></span>
+                        <span class="text-base font-extrabold text-emerald-600 font-display" x-text="`৳ ${formatMoney(selectedMemberDetail?.total_deposited)}`"></span>
+                    </div>
+                </div>
 
-                <div class="space-y-2 max-h-52 overflow-y-auto no-scrollbar">
-                    <template x-for="dep in (selectedMemberDetail?.deposits || [])" :key="dep.id">
-                        <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs text-xs">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                <div>
-                                    <span class="font-bold text-slate-900 block" x-text="`+ ৳ ${formatMoney(dep.amount)}`"></span>
-                                    <div class="flex items-center gap-1.5 text-[10px] text-slate-400">
-                                        <span x-text="formatDate(dep.created_at)"></span>
-                                        <template x-if="dep.note">
-                                            <span class="text-slate-600 font-medium" x-text="`• ${dep.note}`"></span>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Action buttons for each deposit -->
-                            <template x-if="!tour.is_archived">
-                                <div class="flex items-center gap-1">
-                                    <button @click="openEditDepositModal(dep, selectedMemberDetail.member)"
-                                            :title="lang === 'bn' ? 'জমা এডিট করুন' : 'Edit deposit'"
-                                            class="w-7 h-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                    </button>
-                                    <button @click="confirmDeleteDeposit(dep)"
-                                            :title="lang === 'bn' ? 'জমা ডিলিট করুন' : 'Delete deposit'"
-                                            class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
-                                </div>
-                            </template>
+                <!-- List of Individual Deposit Entries with Edit / Delete -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-xs font-bold text-slate-800" x-text="lang === 'bn' ? 'পৃথক জমার এন্ট্রি তালিকা:' : 'Individual Deposit Entries:'"></h4>
+                        <span class="text-[10px] text-slate-400 font-semibold" x-text="`${selectedMemberDetail?.deposits?.length || 0} ${lang === 'bn' ? 'টি এন্ট্রি' : 'entries'}`"></span>
+                    </div>
+
+                    <template x-if="!selectedMemberDetail?.deposits || selectedMemberDetail.deposits.length === 0">
+                        <div class="py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'কোনো টাকা জমা দেওয়া হয়নি' : 'No deposits recorded yet'"></p>
                         </div>
                     </template>
+
+                    <div class="space-y-2 max-h-52 overflow-y-auto no-scrollbar">
+                        <template x-for="dep in (selectedMemberDetail?.deposits || [])" :key="dep.id">
+                            <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <div>
+                                        <span class="font-bold text-slate-900 block" x-text="`+ ৳ ${formatMoney(dep.amount)}`"></span>
+                                        <div class="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                            <span x-text="formatDate(dep.created_at)"></span>
+                                            <template x-if="dep.note">
+                                                <span class="text-slate-600 font-medium" x-text="`• ${dep.note}`"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action buttons for each deposit -->
+                                <template x-if="!tour.is_archived">
+                                    <div class="flex items-center gap-1">
+                                        <button @click="openEditDepositModal(dep, selectedMemberDetail.member)"
+                                                :title="lang === 'bn' ? 'জমা এডিট করুন' : 'Edit deposit'"
+                                                class="w-7 h-7 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </button>
+                                        <button @click="confirmDeleteDeposit(dep)"
+                                                :title="lang === 'bn' ? 'জমা ডিলিট করুন' : 'Delete deposit'"
+                                                class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </div>
 
-            <!-- Drawer Bottom Actions (+ Add Deposit, Edit Member, Delete Member [Guardrail: Owner cannot be deleted]) -->
-            <div class="pt-3 border-t border-slate-100 space-y-2">
+            <!-- Drawer Bottom Actions (+ Add Deposit, Edit Member, Delete Member) -->
+            <div class="px-6 py-3 border-t border-slate-100 bg-white/95 backdrop-blur-md flex-shrink-0 space-y-2">
                 <template x-if="!tour.is_archived">
                     <button @click="openDepositModalFromDrawer()"
-                            class="w-full min-h-[48px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm active:scale-95 transition-all">
+                            class="w-full min-h-[46px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all">
                         <span>+</span>
                         <span x-text="lang === 'bn' ? 'এই মেম্বারের টাকা জমা দিন' : 'Add Deposit for this Member'"></span>
                     </button>
@@ -641,7 +654,7 @@
 
                 <!-- Send/Share Invite Link with this member -->
                 <button @click="shareWithMember(selectedMemberDetail?.member)"
-                        class="w-full min-h-[44px] bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs active:scale-95 transition-all">
+                        class="w-full min-h-[42px] bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-2xl flex items-center justify-center gap-2 text-xs active:scale-95 transition-all">
                     <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                     </svg>
@@ -651,7 +664,7 @@
                 <div class="flex items-center gap-2">
                     <!-- Edit Member Info (Name / Role) -->
                     <button @click="openEditMemberFromDrawer()"
-                            class="flex-1 min-h-[44px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl flex items-center justify-center gap-1.5 text-xs active:scale-95 transition-all">
+                            class="flex-1 min-h-[42px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl flex items-center justify-center gap-1.5 text-xs active:scale-95 transition-all">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         <span x-text="lang === 'bn' ? 'মেম্বার তথ্য পরিবর্তন' : 'Edit Member Info'"></span>
                     </button>
@@ -659,7 +672,7 @@
                     <!-- Delete Member Button: ONLY VISIBLE IF NOT OWNER! -->
                     <template x-if="!isOwnerMember(selectedMemberDetail?.member)">
                         <button @click="deleteMemberFromDrawer()"
-                                class="px-3.5 min-h-[44px] bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-2xl border border-rose-200 flex items-center justify-center gap-1 text-xs active:scale-95 transition-all">
+                                class="px-3.5 min-h-[42px] bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-2xl border border-rose-200 flex items-center justify-center gap-1 text-xs active:scale-95 transition-all">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             <span x-text="lang === 'bn' ? 'বাদ দিন' : 'Remove'"></span>
                         </button>
@@ -676,7 +689,7 @@
     <!-- Modal 3: Quick Deposit / Edit Deposit Form -->
     <div x-show="showDepositModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showDepositModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] overflow-y-auto no-scrollbar pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
             
             <div class="flex items-center justify-between mb-4">
@@ -684,8 +697,8 @@
                     <h3 class="text-base font-bold text-slate-900" x-text="depositForm.isEdit ? (lang === 'bn' ? 'জমা এন্ট্রি সংশোধন' : 'Edit Deposit') : `${selectedMember?.name || ''} - ${lang === 'bn' ? 'টাকা জমা' : 'Add Deposit'}`"></h3>
                     <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'ট্যুরের Common Fund-এ টাকার পরিমাণ' : 'Amount added to Common Fund'"></p>
                 </div>
-                <button @click="showDepositModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @click="showDepositModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
@@ -715,7 +728,7 @@
     <!-- Modal 4: Add / Edit Expense Bottom Sheet (with Note & Live Nickname Split) -->
     <div x-show="showExpenseModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showExpenseModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[92vh] overflow-y-auto no-scrollbar pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] overflow-y-auto no-scrollbar pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
 
             <div class="flex items-center justify-between mb-4">
@@ -723,8 +736,8 @@
                     <h3 class="text-base font-bold text-slate-900" x-text="expenseForm.isEdit ? (lang === 'bn' ? 'খরচ এডিট করুন' : 'Edit Expense') : (lang === 'bn' ? 'নতুন খরচ রেকর্ড করুন' : 'Add New Expense')"></h3>
                     <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'খরচের বিবরণ, পরিমাণ ও মেম্বার নির্ধারণ করুন' : 'Specify amount, purpose, payer and members'"></p>
                 </div>
-                <button @click="showExpenseModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @click="showExpenseModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
@@ -815,27 +828,27 @@
     <!-- Modal 5: Member Settlement Breakdown & Drilldown Chart Drawer -->
     <div x-show="showLedgerModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showLedgerModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[92vh] overflow-y-auto no-scrollbar pb-safe">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl shadow-2xl border-t border-slate-200 h-[90dvh] max-h-[90dvh] flex flex-col overflow-hidden pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-3 mb-2 flex-shrink-0"></div>
 
-            <!-- Drawer Header -->
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base ring-1 ring-blue-100">
+            <!-- Sticky Drawer Header -->
+            <div class="flex items-center justify-between px-6 pb-3 pt-1 border-b border-slate-100 flex-shrink-0 bg-white/95 backdrop-blur-md">
+                <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base ring-1 ring-blue-100 flex-shrink-0">
                         <span x-text="selectedLedgerMember?.name?.charAt(0).toUpperCase()"></span>
                     </div>
-                    <div>
+                    <div class="truncate">
                         <div class="flex items-center gap-1.5 flex-wrap">
-                            <h3 class="text-base font-bold text-slate-900" x-text="selectedLedgerMember?.name"></h3>
+                            <h3 class="text-base font-bold text-slate-900 truncate" x-text="selectedLedgerMember?.name"></h3>
                             <template x-if="selectedLedgerMember?.designation">
-                                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/70"
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 text-indigo-700 border border-indigo-200/70 truncate"
                                       x-text="selectedLedgerMember.designation"></span>
                             </template>
                         </div>
-                        <p class="text-xs text-slate-400 mt-0.5" x-text="lang === 'bn' ? 'ব্যক্তিগত জমা ও খরচের পরিষ্কার হিসাব' : 'Personal ledger and settlement balance'"></p>
+                        <p class="text-xs text-slate-400 mt-0.5 truncate" x-text="lang === 'bn' ? 'ব্যক্তিগত জমা ও খরচের পরিষ্কার হিসাব' : 'Personal ledger and settlement balance'"></p>
                     </div>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 flex-shrink-0">
                     <button type="button"
                             @click="printMemberSettlement(selectedLedgerMember)"
                             class="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold flex items-center gap-1 transition-all active:scale-95"
@@ -845,11 +858,14 @@
                         </svg>
                         <span x-text="lang === 'bn' ? 'প্রিন্ট' : 'Print'"></span>
                     </button>
-                    <button @click="showLedgerModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <button type="button" @click="showLedgerModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all" aria-label="Close">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
+
+            <!-- Scrollable Body Content -->
+            <div class="flex-1 overflow-y-auto px-6 py-4 overscroll-contain no-scrollbar space-y-4">
 
             <!-- Step 0: Final Verdict Banner (Crystal-clear result) -->
             <div class="p-4 rounded-3xl mb-4 text-center border shadow-xs"
@@ -986,18 +1002,19 @@
                 </div>
             </div>
 
+            </div>
         </div>
     </div>
 
     <!-- Modal 6: Edit Tour Details Modal (with Description, Budget Clear & Archive Lock Options) -->
     <div x-show="showEditTourModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showEditTourModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] overflow-y-auto no-scrollbar pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-bold text-slate-900" x-text="lang === 'bn' ? 'ট্যুরের তথ্য সম্পাদনা' : 'Edit Tour Details'"></h3>
-                <button @click="showEditTourModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @click="showEditTourModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <form @submit.prevent="submitEditTour()" class="space-y-4">
@@ -1057,12 +1074,12 @@
     <!-- Modal 7: Edit Member Modal (Role dropdown 100% English; Guardrail: Owner cannot be deleted) -->
     <div x-show="showEditMemberModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showEditMemberModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] overflow-y-auto no-scrollbar pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-bold text-slate-900" x-text="lang === 'bn' ? 'মেম্বার তথ্য পরিবর্তন' : 'Edit Member Info'"></h3>
-                <button @click="showEditMemberModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @click="showEditMemberModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <form @submit.prevent="submitEditMember()" class="space-y-3.5">
@@ -1138,15 +1155,15 @@
     <!-- Modal 8: Share / Invite Modal (Normal dropdown with VIEWER as default) -->
     <div x-show="showShareModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showShareModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] overflow-y-auto no-scrollbar pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-base font-bold text-slate-900" x-text="lang === 'bn' ? 'মেম্বার যুক্ত ও ইনভাইট করুন' : 'Add & Invite Member'"></h3>
                     <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'সদস্যের নাম, ইমেইল ও পদবি নির্ধারণ করে যুক্ত করুন' : 'Enter name, Gmail and optional designation'"></p>
                 </div>
-                <button @click="showShareModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @click="showShareModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <form @submit.prevent="submitShare()" class="space-y-3.5">
@@ -1210,15 +1227,15 @@
     <!-- Modal 9: View All Full Activity & Edit History (Slide-up Drawer) -->
     <div x-show="showAllHistoryModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showAllHistoryModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[85vh] flex flex-col pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] flex flex-col pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 flex-shrink-0"></div>
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3 flex-shrink-0">
                 <div>
                     <h3 class="text-base font-bold text-slate-900" x-text="lang === 'bn' ? 'সম্পূর্ণ অ্যাক্টিভিটি হিস্ট্রি' : 'All Activity & Edit History'"></h3>
                     <p class="text-xs text-slate-400" x-text="`${activities.length} ${lang === 'bn' ? 'টি মোট রেকর্ড' : 'total logs'}`"></p>
                 </div>
-                <button @click="showAllHistoryModal = false" class="p-1.5 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @click="showAllHistoryModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto no-scrollbar space-y-2.5 pr-1">
@@ -1242,17 +1259,15 @@
     <!-- Modal 10: View Full Tour Description (Slide-up Drawer) -->
     <div x-show="showDescriptionModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showDescriptionModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] overflow-y-auto no-scrollbar pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-                <div class="flex items-center gap-2">
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-900" x-text="lang === 'bn' ? 'ট্যুরের বিবরণ ও পরিকল্পনা' : 'Tour Itinerary & Plan'"></h3>
-                        <p class="text-[10px] text-slate-400" x-text="tour.title"></p>
-                    </div>
+                <div class="min-w-0 pr-2">
+                    <h3 class="text-sm font-bold text-slate-900 truncate" x-text="lang === 'bn' ? 'ট্যুরের বিবরণ ও পরিকল্পনা' : 'Tour Itinerary & Plan'"></h3>
+                    <p class="text-[10px] text-slate-400 truncate" x-text="tour.title"></p>
                 </div>
-                <button @click="showDescriptionModal = false" class="p-1.5 rounded-full text-slate-400 hover:bg-slate-100 active:scale-95">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" @click="showDescriptionModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <div class="max-h-[70vh] overflow-y-auto no-scrollbar py-2">
@@ -1582,7 +1597,7 @@
 
     <!-- Modal 12: All Expenses Breakdown Table & Print Modal -->
     <div x-show="showAllExpensesModal"
-         class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+         class="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4"
          x-cloak>
         <!-- Backdrop -->
         <div x-show="showAllExpensesModal"
@@ -1598,34 +1613,36 @@
         <!-- Modal Dialog -->
         <div x-show="showAllExpensesModal"
              x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:enter-start="opacity-0 translate-y-8 sm:scale-95 sm:translate-y-0"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92vh] flex flex-col z-10">
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-8 sm:scale-95 sm:translate-y-0"
+             class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden h-[90dvh] sm:h-auto sm:max-h-[88vh] max-h-[100dvh] flex flex-col z-10">
 
-            <!-- Header -->
-            <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/50">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+            <!-- Sticky Header -->
+            <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-md flex-shrink-0 z-20">
+                <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div class="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100" x-text="lang === 'bn' ? 'সকল খরচের বিস্তারিত বিবরণী টেবিল' : 'All Expenses Statement Table'"></h3>
-                        <p class="text-[11px] text-slate-400" x-text="`${tour.title || ''} • ${recentExpenses.length} ${lang === 'bn' ? 'টি খরচ' : 'entries'}`"></p>
+                    <div class="truncate">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate" x-text="lang === 'bn' ? 'সকল খরচের বিস্তারিত বিবরণী টেবিল' : 'All Expenses Statement Table'"></h3>
+                        <p class="text-[11px] text-slate-400 truncate" x-text="`${tour.title || ''} • ${recentExpenses.length} ${lang === 'bn' ? 'টি খরচ' : 'entries'}`"></p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button @click="printExpenseTable()"
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button type="button" @click="printExpenseTable()"
                             class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                        <span x-text="lang === 'bn' ? 'প্রিন্ট / পিডিএফ' : 'Print'"></span>
+                        <span x-text="lang === 'bn' ? 'প্রিন্ট' : 'Print'"></span>
                     </button>
-                    <button @click="showAllExpensesModal = false" class="w-8 h-8 rounded-full bg-slate-200/70 dark:bg-slate-800 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-95 transition-all">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <button type="button" @click="showAllExpensesModal = false"
+                            class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 flex items-center justify-center active:scale-90 transition-all"
+                            aria-label="Close">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
@@ -1680,14 +1697,14 @@
                 </table>
             </div>
 
-            <!-- Footer summary -->
-            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+            <!-- Sticky Footer (with safe-area bottom padding) -->
+            <div class="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-md flex-shrink-0 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <div class="text-xs text-slate-500">
                     <span x-text="lang === 'bn' ? 'মোট এন্ট্রি:' : 'Total Items:'"></span>
                     <strong class="text-slate-800 dark:text-slate-200" x-text="recentExpenses.length"></strong>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" @click="showAllExpensesModal = false" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-95 transition-all">
+                    <button type="button" @click="showAllExpensesModal = false" class="px-3.5 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold active:scale-95 transition-all">
                         <span x-text="lang === 'bn' ? 'বন্ধ করুন' : 'Close'"></span>
                     </button>
                     <button type="button" @click="printExpenseTable()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-1.5">
@@ -1702,7 +1719,7 @@
 
     <!-- Modal 13: Final Report (Master Settlement Audit & Balance Sheet) Modal -->
     <div x-show="showFinalReportModal"
-         class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+         class="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4"
          x-cloak>
         <!-- Backdrop -->
         <div x-show="showFinalReportModal"
@@ -1718,29 +1735,31 @@
         <!-- Modal Dialog -->
         <div x-show="showFinalReportModal"
              x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:enter-start="opacity-0 translate-y-8 sm:scale-95 sm:translate-y-0"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
              x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100 scale-100"
-             x-transition:leave-end="opacity-0 scale-95"
-             class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[94vh] flex flex-col z-10">
+             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+             x-transition:leave-end="opacity-0 translate-y-8 sm:scale-95 sm:translate-y-0"
+             class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden h-[92dvh] sm:h-auto sm:max-h-[88vh] max-h-[100dvh] flex flex-col z-10">
 
-            <!-- Header -->
-            <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/50">
-                <div class="flex items-center gap-2.5">
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100" x-text="lang === 'bn' ? 'চূড়ান্ত ট্যুর অডিট ও ফাইনাল রিপোর্ট' : 'Final Settlement Report'"></h3>
-                        <p class="text-[11px] text-slate-400" x-text="`${tour.title || ''} • ${settlementData?.members?.length || 0} ${lang === 'bn' ? 'জন সদস্য' : 'members'}`"></p>
+            <!-- Sticky Header -->
+            <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-md flex-shrink-0 z-20">
+                <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div class="truncate">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate" x-text="lang === 'bn' ? 'চূড়ান্ত ট্যুর অডিট ও ফাইনাল রিপোর্ট' : 'Final Settlement Report'"></h3>
+                        <p class="text-[11px] text-slate-400 truncate" x-text="`${tour.title || ''} • ${settlementData?.members?.length || 0} ${lang === 'bn' ? 'জন সদস্য' : 'members'}`"></p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button @click="printFinalReport()"
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button type="button" @click="printFinalReport()"
                             class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                        <span x-text="lang === 'bn' ? 'প্রিন্ট / পিডিএফ' : 'Print'"></span>
+                        <span x-text="lang === 'bn' ? 'প্রিন্ট' : 'Print'"></span>
                     </button>
-                    <button @click="showFinalReportModal = false" class="w-8 h-8 rounded-full bg-slate-200/70 dark:bg-slate-800 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-95 transition-all">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <button type="button" @click="showFinalReportModal = false"
+                            class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 flex items-center justify-center active:scale-90 transition-all"
+                            aria-label="Close">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
@@ -1924,14 +1943,14 @@
                 </div>
             </div>
 
-            <!-- Footer summary -->
-            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+            <!-- Sticky Footer (with safe-area bottom padding) -->
+            <div class="px-4 py-3 sm:px-5 sm:py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-md flex-shrink-0 z-20 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <div class="text-xs text-slate-500">
                     <span x-text="lang === 'bn' ? 'সদস্য সংখ্যা:' : 'Total Members:'"></span>
                     <strong class="text-slate-800 dark:text-slate-200" x-text="settlementData?.members?.length || 0"></strong>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" @click="showFinalReportModal = false" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold active:scale-95 transition-all">
+                    <button type="button" @click="showFinalReportModal = false" class="px-3.5 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold active:scale-95 transition-all">
                         <span x-text="lang === 'bn' ? 'বন্ধ করুন' : 'Close'"></span>
                     </button>
                     <button type="button" @click="printFinalReport()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-1.5">
@@ -1944,58 +1963,63 @@
         </div>
     </div>
 
-    <!-- Demo Tour Full Interactive Guideline Modal -->
+    <!-- Demo Tour Full Interactive Guideline Modal (with Offline Usage Instructions) -->
     <div x-show="showDemoGuideModal"
          @click.self="showDemoGuideModal = false"
          class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
          x-cloak>
-        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full max-h-[88dvh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             
             <!-- Modal Header -->
-            <div class="px-5 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-between">
+            <div class="px-5 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <span class="text-lg">📖</span>
                     <div>
                         <h3 class="text-sm font-bold text-white leading-tight" x-text="lang === 'bn' ? 'ট্যুরমেট সিস্টেম গাইডলাইন' : 'TourMate System Guideline'"></h3>
-                        <p class="text-[10px] text-blue-100" x-text="lang === 'bn' ? `ধাপ ${demoGuideStep} এর ৫ • কীভাবে হিসাব কাজ করে` : `Step ${demoGuideStep} of 5 • How calculation works`"></p>
+                        <p class="text-[10px] text-blue-100" x-text="lang === 'bn' ? `ধাপ ${demoGuideStep} এর ৬ • কীভাবে হিসাব ও অফলাইন কাজ করে` : `Step ${demoGuideStep} of 6 • How math & offline work`"></p>
                     </div>
                 </div>
-                <button @click="showDemoGuideModal = false" class="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-xs font-bold">
+                <button type="button" @click="showDemoGuideModal = false" class="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-xs font-bold active:scale-95" aria-label="Close">
                     ✕
                 </button>
             </div>
 
             <!-- Step Navigation Tabs / Dots -->
-            <div class="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 px-2 py-1.5 gap-1 overflow-x-auto no-scrollbar">
-                <button @click="demoGuideStep = 1"
+            <div class="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 px-2 py-1.5 gap-1 overflow-x-auto no-scrollbar flex-shrink-0">
+                <button type="button" @click="demoGuideStep = 1"
                         :class="demoGuideStep === 1 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
-                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
                     <span>1. ব্যালেন্স</span>
                 </button>
-                <button @click="demoGuideStep = 2"
+                <button type="button" @click="demoGuideStep = 2"
                         :class="demoGuideStep === 2 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
-                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
                     <span>2. খরচের ভাগ</span>
                 </button>
-                <button @click="demoGuideStep = 3"
+                <button type="button" @click="demoGuideStep = 3"
                         :class="demoGuideStep === 3 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
-                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
                     <span>3. ইনভাইট</span>
                 </button>
-                <button @click="demoGuideStep = 4"
+                <button type="button" @click="demoGuideStep = 4"
                         :class="demoGuideStep === 4 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
-                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
                     <span>4. দেনা-পাওনা</span>
                 </button>
-                <button @click="demoGuideStep = 5"
-                        :class="demoGuideStep === 5 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
-                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
-                    <span>5. লগআউট</span>
+                <button type="button" @click="demoGuideStep = 5"
+                        :class="demoGuideStep === 5 ? 'bg-cyan-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[62px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>5. অফলাইন</span>
+                </button>
+                <button type="button" @click="demoGuideStep = 6"
+                        :class="demoGuideStep === 6 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>6. লগআউট</span>
                 </button>
             </div>
 
             <!-- Step Content Body (Scrollable) -->
-            <div class="p-5 flex-1 overflow-y-auto text-slate-700 dark:text-slate-200 text-xs leading-relaxed space-y-4">
+            <div class="p-5 flex-1 overflow-y-auto text-slate-700 dark:text-slate-200 text-xs leading-relaxed space-y-4 overscroll-contain">
                 
                 <!-- STEP 1: Calculation & Data Location -->
                 <div x-show="demoGuideStep === 1" class="space-y-3 animate-fadeIn">
@@ -2003,30 +2027,30 @@
                         💰
                     </div>
                     <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '১. কমন ফান্ড ও ফিন্যান্সিয়াল ব্যালেন্স কোথায় দেখা যাবে?' : '1. Common Fund & Live Financial Balance'"></h4>
-                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'স্ক্রিনের শীর্ষে নীল রঙের বড় ফন্টে সর্বদা দেখা যায় আপনার ট্যুরের আসল নগদ অবশিষ্ট ফান্ড (Remaining Fund)।' : 'At the very top of the screen, you always see the real live Remaining Fund in a prominent banner.'"></p>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'ট্যুর ড্যাশবোর্ডের শীর্ষে সর্বদা বড় ফন্টে দেখা যায় আপনার ট্যুরের আসল নগদ অবশিষ্ট ফান্ড (Remaining Fund)।' : 'At the very top of the tour screen, you always see the live Remaining Fund in a prominent banner.'"></p>
                     
                     <div class="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-2">
                         <span class="text-[10px] uppercase font-bold text-slate-400 block" x-text="lang === 'bn' ? 'স্বয়ংক্রিয় ফর্মুলা:' : 'Automatic Math Formula:'"></span>
                         <div class="font-mono text-xs font-bold text-blue-700 dark:text-blue-300">
-                            মোট ফান্ড জমা (Credit) - মোট খরচ (Debit) = অবশিষ্ট ফান্ড
+                            মোট ফান্ড জমা (Credit) - মোট খরচ (Debit) = অবশিষ্ট নগদ ফান্ড
                         </div>
                         <div class="pt-2 border-t border-slate-200 dark:border-slate-700 text-[11px] grid grid-cols-3 text-center gap-2">
                             <div class="bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-xl border border-emerald-200/50">
                                 <span class="text-[10px] text-emerald-600 font-bold block">মোট জমা</span>
-                                <span class="font-mono font-bold text-emerald-800 dark:text-emerald-300">৳ ১,৯৯৫</span>
+                                <span class="font-mono font-bold text-emerald-800 dark:text-emerald-300">৳ ১০,৪০০</span>
                             </div>
                             <div class="bg-rose-50 dark:bg-rose-950/40 p-2 rounded-xl border border-rose-200/50">
                                 <span class="text-[10px] text-rose-600 font-bold block">মোট খরচ</span>
-                                <span class="font-mono font-bold text-rose-800 dark:text-rose-300">৳ ৯৯৫</span>
+                                <span class="font-mono font-bold text-rose-800 dark:text-rose-300">৳ ৯,৫৬০</span>
                             </div>
                             <div class="bg-blue-50 dark:bg-blue-950/40 p-2 rounded-xl border border-blue-200/50">
                                 <span class="text-[10px] text-blue-600 font-bold block">অবশিষ্ট ফান্ড</span>
-                                <span class="font-mono font-bold text-blue-800 dark:text-blue-300">৳ ১,০০০</span>
+                                <span class="font-mono font-bold text-blue-800 dark:text-blue-300">৳ ৮৪০</span>
                             </div>
                         </div>
                     </div>
 
-                    <p class="text-[11px] text-slate-500" x-text="lang === 'bn' ? 'ক্যালকুলেটরের কোনো ঝামেলা ছাড়া যেকোনো মেম্বারের নতুন জমা বা খরচ যুক্ত হওয়ামাত্রই এই ব্যালেন্স লাইভ আপডেট হয়।' : 'Whenever any member adds a deposit or expense, this remaining fund updates automatically in real-time.'"></p>
+                    <p class="text-[11px] text-slate-500" x-text="lang === 'bn' ? 'ক্যালকুলেটরের কোনো ঝামেলা ছাড়াই ৪ জন মেম্বারের যেকোনো নতুন জমা বা খরচ যুক্ত হওয়ামাত্রই এই ব্যালেন্স লাইভ হিসাব হয়ে যায়।' : 'Whenever any member adds a deposit or expense, this remaining fund balance updates automatically in real-time.'"></p>
                 </div>
 
                 <!-- STEP 2: Individual Cost Split & Selective Breakdown -->
@@ -2040,23 +2064,31 @@
                     <div class="space-y-2">
                         <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">🏨 হোটেল বুকিং (৳ ২৫০)</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">সবার মাঝে ভাগ (All)</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">🏨 মেঘপুঞ্জি রিসোর্ট বুকিং (৳ ৩,৬০০)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">সবার মাঝে ভাগ (All 4)</span>
                             </div>
-                            <p class="text-[11px] text-slate-500">৬ জন সদস্যের মাঝেই সমানভাবে ভাগ হয়ে প্রত্যেকের ভাগে পড়েছে <strong>৳ ৪১.৬৭</strong>।</p>
+                            <p class="text-[11px] text-slate-500">৪ জন সদস্যের (Alex, Kabir, Alomgir, Rafique) মাঝেই সমানভাবে ভাগ হয়ে প্রত্যেকের ভাগে পড়েছে <strong>৳ ৯০০.০০</strong>।</p>
                         </div>
 
                         <div class="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">🥤 Drinks (৳ ৯০)</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">সিলেক্টিভ স্প্লিট (Selective)</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">🚶 কংলাক গাইড ফি (৳ ৪৫০)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">সিলেক্টিভ স্প্লিট (৩ জন)</span>
                             </div>
-                            <p class="text-[11px] text-slate-600 dark:text-slate-300">এটি শুধু <strong>Alex</strong> ও <strong>Meow</strong> খেয়েছে। তাই তাদের দুজনের ভাগে <strong>৳ ৪৫.০০</strong> করে পড়েছে। বাকি ৪ জন সদস্যের থেকে ১ পয়সাও কাটা হয়নি!</p>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300">এটি শুধু <strong>Alex</strong>, <strong>Alomgir</strong> ও <strong>Rafique</strong> ট্র্যাকিং করেছে। তাই তাদের ৩ জনের ভাগে <strong>৳ ১৫০.০০</strong> করে পড়েছে। কবির ভাইয়ের থেকে কোনো টাকা কাটা হয়নি!</p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/50">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">☕ চা ও পাহাড়ি পেঁপে (৳ ১৬০)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">সিলেক্টিভ স্প্লিট (২ জন)</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300">এটি শুধু <strong>Alex</strong> ও <strong>Alomgir</strong> খেয়েছে। তাই দুজনের ভাগে <strong>৳ ৮০.০০</strong> করে পড়েছে। বাকিদের হিসাব সম্পূর্ণ আলাদা রাখা হয়েছে!</p>
                         </div>
                     </div>
 
                     <div class="p-2.5 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-[11px] text-blue-700 dark:text-blue-300">
-                        💡 <strong>টিপস:</strong> "খরচের তালিকা" ট্যাবে যেকোনো খরচের উপর ট্যাপ করলে পুরো বিবরণ ও কার ভাগে কত পড়েছে তা দেখা যায়।
+                        💡 <strong>টিপস:</strong> "খরচের তালিকা" এ যেকোনো খরচের উপর ট্যাপ করলে পুরো বিবরণ, কে পরিশোধ করেছে এবং কার ভাগে কত পড়েছে তা দেখা যায়।
                     </div>
                 </div>
 
@@ -2072,30 +2104,30 @@
                         <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
                             <span class="text-base">👑</span>
                             <div>
-                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Owner (ট্যুর অ্যাডমিন)</strong>
-                                <span class="text-[11px] text-slate-500">ট্যুরের প্রধান নির্মাতা। সব কিছু নিয়ন্ত্রণ, লক/আনলক ও হিসাব পরিচালনা করতে পারে।</span>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Owner (ট্যুর অ্যাডমিন) — Alex Rivers</strong>
+                                <span class="text-[11px] text-slate-500">ট্যুরের প্রধান নির্মাতা। সব কিছু নিয়ন্ত্রণ, মেম্বার ম্যানেজমেন্ট ও হিসাব পরিচালনা করতে পারে।</span>
                             </div>
                         </div>
 
                         <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
                             <span class="text-base">✏️</span>
                             <div>
-                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Editor (খরচ/জমা ইনপুটকারী)</strong>
-                                <span class="text-[11px] text-slate-500">ট্যুরের হিসাবরক্ষক বা ম্যানেজার। নতুন খরচ বা জমা এন্ট্রি করতে পারে।</span>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Editor (খরচ/জমা ইনপুটকারী) — Kabir, Alomgir, Rafique</strong>
+                                <span class="text-[11px] text-slate-500">ট্যুরের সহযোগী ম্যানেজার। নতুন খরচ বা জমা এন্ট্রি করতে পারে।</span>
                             </div>
                         </div>
 
                         <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
                             <span class="text-base">👁️</span>
                             <div>
-                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Viewer (ভিউ-অনলি)</strong>
-                                <span class="text-[11px] text-slate-500">সাধারণ মেম্বার। হিসাব বা টাকা এডিট করতে পারবে না, কেবল স্বচ্ছভাবে লাইভ দেখতে পাবে।</span>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Viewer (ভিউ-অনলি সদস্য)</strong>
+                                <span class="text-[11px] text-slate-500">সাধারণ মেম্বার। হিসাব এডিট করতে পারবে না, কেবল স্বচ্ছভাবে লাইভ হিসাব দেখতে পাবে।</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300">
-                        📲 <strong>ইনভাইট করার নিয়ম:</strong> "সদস্য (Members)" ট্যাবে গিয়ে যেকোনো মেম্বারের নামের উপর ক্লিক করে <strong>"Send Invite Link"</strong> চাপলেই লিংক কপি হয়ে যাবে।
+                        📲 <strong>ইনভাইট করার নিয়ম:</strong> "সদস্য (Members)" ট্যাবে গিয়ে যেকোনো মেম্বারের নামের পাশে <strong>"ইনভাইট শেয়ার"</strong> চাপলেই হোয়াটসঅ্যাপ বা মেসেঞ্জারে লিংক পাঠানো যায়।
                     </div>
                 </div>
 
@@ -2110,36 +2142,86 @@
                     <div class="space-y-2">
                         <div class="p-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-emerald-800 dark:text-emerald-300 text-xs">🟢 Refundable (সবুজ - ফেরত পাবেন)</span>
+                                <span class="font-bold text-emerald-800 dark:text-emerald-300 text-xs">🟢 Refundable (টাকা ফেরত পাবেন)</span>
                                 <span class="text-[10px] font-bold text-emerald-700">ফান্ড থেকে ফেরত</span>
                             </div>
-                            <p class="text-[11px] text-slate-600 dark:text-slate-300">
-                                যিনি খরচের চেয়ে বেশি টাকা জমা দিয়েছেন:<br>
-                                • <strong>Alex Rivers</strong> পাবে <strong>+৳ ৯৯৯.১৭</strong> ফেরত<br>
-                                • <strong>Alomgir</strong> পাবে <strong>+৳ ৪৪৯.১৭</strong> ফেরত<br>
-                                • <strong>Meow</strong> পাবে <strong>+৳ ৪.১৭</strong> ফেরত
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                                যিনি খরচের চেয়ে বেশি জমা দিয়েছেন:<br>
+                                • <strong>Alex Rivers:</strong> জমা ৳৩,২০০ - খরচ ৳২,৫২০ = <strong>+৳ ৬৮০.০০ পাবে</strong><br>
+                                • <strong>Kabir Bhai:</strong> জমা ৳২,৮০০ - খরচ ৳২,২৯০ = <strong>+৳ ৫১০.০০ পাবে</strong><br>
+                                • <strong>Alomgir Hossain:</strong> জমা ৳২,৪০০ - খরচ ৳২,২৫০ = <strong>+৳ ১৫০.০০ পাবে</strong>
                             </p>
                         </div>
 
                         <div class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="font-bold text-rose-800 dark:text-rose-300 text-xs">🔴 Payable (লাল - পরিশোধ করবেন)</span>
-                                <span class="text-[10px] font-bold text-rose-700">ফান্ডে জমা দিতে হবে</span>
+                                <span class="font-bold text-rose-800 dark:text-rose-300 text-xs">🔴 Payable (টাকা পরিশোধ করবেন)</span>
+                                <span class="text-[10px] font-bold text-rose-700">বকেয়া জমা দিতে হবে</span>
                             </div>
-                            <p class="text-[11px] text-slate-600 dark:text-slate-300">
-                                যিনি কোনো জমা দেননি কিন্তু খরচ ভোগ করেছেন:<br>
-                                • <strong>রফিক বাবু</strong> দিবে <strong>-৳ ১৫০.৮৩</strong><br>
-                                • <strong>কবির ভাই</strong> দিবে <strong>-৳ ১৫০.৮৩</strong><br>
-                                • <strong>তানভীর আহমেদ</strong> দিবে <strong>-৳ ১৫০.৮৩</strong>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                                যিনি খরচের চেয়ে কম জমা দিয়েছেন:<br>
+                                • <strong>Rafique Babu:</strong> জমা ৳২,০০০ - খরচ ৳২,৫০০ = <strong>-৳ ৫০০.০০ দিতে হবে</strong>
                             </p>
                         </div>
                     </div>
 
-                    <p class="text-[11px] text-slate-500" x-text="lang === 'bn' ? 'ফান্ডের নগদ অবশিষ্ট টাকা (৳ ১,০০০) এবং এই তিনজনের পাওনা টাকা (৳ ৪৫২.৪৯) একত্রিত করলে ফেরতযোগ্য টাকার সমান হয়—যাতে ট্যুর শেষে ১ টাকারও গড়মিল (Zero Discrepancy) না থাকে।' : 'The remaining fund plus collected dues exactly equal total refundable amounts, ensuring mathematically zero discrepancy.'"></p>
+                    <div class="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-2xl border border-blue-200 dark:border-blue-800 text-[11px] space-y-1">
+                        <span class="font-bold text-blue-900 dark:text-blue-200 block">✨ শতভাগ নির্ভুল সমীকরণ (Zero Discrepancy):</span>
+                        <p class="text-slate-600 dark:text-slate-300">
+                            কমন ফান্ডের অবশিষ্ট নগদ টাকা (<strong>৳ ৮৪০</strong>) + রফিক বাবুর বকেয়া (<strong>৳ ৫০০</strong>) = মোট <strong>৳ ১,৩৪০</strong>।<br>
+                            এই ৳ ১,৩৪০ টাকা দিয়েই ৩ জন সদস্যের সমুদয় পাওনা (Alex ৳৬৮০ + Kabir ৳৫১০ + Alomgir ৳১৫০ = ৳১,৩৪০) পাই টু পাই পরিশোধ হয়ে হিসাব শূন্য হয়ে যাবে!
+                        </p>
+                    </div>
                 </div>
 
-                <!-- STEP 5: Logout & Start Real Tour -->
-                <div x-show="demoGuideStep === 5" class="space-y-4 animate-fadeIn text-center py-2">
+                <!-- STEP 5: Offline Usage Instructions -->
+                <div x-show="demoGuideStep === 5" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-2xl font-bold">
+                        📶
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '৫. অফলাইন ব্যবহার নির্দেশিকা (পাহাড়েও সচল হিসাব)' : '5. Offline Usage Instructions (Works in Remote Hills)'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'পাহাড় বা দুর্গম ট্র্যাকিং ট্রেইলে যেখানে কোনো মোবাইল নেটওয়ার্ক বা ইন্টারনেট থাকে না, সেখানেও ট্যুরমেটের হিসাব নিরবচ্ছিন্নভাবে দেখা যাবে।' : 'TourMate calculations and statements remain fully accessible even in remote hills without internet.'"></p>
+
+                    <div class="space-y-2.5">
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center text-[10px]">১</span>
+                                <span>কোন পেজ লোড থাকতে হবে?</span>
+                            </span>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 pl-6.5">
+                                ট্যুর শুরুর আগে বা যেখানে ওয়াইফাই/ইন্টারনেট রয়েছে (যেমন: হোটেল বা বাসা), সেখানে আপনার নির্দিষ্ট ট্যুরের <strong>ট্যুর ড্যাশবোর্ড (Tour Dashboard)</strong> পেজটি ফোনের ব্রাউজারে একবার ওপেন করে রাখুন।
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center text-[10px]">২</span>
+                                <span>কী হবে ও কীভাবে কাজ করবে?</span>
+                            </span>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 pl-6.5">
+                                পেজটি একবার লোড হওয়ার পর সমস্ত হিসাব, খরচ, জমা ও সদস্যদের দেনা-পাওনা স্বয়ংক্রিয়ভাবে ব্রাউজারের মেমরিতে সংরক্ষিত থাকে। পাহাড়ে ইন্টারনেট বন্ধ হয়ে গেলেও পেজটি বন্ধ বা ক্র্যাশ হবে না!
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center text-[10px]">৩</span>
+                                <span>পাহাড়ে ব্যবহারের নিয়ম</span>
+                            </span>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 pl-6.5">
+                                কংলাক পাহাড় বা পাহাড়ি ট্রেইলে নেট না থাকলে শুধু ব্রাউজার খুলে ট্যুরমেটের ট্যাবটিতে ট্যাপ করলেই পুরো ব্যালান্স শিট, খরচের তালিকা ও মেম্বার লেজার সরাসরি চোখের সামনে দেখতে পাবেন।
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 bg-cyan-50 dark:bg-cyan-950/40 rounded-xl text-[11px] text-cyan-800 dark:text-cyan-300 flex items-center gap-2">
+                        <span>⚡</span>
+                        <span><strong>টিপস:</strong> অফলাইনে হিসাব দেখার জন্য ব্রাউজারের ট্যাবটি রিফ্রেশ বা বন্ধ না করে খোলা রাখুন।</span>
+                    </div>
+                </div>
+
+                <!-- STEP 6: Logout & Start Real Tour -->
+                <div x-show="demoGuideStep === 6" class="space-y-4 animate-fadeIn text-center py-2">
                     <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-3xl font-bold mx-auto shadow-xl shadow-blue-500/25">
                         🚀
                     </div>
@@ -2163,7 +2245,7 @@
                         </div>
                     </div>
 
-                    <button @click="logout()"
+                    <button type="button" @click="logout()"
                             class="w-full py-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold rounded-2xl text-xs active:scale-95 transition-all shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2">
                         <span>🚪</span>
                         <span x-text="lang === 'bn' ? 'ডেমো থেকে লগআউট করুন' : 'Log Out from Demo'"></span>
@@ -2173,7 +2255,7 @@
             </div>
 
             <!-- Modal Footer Controls -->
-            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
+            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between flex-shrink-0">
                 <button type="button"
                         @click="demoGuideStep = Math.max(1, demoGuideStep - 1)"
                         :disabled="demoGuideStep === 1"
@@ -2182,17 +2264,17 @@
                 </button>
 
                 <div class="text-[11px] font-bold text-slate-400">
-                    <span x-text="demoGuideStep"></span> / 5
+                    <span x-text="demoGuideStep"></span> / 6
                 </div>
 
-                <template x-if="demoGuideStep < 5">
+                <template x-if="demoGuideStep < 6">
                     <button type="button"
-                            @click="demoGuideStep = Math.min(5, demoGuideStep + 1)"
+                            @click="demoGuideStep = Math.min(6, demoGuideStep + 1)"
                             class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white active:scale-95 transition-all shadow-sm">
                         পরবর্তী →
                     </button>
                 </template>
-                <template x-if="demoGuideStep === 5">
+                <template x-if="demoGuideStep === 6">
                     <button type="button"
                             @click="showDemoGuideModal = false"
                             class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-all">
@@ -2503,6 +2585,120 @@ function tourDetailPage(tourId) {
         },
 
         printHtmlDocument(title, bodyHtml, extraStyles = '') {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            const printableContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>${title}</title>
+    <style>
+        @page { size: auto; margin: 12mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hind Siliguri", sans-serif;
+            color: #0f172a;
+            background: #ffffff;
+            padding: 16px;
+            margin: 0;
+            line-height: 1.5;
+        }
+        h2 { margin: 0 0 4px 0; font-size: 18px; font-weight: 800; color: #0f172a; }
+        p { margin: 0 0 12px 0; font-size: 11px; color: #64748b; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+        th, td { border: 1px solid #cbd5e1; padding: 7px 9px; text-align: left; }
+        th { background: #f1f5f9; font-weight: bold; color: #334155; }
+        tfoot tr { background: #f8fafc; font-weight: bold; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-mono { font-family: monospace; }
+        .font-bold { font-weight: bold; }
+        .meta-box { border: 1px solid #e2e8f0; background: #f8fafc; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .meta-item { font-size: 11px; }
+        .meta-label { color: #64748b; font-size: 9px; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 2px; }
+        .status-badge { font-size: 13px; font-weight: bold; }
+        .refund { color: #059669; }
+        .due { color: #e11d48; }
+        .settled { color: #475569; }
+        .section-title { font-size: 12px; font-weight: bold; color: #1e293b; margin: 14px 0 6px 0; }
+        .signature-grid { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 16px; gap: 16px; }
+        .sig-line { border-top: 1px dashed #94a3b8; padding-top: 6px; font-size: 10px; color: #64748b; text-align: center; flex: 1; }
+        .no-print-bar {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #1e293b;
+            color: #ffffff;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+        }
+        .btn-print {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .btn-close {
+            background: #475569;
+            color: #ffffff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        @media print {
+            .no-print-bar { display: none !important; }
+            body { padding: 0 !important; }
+        }
+        ${extraStyles}
+    </style>
+</head>
+<body>
+    <div class="no-print-bar">
+        <span style="font-size:12px; font-weight:bold;">${title}</span>
+        <div>
+            <button class="btn-print" onclick="window.print()">🖨️ ${this.lang === 'bn' ? 'প্রিন্ট / PDF' : 'Print / PDF'}</button>
+            <button class="btn-close" onclick="window.close()">✕ ${this.lang === 'bn' ? 'বন্ধ করুন' : 'Close'}</button>
+        </div>
+    </div>
+    ${bodyHtml}
+</body>
+</html>`;
+
+            if (isMobile) {
+                // On mobile phones, open dedicated clean window to avoid freezing the app
+                const printWin = window.open('', '_blank');
+                if (printWin) {
+                    printWin.document.open();
+                    printWin.document.write(printableContent);
+                    printWin.document.close();
+                    setTimeout(() => {
+                        try {
+                            printWin.focus();
+                            printWin.print();
+                        } catch (e) {
+                            console.error('Mobile auto-print error:', e);
+                        }
+                    }, 500);
+                    return;
+                }
+            }
+
+            // Desktop / Fallback using off-screen iframe (NOT zero size/hidden)
             const oldIframe = document.getElementById('tourmate-print-frame');
             if (oldIframe) {
                 oldIframe.remove();
@@ -2511,62 +2707,20 @@ function tourDetailPage(tourId) {
             const iframe = document.createElement('iframe');
             iframe.id = 'tourmate-print-frame';
             iframe.style.position = 'fixed';
-            iframe.style.right = '0';
-            iframe.style.bottom = '0';
-            iframe.style.width = '0';
-            iframe.style.height = '0';
+            iframe.style.top = '-9999px';
+            iframe.style.left = '-9999px';
+            iframe.style.width = '1024px';
+            iframe.style.height = '768px';
             iframe.style.border = '0';
-            iframe.style.visibility = 'hidden';
+            iframe.style.opacity = '0';
+            iframe.style.pointerEvents = 'none';
             document.body.appendChild(iframe);
 
             const doc = iframe.contentWindow || iframe.contentDocument;
             const iframeDoc = doc.document || doc;
 
-            const fullHtml = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>${title}</title>
-    <style>
-        @page { size: auto; margin: 15mm; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hind Siliguri", sans-serif;
-            color: #0f172a;
-            background: #ffffff;
-            padding: 24px;
-            margin: 0;
-            line-height: 1.5;
-        }
-        h2 { margin: 0 0 4px 0; font-size: 20px; font-weight: 800; color: #0f172a; }
-        p { margin: 0 0 16px 0; font-size: 12px; color: #64748b; }
-        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 12px; text-align: left; }
-        th { background: #f1f5f9; font-weight: bold; color: #334155; }
-        tfoot tr { background: #f8fafc; font-weight: bold; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .font-mono { font-family: monospace; }
-        .font-bold { font-weight: bold; }
-        .meta-box { border: 1px solid #e2e8f0; background: #f8fafc; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-        .meta-item { font-size: 12px; }
-        .meta-label { color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 2px; }
-        .status-badge { font-size: 14px; font-weight: bold; }
-        .refund { color: #059669; }
-        .due { color: #e11d48; }
-        .settled { color: #475569; }
-        .section-title { font-size: 13px; font-weight: bold; color: #1e293b; margin: 16px 0 6px 0; }
-        .signature-grid { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; gap: 20px; }
-        .sig-line { border-top: 1px dashed #94a3b8; padding-top: 6px; font-size: 11px; color: #64748b; text-align: center; flex: 1; }
-        ${extraStyles}
-    </style>
-</head>
-<body>
-    ${bodyHtml}
-</body>
-</html>`;
-
             iframeDoc.open();
-            iframeDoc.write(fullHtml);
+            iframeDoc.write(printableContent);
             iframeDoc.close();
 
             setTimeout(() => {
@@ -2574,7 +2728,7 @@ function tourDetailPage(tourId) {
                     iframe.contentWindow.focus();
                     iframe.contentWindow.print();
                 } catch (err) {
-                    console.error('Print failed:', err);
+                    console.error('Print iframe error:', err);
                     window.print();
                 }
             }, 300);

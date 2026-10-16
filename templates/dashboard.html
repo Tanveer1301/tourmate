@@ -59,10 +59,10 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    <button @click="goToDemoTour()"
-                            class="px-3.5 py-2 bg-white text-blue-700 rounded-xl font-bold text-xs hover:bg-blue-50 active:scale-95 transition-all shadow-xs flex items-center gap-1">
-                        <span>👀</span>
-                        <span x-text="lang === 'bn' ? 'ডেমো ট্যুর দেখুন' : 'View Demo Tour'"></span>
+                    <button @click="showDemoGuideModal = true; demoGuideStep = 1"
+                            class="px-3.5 py-2 bg-white text-blue-700 rounded-xl font-bold text-xs hover:bg-blue-50 active:scale-95 transition-all shadow-xs flex items-center gap-1.5">
+                        <span>📖</span>
+                        <span x-text="lang === 'bn' ? 'গাইডলাইন দেখুন' : 'User Guideline'"></span>
                     </button>
                     <button @click="logout()"
                             class="px-3 py-2 bg-white/20 hover:bg-rose-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all">
@@ -219,7 +219,7 @@
          class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center"
          x-cloak>
         <div class="absolute inset-0" @click="showCreateModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[90vh] overflow-y-auto no-scrollbar pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] overflow-y-auto no-scrollbar pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
 
             <div class="flex items-center justify-between mb-4">
@@ -227,9 +227,9 @@
                     <h3 class="text-base font-bold text-slate-900" x-text="lang === 'bn' ? 'নতুন ট্যুর যোগ করুন' : 'Create New Tour'"></h3>
                     <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'ট্যুরের নাম ও প্রাথমিক বাজেট নির্ধারণ করুন' : 'Set title, theme color and optional budget'"></p>
                 </div>
-                <button @click="showCreateModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button type="button" @click="showCreateModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -290,7 +290,7 @@
          class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center"
          x-cloak>
         <div class="absolute inset-0" @click="showEditTourModal = false"></div>
-        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[90vh] overflow-y-auto no-scrollbar pb-safe">
+        <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 max-h-[88dvh] overflow-y-auto no-scrollbar pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
 
             <div class="flex items-center justify-between mb-4">
@@ -298,9 +298,9 @@
                     <h3 class="text-base font-bold text-slate-900" x-text="lang === 'bn' ? 'ট্যুর তথ্য এডিট করুন' : 'Edit Tour Details'"></h3>
                     <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'নাম, বিবরণ, বাজেট ও থিম পরিবর্তন করুন' : 'Update title, description, budget & theme'"></p>
                 </div>
-                <button @click="showEditTourModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button type="button" @click="showEditTourModal = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center active:scale-90 transition-all flex-shrink-0" aria-label="Close">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -698,15 +698,339 @@
                         class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs active:scale-95 transition-all shadow-md">
                     <span x-text="lang === 'bn' ? 'লগআউট করে Google দিয়ে ঢুকুন' : 'Log Out & Sign In with Google'"></span>
                 </button>
-                <button @click="showDemoLockModal = false; goToDemoTour()"
-                        class="w-full py-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold rounded-2xl text-xs hover:bg-indigo-100">
-                    <span x-text="lang === 'bn' ? '👀 ডেমো ট্যুরে ফিরে যান' : '👀 Return to Demo Tour'"></span>
+                <button @click="showDemoLockModal = false; showDemoGuideModal = true; demoGuideStep = 1"
+                        class="w-full py-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold rounded-2xl text-xs hover:bg-indigo-100 flex items-center justify-center gap-1.5">
+                    <span>📖</span>
+                    <span x-text="lang === 'bn' ? 'ট্যুরমেট গাইডলাইন দেখুন' : 'View User Guideline'"></span>
                 </button>
                 <button @click="showDemoLockModal = false"
                         class="w-full py-2 text-slate-400 font-medium text-xs hover:text-slate-600">
                     <span x-text="lang === 'bn' ? 'বন্ধ করুন' : 'Close'"></span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Demo Tour Full Interactive Guideline Modal (with Offline Usage Instructions) -->
+    <div x-show="showDemoGuideModal"
+         @click.self="showDemoGuideModal = false"
+         class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+         x-cloak>
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full max-h-[88dvh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">📖</span>
+                    <div>
+                        <h3 class="text-sm font-bold text-white leading-tight" x-text="lang === 'bn' ? 'ট্যুরমেট সিস্টেম গাইডলাইন' : 'TourMate System Guideline'"></h3>
+                        <p class="text-[10px] text-blue-100" x-text="lang === 'bn' ? `ধাপ ${demoGuideStep} এর ৬ • কীভাবে হিসাব ও অফলাইন কাজ করে` : `Step ${demoGuideStep} of 6 • How math & offline work`"></p>
+                    </div>
+                </div>
+                <button type="button" @click="showDemoGuideModal = false" class="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-xs font-bold active:scale-95" aria-label="Close">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Step Navigation Tabs / Dots -->
+            <div class="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 px-2 py-1.5 gap-1 overflow-x-auto no-scrollbar flex-shrink-0">
+                <button type="button" @click="demoGuideStep = 1"
+                        :class="demoGuideStep === 1 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>1. ব্যালেন্স</span>
+                </button>
+                <button type="button" @click="demoGuideStep = 2"
+                        :class="demoGuideStep === 2 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>2. খরচের ভাগ</span>
+                </button>
+                <button type="button" @click="demoGuideStep = 3"
+                        :class="demoGuideStep === 3 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>3. ইনভাইট</span>
+                </button>
+                <button type="button" @click="demoGuideStep = 4"
+                        :class="demoGuideStep === 4 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>4. দেনা-পাওনা</span>
+                </button>
+                <button type="button" @click="demoGuideStep = 5"
+                        :class="demoGuideStep === 5 ? 'bg-cyan-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[62px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>5. অফলাইন</span>
+                </button>
+                <button type="button" @click="demoGuideStep = 6"
+                        :class="demoGuideStep === 6 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[56px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>6. লগআউট</span>
+                </button>
+            </div>
+
+            <!-- Step Content Body (Scrollable) -->
+            <div class="p-5 flex-1 overflow-y-auto text-slate-700 dark:text-slate-200 text-xs leading-relaxed space-y-4 overscroll-contain">
+                
+                <!-- STEP 1: Calculation & Data Location -->
+                <div x-show="demoGuideStep === 1" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl font-bold">
+                        💰
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '১. কমন ফান্ড ও ফিন্যান্সিয়াল ব্যালেন্স কোথায় দেখা যাবে?' : '1. Common Fund & Live Financial Balance'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'ট্যুর ড্যাশবোর্ডের শীর্ষে সর্বদা বড় ফন্টে দেখা যায় আপনার ট্যুরের আসল নগদ অবশিষ্ট ফান্ড (Remaining Fund)।' : 'At the very top of the tour screen, you always see the live Remaining Fund in a prominent banner.'"></p>
+                    
+                    <div class="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-2">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block" x-text="lang === 'bn' ? 'স্বয়ংক্রিয় ফর্মুলা:' : 'Automatic Math Formula:'"></span>
+                        <div class="font-mono text-xs font-bold text-blue-700 dark:text-blue-300">
+                            মোট ফান্ড জমা (Credit) - মোট খরচ (Debit) = অবশিষ্ট নগদ ফান্ড
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 dark:border-slate-700 text-[11px] grid grid-cols-3 text-center gap-2">
+                            <div class="bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-xl border border-emerald-200/50">
+                                <span class="text-[10px] text-emerald-600 font-bold block">মোট জমা</span>
+                                <span class="font-mono font-bold text-emerald-800 dark:text-emerald-300">৳ ১০,৪০০</span>
+                            </div>
+                            <div class="bg-rose-50 dark:bg-rose-950/40 p-2 rounded-xl border border-rose-200/50">
+                                <span class="text-[10px] text-rose-600 font-bold block">মোট খরচ</span>
+                                <span class="font-mono font-bold text-rose-800 dark:text-rose-300">৳ ৯,৫৬০</span>
+                            </div>
+                            <div class="bg-blue-50 dark:bg-blue-950/40 p-2 rounded-xl border border-blue-200/50">
+                                <span class="text-[10px] text-blue-600 font-bold block">অবশিষ্ট ফান্ড</span>
+                                <span class="font-mono font-bold text-blue-800 dark:text-blue-300">৳ ৮৪০</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-slate-500" x-text="lang === 'bn' ? 'ক্যালকুলেটরের কোনো ঝামেলা ছাড়াই ৪ জন মেম্বারের যেকোনো নতুন জমা বা খরচ যুক্ত হওয়ামাত্রই এই ব্যালেন্স লাইভ হিসাব হয়ে যায়।' : 'Whenever any member adds a deposit or expense, this remaining fund balance updates automatically in real-time.'"></p>
+                </div>
+
+                <!-- STEP 2: Individual Cost Split & Selective Breakdown -->
+                <div x-show="demoGuideStep === 2" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl font-bold">
+                        🧾
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '২. খরচের একক হিসাব ও সিলেক্টিভ স্প্লিট (Individual Cost Split)' : '2. Individual Cost Split & Selective Tagging'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'ট্যুরে সব খরচ সবার সমান হয় না। TourMate-এ প্রতি খরচে আলাদাভাবে সিলেক্ট করা যায় এটি কাদের জন্য খরচ হয়েছে।' : 'Not all expenses apply to everyone. TourMate lets you selectively choose who shares each expense.'"></p>
+
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">🏨 মেঘপুঞ্জি রিসোর্ট বুকিং (৳ ৩,৬০০)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">সবার মাঝে ভাগ (All 4)</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500">৪ জন সদস্যের (Alex, Kabir, Alomgir, Rafique) মাঝেই সমানভাবে ভাগ হয়ে প্রত্যেকের ভাগে পড়েছে <strong>৳ ৯০০.০০</strong>।</p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">🚶 কংলাক গাইড ফি (৳ ৪৫০)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">সিলেক্টিভ স্প্লিট (৩ জন)</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300">এটি শুধু <strong>Alex</strong>, <strong>Alomgir</strong> ও <strong>Rafique</strong> ট্র্যাকিং করেছে। তাই তাদের ৩ জনের ভাগে <strong>৳ ১৫০.০০</strong> করে পড়েছে। কবির ভাইয়ের থেকে কোনো টাকা কাটা হয়নি!</p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/50">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">☕ চা ও পাহাড়ি পেঁপে (৳ ১৬০)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">সিলেক্টিভ স্প্লিট (২ জন)</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300">এটি শুধু <strong>Alex</strong> ও <strong>Alomgir</strong> খেয়েছে। তাই দুজনের ভাগে <strong>৳ ৮০.০০</strong> করে পড়েছে। বাকিদের হিসাব সম্পূর্ণ আলাদা রাখা হয়েছে!</p>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-[11px] text-blue-700 dark:text-blue-300">
+                        💡 <strong>টিপস:</strong> "খরচের তালিকা" এ যেকোনো খরচের উপর ট্যাপ করলে পুরো বিবরণ, কে পরিশোধ করেছে এবং কার ভাগে কত পড়েছে তা দেখা যায়।
+                    </div>
+                </div>
+
+                <!-- STEP 3: Member Invitation & Permissions -->
+                <div x-show="demoGuideStep === 3" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl font-bold">
+                        👥
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '৩. মেম্বার ইনভাইটেশন ও ৩টি পারমিশন রোল' : '3. Member Invitation & Permission Roles'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'সদস্যদের সহজে গ্রুপে ইনভাইট করতে এবং কাকে কী অনুমতি দিবেন তা নিয়ন্ত্রণ করতে পারবেন।' : 'Invite members via WhatsApp/Messenger and control their access levels.'"></p>
+
+                    <div class="space-y-2">
+                        <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
+                            <span class="text-base">👑</span>
+                            <div>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Owner (ট্যুর অ্যাডমিন) — Alex Rivers</strong>
+                                <span class="text-[11px] text-slate-500">ট্যুরের প্রধান নির্মাতা। সব কিছু নিয়ন্ত্রণ, মেম্বার ম্যানেজমেন্ট ও হিসাব পরিচালনা করতে পারে।</span>
+                            </div>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
+                            <span class="text-base">✏️</span>
+                            <div>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Editor (খরচ/জমা ইনপুটকারী) — Kabir, Alomgir, Rafique</strong>
+                                <span class="text-[11px] text-slate-500">ট্যুরের সহযোগী ম্যানেজার। নতুন খরচ বা জমা এন্ট্রি করতে পারে।</span>
+                            </div>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
+                            <span class="text-base">👁️</span>
+                            <div>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Viewer (ভিউ-অনলি সদস্য)</strong>
+                                <span class="text-[11px] text-slate-500">সাধারণ মেম্বার। হিসাব এডিট করতে পারবে না, কেবল স্বচ্ছভাবে লাইভ হিসাব দেখতে পাবে।</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300">
+                        📲 <strong>ইনভাইট করার নিয়ম:</strong> "সদস্য (Members)" ট্যাবে গিয়ে যেকোনো মেম্বারের নামের পাশে <strong>"ইনভাইট শেয়ার"</strong> চাপলেই হোয়াটসঅ্যাপ বা মেসেঞ্জারে লিংক পাঠানো যায়।
+                    </div>
+                </div>
+
+                <!-- STEP 4: Settlement - Who Gets Refund vs Who Pays -->
+                <div x-show="demoGuideStep === 4" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl font-bold">
+                        ⚖️
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '৪. কে কত পাবে বা দিবে (Final Settlement)' : '4. Final Settlement (Who Gets Refund vs Who Pays)'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'নিচে \'হিসাব-নিকাশ (Settlement)\' ট্যাবে ক্লিক করলেই পুরো ট্যুরের চূড়ান্ত দেনা-পাওনা স্বচ্ছভাবে পেয়ে যাবেন।' : 'Click the \'Settlement\' tab below to see the complete transparent refund vs due balancing.'"></p>
+
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-emerald-800 dark:text-emerald-300 text-xs">🟢 Refundable (টাকা ফেরত পাবেন)</span>
+                                <span class="text-[10px] font-bold text-emerald-700">ফান্ড থেকে ফেরত</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                                যিনি খরচের চেয়ে বেশি জমা দিয়েছেন:<br>
+                                • <strong>Alex Rivers:</strong> জমা ৳৩,২০০ - খরচ ৳২,৫২০ = <strong>+৳ ৬৮০.০০ পাবে</strong><br>
+                                • <strong>Kabir Bhai:</strong> জমা ৳২,৮০০ - খরচ ৳২,২৯০ = <strong>+৳ ৫১০.০০ পাবে</strong><br>
+                                • <strong>Alomgir Hossain:</strong> জমা ৳২,৪০০ - খরচ ৳২,২৫০ = <strong>+৳ ১৫০.০০ পাবে</strong>
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-rose-800 dark:text-rose-300 text-xs">🔴 Payable (টাকা পরিশোধ করবেন)</span>
+                                <span class="text-[10px] font-bold text-rose-700">বকেয়া জমা দিতে হবে</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                                যিনি খরচের চেয়ে কম জমা দিয়েছেন:<br>
+                                • <strong>Rafique Babu:</strong> জমা ৳২,০০০ - খরচ ৳২,৫০০ = <strong>-৳ ৫০০.০০ দিতে হবে</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-2xl border border-blue-200 dark:border-blue-800 text-[11px] space-y-1">
+                        <span class="font-bold text-blue-900 dark:text-blue-200 block">✨ শতভাগ নির্ভুল সমীকরণ (Zero Discrepancy):</span>
+                        <p class="text-slate-600 dark:text-slate-300">
+                            কমন ফান্ডের অবশিষ্ট নগদ টাকা (<strong>৳ ৮৪০</strong>) + রফিক বাবুর বকেয়া (<strong>৳ ৫০০</strong>) = মোট <strong>৳ ১,৩৪০</strong>।<br>
+                            এই ৳ ১,৩৪০ টাকা দিয়েই ৩ জন সদস্যের সমুদয় পাওনা (Alex ৳৬৮০ + Kabir ৳৫১০ + Alomgir ৳১৫০ = ৳১,৩৪০) পাই টু পাই পরিশোধ হয়ে হিসাব শূন্য হয়ে যাবে!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- STEP 5: Offline Usage Instructions -->
+                <div x-show="demoGuideStep === 5" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-2xl font-bold">
+                        📶
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '৫. অফলাইন ব্যবহার নির্দেশিকা (পাহাড়েও সচল হিসাব)' : '5. Offline Usage Instructions (Works in Remote Hills)'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'পাহাড় বা দুর্গম ট্র্যাকিং ট্রেইলে যেখানে কোনো মোবাইল নেটওয়ার্ক বা ইন্টারনেট থাকে না, সেখানেও ট্যুরমেটের হিসাব নিরবচ্ছিন্নভাবে দেখা যাবে।' : 'TourMate calculations and statements remain fully accessible even in remote hills without internet.'"></p>
+
+                    <div class="space-y-2.5">
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center text-[10px]">১</span>
+                                <span>কোন পেজ লোড থাকতে হবে?</span>
+                            </span>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 pl-6.5">
+                                ট্যুর শুরুর আগে বা যেখানে ওয়াইফাই/ইন্টারনেট রয়েছে (যেমন: হোটেল বা বাসা), সেখানে আপনার নির্দিষ্ট ট্যুরের <strong>ট্যুর ড্যাশবোর্ড (Tour Dashboard)</strong> পেজটি ফোনের ব্রাউজারে একবার ওপেন করে রাখুন।
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center text-[10px]">২</span>
+                                <span>কী হবে ও কীভাবে কাজ করবে?</span>
+                            </span>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 pl-6.5">
+                                পেজটি একবার লোড হওয়ার পর সমস্ত হিসাব, খরচ, জমা ও সদস্যদের দেনা-পাওনা স্বয়ংক্রিয়ভাবে ব্রাউজারের মেমরিতে সংরক্ষিত থাকে। পাহাড়ে ইন্টারনেট বন্ধ হয়ে গেলেও পেজটি বন্ধ বা ক্র্যাশ হবে না!
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center text-[10px]">৩</span>
+                                <span>পাহাড়ে ব্যবহারের নিয়ম</span>
+                            </span>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 pl-6.5">
+                                কংলাক পাহাড় বা পাহাড়ি ট্রেইলে নেট না থাকলে শুধু ব্রাউজার খুলে ট্যুরমেটের ট্যাবটিতে ট্যাপ করলেই পুরো ব্যালান্স শিট, খরচের তালিকা ও মেম্বার লেজার সরাসরি চোখের সামনে দেখতে পাবেন।
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 bg-cyan-50 dark:bg-cyan-950/40 rounded-xl text-[11px] text-cyan-800 dark:text-cyan-300 flex items-center gap-2">
+                        <span>⚡</span>
+                        <span><strong>টিপস:</strong> অফলাইনে হিসাব দেখার জন্য ব্রাউজারের ট্যাবটি রিফ্রেশ বা বন্ধ না করে খোলা রাখুন।</span>
+                    </div>
+                </div>
+
+                <!-- STEP 6: Logout & Start Real Tour -->
+                <div x-show="demoGuideStep === 6" class="space-y-4 animate-fadeIn text-center py-2">
+                    <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-3xl font-bold mx-auto shadow-xl shadow-blue-500/25">
+                        🚀
+                    </div>
+                    <div>
+                        <h4 class="text-base font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? 'ডেমো দেখা শেষ? নিজের ট্যুর শুরু করুন!' : 'Ready to Start Your Own Tour?'"></h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" x-text="lang === 'bn' ? 'ডেমো অ্যাকাউন্ট কেবল হিসাব দেখার ও নির্দেশিকা বোঝার জন্য। এখন নিজের বন্ধুদের নিয়ে আসল ট্যুর খুলতে ডেমো থেকে লগআউট করুন।' : 'Demo is for preview only. Log out from demo and sign in with Google to create your real group tour!'"></p>
+                    </div>
+
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-left space-y-1.5 text-[11px]">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">১</span>
+                            <span>নিচের <strong>"ডেমো থেকে লগআউট করুন"</strong> বাটনে ক্লিক করুন।</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">২</span>
+                            <span>লগইন পেজে <strong>"Google দিয়ে প্রবেশ করুন"</strong> চাপুন।</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">৩</span>
+                            <span><strong>"+ নতুন ট্যুর"</strong> যোগ করে বন্ধুদের ইনভাইট লিংক পাঠিয়ে হিসাব শুরু করুন!</span>
+                        </div>
+                    </div>
+
+                    <button type="button" @click="logout()"
+                            class="w-full py-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold rounded-2xl text-xs active:scale-95 transition-all shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2">
+                        <span>🚪</span>
+                        <span x-text="lang === 'bn' ? 'ডেমো থেকে লগআউট করুন' : 'Log Out from Demo'"></span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer Controls -->
+            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between flex-shrink-0">
+                <button type="button"
+                        @click="demoGuideStep = Math.max(1, demoGuideStep - 1)"
+                        :disabled="demoGuideStep === 1"
+                        class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 disabled:opacity-40 active:scale-95 transition-all">
+                    ← পূর্ববর্তী
+                </button>
+
+                <div class="text-[11px] font-bold text-slate-400">
+                    <span x-text="demoGuideStep"></span> / 6
+                </div>
+
+                <template x-if="demoGuideStep < 6">
+                    <button type="button"
+                            @click="demoGuideStep = Math.min(6, demoGuideStep + 1)"
+                            class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white active:scale-95 transition-all shadow-sm">
+                        পরবর্তী →
+                    </button>
+                </template>
+                <template x-if="demoGuideStep === 6">
+                    <button type="button"
+                            @click="showDemoGuideModal = false"
+                            class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-all">
+                        বন্ধ করুন
+                    </button>
+                </template>
+            </div>
+
         </div>
     </div>
 
@@ -733,6 +1057,8 @@ function dashboardPage() {
         settingsView: 'main',
         showEditTourModal: false,
         showDemoLockModal: false,
+        showDemoGuideModal: false,
+        demoGuideStep: 1,
 
         get isDemoUser() {
             const user = TourMateAPI.getUser();
