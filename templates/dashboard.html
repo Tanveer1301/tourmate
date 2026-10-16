@@ -874,8 +874,28 @@
                         </div>
                     </div>
 
+                    <!-- Email Invitation Rule -->
+                    <div class="p-3 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/50 space-y-1.5">
+                        <div class="flex items-center gap-1.5 font-bold text-blue-900 dark:text-blue-200 text-xs">
+                            <span>📧</span>
+                            <span x-text="lang === 'bn' ? 'ভ্যালিড ইমেইল দিয়ে ইনভাইট ও অটো কানেক্ট:' : 'Invite with Valid Email & Auto Connect:'"></span>
+                        </div>
+                        <p class="text-[11px] text-blue-800/90 dark:text-blue-300 leading-relaxed"
+                           x-text="lang === 'bn' ? 'মেম্বার যুক্ত করার সময় তার সঠিক/ভ্যালিড ইমেইল (যেমন Gmail) দিলে তাকে জয়েন লিংক শেয়ার করতে পারবেন। এছাড়া ওই মেম্বার TourMate-এ এসে নিজের সেই ইমেইল দিয়ে লগইন করলেই স্বয়ংক্রিয়ভাবে তার ড্যাশবোর্ডে ট্যুরটি যুক্ত হয়ে যাবে এবং সরাসরি হিসাব দেখতে পাবে।' : 'When adding a member with their valid email (e.g. Gmail), you can share the invite link with them. Also, whenever that member logs into TourMate with that same email, this tour will automatically appear on their dashboard.'"></p>
+                    </div>
+
+                    <!-- Without Email Normal Calculation -->
+                    <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <div class="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200 text-xs">
+                            <span>📝</span>
+                            <span x-text="lang === 'bn' ? 'ইমেইল ছাড়া স্বাভাবিক হিসাব:' : 'Normal Calculation Without Email:'"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed"
+                           x-text="lang === 'bn' ? 'ইমেইল দেওয়া বাধ্যতামূলক নয়। ইমেইল ছাড়াই শুধু নাম দিয়ে মেম্বার যোগ করে ট্যুর ম্যানেজার স্বাভাবিকভাবে টাকা জমা, খরচ ও দেনা-পাওনার পুরো হিসাব নিজের মতো পরিচালনা করতে পারবেন।' : 'Email is not mandatory. You can add members with just their names, and the tour manager can manage all deposits, expenses, and settlements normally.'"></p>
+                    </div>
+
                     <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300">
-                        📲 <strong>ইনভাইট করার নিয়ম:</strong> "সদস্য (Members)" ট্যাবে গিয়ে যেকোনো মেম্বারের নামের পাশে <strong>"ইনভাইট শেয়ার"</strong> চাপলেই হোয়াটসঅ্যাপ বা মেসেঞ্জারে লিংক পাঠানো যায়।
+                        📲 <strong>ইনভাইট লিংক শেয়ার:</strong> মেম্বারের উপর ট্যাপ করে ড্রয়ার থেকে <strong>"এই মেম্বারকে ইনভাইটেশন লিংক পাঠান"</strong> বাটনে ক্লিক করে যেকোনো সময় হোয়াটসঅ্যাপ বা মেসেঞ্জারে লিংক পাঠাতে পারবেন।
                     </div>
                 </div>
 
