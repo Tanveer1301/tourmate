@@ -53,26 +53,14 @@ def require_tour_access(
                         "role": TourMember.Role.OWNER,
                     },
                 )
-            elif tour.created_by and tour.created_by.email == "alex@tourmate.test":
-                # Demo Showcase Tour: Read-only access for any authenticated visitor
+            elif (tour.created_by and tour.created_by.email == "alex@tourmate.test") or str(tour.id) == "6c718b10-c0e7-4ca7-9c71-66b320f94a8d":
+                # Demo Showcase Tour ONLY: In-memory read-only viewer without database persistence
                 membership = TourMember(
                     tour=tour,
                     user=user,
-                    name=user.full_name or (user.email.split('@')[0] if user.email else "Guest"),
-                    email=user.email,
+                    name=getattr(user, "full_name", "") or "Guest",
+                    email=getattr(user, "email", ""),
                     role=TourMember.Role.VIEWER,
-                )
-            elif min_role == TourMember.Role.VIEWER:
-                # Direct tour invite link: join as VIEWER automatically!
-                display_name = user.full_name or (user.email.split('@')[0] if user.email else "Member")
-                membership, _ = TourMember.objects.get_or_create(
-                    tour=tour,
-                    user=user,
-                    defaults={
-                        "name": display_name,
-                        "email": user.email,
-                        "role": TourMember.Role.VIEWER,
-                    },
                 )
             else:
                 raise HttpError(403, "You do not have access to this tour.")

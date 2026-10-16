@@ -131,6 +131,11 @@
                                 <p class="text-[11px] text-slate-400 mt-0.5" x-text="formatDate(tour.created_at)"></p>
                             </div>
                             <div class="flex items-center gap-1.5">
+                                <template x-if="tour.is_archived">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200/80">
+                                        🔒 <span x-text="lang === 'bn' ? 'আর্কাইভড' : 'Archived'"></span>
+                                    </span>
+                                </template>
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
                                     <span x-text="lang === 'bn' ? `${tour.members_count} জন` : `${tour.members_count} members`"></span>
                                 </span>
@@ -164,6 +169,14 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                             </svg>
                                             <span x-text="lang === 'bn' ? 'ট্যুর এডিট করুন' : 'Edit Tour Details'"></span>
+                                        </button>
+                                        <!-- Archive / Unarchive Tour -->
+                                        <button @click.stop="openMenu = false; toggleArchiveTour(tour)"
+                                                class="w-full px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition-colors">
+                                            <svg class="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                            </svg>
+                                            <span x-text="tour.is_archived ? (lang === 'bn' ? 'আন-আর্কাইভ করুন' : 'Unarchive Tour') : (lang === 'bn' ? 'ট্যুর আর্কাইভ করুন' : 'Archive Tour')"></span>
                                         </button>
                                         <div class="my-1 border-t border-slate-100"></div>
                                         <!-- Delete Tour -->
@@ -501,21 +514,6 @@
                             </svg>
                         </button>
 
-                        <!-- Clickable Item: Super Admin Panel Link -->
-                        <a href="/admin/"
-                           target="_blank"
-                           class="w-full p-3 bg-slate-50 hover:bg-purple-50/60 dark:bg-slate-800/70 dark:hover:bg-purple-900/30 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between transition-all group active:scale-[0.99]">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-base">
-                                    🛡️
-                                </div>
-                                <div class="text-left">
-                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" x-text="lang === 'bn' ? 'সাইট অ্যাডমিন প্যানেল (/admin/)' : 'Django Site Admin Panel (/admin/)'"></h4>
-                                    <p class="text-[10px] text-slate-400" x-text="lang === 'bn' ? 'মাস্টার ডাটাবেজ কন্ট্রোল (Staff / Superuser)' : 'Database control panel (Staff / Superuser)'"></p>
-                                </div>
-                            </div>
-                            <span class="text-purple-400 font-bold">↗</span>
-                        </a>
 
                         <!-- Clickable Item: Logout -->
                         <button type="button"
@@ -1011,6 +1009,22 @@ function dashboardPage() {
                 }, 300);
             } catch (err) {
                 this.saving = false;
+            }
+        },
+
+        async toggleArchiveTour(tour) {
+            if (this.isDemoUser) {
+                this.showDemoLockModal = true;
+                return;
+            }
+            try {
+                const res = await TourMateAPI.toggleArchiveTour(tour.id);
+                tour.is_archived = res.is_archived;
+                window.showToast(this.lang === 'bn' 
+                    ? (tour.is_archived ? '🔒 ট্যুর সফলভাবে আর্কাইভ ও লক করা হয়েছে' : 'ট্যুর আনআর্কাইভ করা হয়েছে') 
+                    : (tour.is_archived ? '🔒 Tour archived and locked' : 'Tour unarchived successfully'), 'success');
+            } catch(err) {
+                window.showToast(err.message || 'Error updating tour', 'error');
             }
         },
 

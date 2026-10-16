@@ -44,14 +44,24 @@ def list_tours(request):
     if user.email:
         TourMember.objects.filter(email__iexact=user.email, user__isnull=True).update(user=user)
 
-    tours = list(
-        Tour.objects.filter(
-            Q(members__user=user) | Q(members__email__iexact=user.email) | Q(created_by=user)
+    # Demo user (Alex) must ONLY ever see the demo showcase tour
+    if user.email == "alex@tourmate.test":
+        tours = list(
+            Tour.objects.filter(id="6c718b10-c0e7-4ca7-9c71-66b320f94a8d")
+            .annotate(members_count_annotated=Count("members", distinct=True))
+            .order_by("-created_at")
         )
-        .distinct()
-        .annotate(members_count_annotated=Count("members", distinct=True))
-        .order_by("-created_at")
-    )
+    else:
+        # Real users only see tours they created or are an explicit member of
+        tours = list(
+            Tour.objects.filter(
+                Q(members__user=user) | Q(members__email__iexact=user.email) | Q(created_by=user)
+            )
+            .exclude(id="6c718b10-c0e7-4ca7-9c71-66b320f94a8d")
+            .distinct()
+            .annotate(members_count_annotated=Count("members", distinct=True))
+            .order_by("-created_at")
+        )
 
     if not tours:
         return []

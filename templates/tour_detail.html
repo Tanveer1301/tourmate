@@ -1420,21 +1420,6 @@
                             </svg>
                         </button>
 
-                        <!-- Clickable Item: Super Admin Panel Link -->
-                        <a href="/admin/"
-                           target="_blank"
-                           class="w-full p-3 bg-slate-50 hover:bg-purple-50/60 dark:bg-slate-800/70 dark:hover:bg-purple-900/30 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 flex items-center justify-between transition-all group active:scale-[0.99]">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-base">
-                                    🛡️
-                                </div>
-                                <div class="text-left">
-                                    <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" x-text="lang === 'bn' ? 'সাইট অ্যাডমিন প্যানেল (/admin/)' : 'Django Site Admin Panel (/admin/)'"></h4>
-                                    <p class="text-[10px] text-slate-400" x-text="lang === 'bn' ? 'মাস্টার ডাটাবেজ কন্ট্রোল (Staff / Superuser)' : 'Database control panel (Staff / Superuser)'"></p>
-                                </div>
-                            </div>
-                            <span class="text-purple-400 font-bold">↗</span>
-                        </a>
 
                         <!-- Clickable Item: Logout -->
                         <button type="button"
@@ -2369,7 +2354,6 @@ function tourDetailPage(tourId) {
         },
 
         openShareModal() {
-            if (this.checkDemoLock()) return;
             this.showShareModal = true;
         },
 
@@ -2969,7 +2953,6 @@ function tourDetailPage(tourId) {
         },
 
         openDepositModalFromDrawer() {
-            if (this.checkDemoLock()) return;
             if (this.tour.is_archived) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে (হিসাব লক)' : 'Tour is archived (Calculations locked)', 'error');
                 return;
@@ -2978,7 +2961,6 @@ function tourDetailPage(tourId) {
         },
 
         openEditMemberFromDrawer() {
-            if (this.checkDemoLock()) return;
             this.openEditMemberModal(this.selectedMemberDetail.member);
         },
 
@@ -3009,7 +2991,6 @@ function tourDetailPage(tourId) {
         },
 
         editExpenseFromDrawer() {
-            if (this.checkDemoLock()) return;
             if (this.tour.is_archived) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে (হিসাব লক)' : 'Tour is archived (Calculations locked)', 'error');
                 return;
@@ -3084,7 +3065,6 @@ function tourDetailPage(tourId) {
 
         // --- Deposit Actions ---
         openDepositModal(member) {
-            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে টাকা জমা যোগ করার অনুমতি নেই' : 'Viewer role has read-only access', 'error');
                 return;
@@ -3099,7 +3079,6 @@ function tourDetailPage(tourId) {
         },
 
         openEditDepositModal(dep, member) {
-            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে জমা পরিবর্তন করার অনুমতি নেই' : 'Viewer role has read-only access', 'error');
                 return;
@@ -3230,7 +3209,6 @@ function tourDetailPage(tourId) {
 
         // --- Expense Actions ---
         openExpenseModal() {
-            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে খরচ যোগ করার অনুমতি নেই' : 'Viewer role has read-only access', 'error');
                 return;
@@ -3257,7 +3235,6 @@ function tourDetailPage(tourId) {
         },
 
         openEditExpenseModal(exp) {
-            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে খরচ পরিবর্তন করার অনুমতি নেই' : 'Viewer role has read-only access', 'error');
                 return;
@@ -3450,7 +3427,6 @@ function tourDetailPage(tourId) {
 
         // --- Tour & Budget & Archive Actions ---
         openEditTourModal() {
-            if (this.checkDemoLock()) return;
             this.editTourForm = {
                 title: this.tour.title,
                 description: this.tour.description || '',
@@ -3520,7 +3496,6 @@ function tourDetailPage(tourId) {
 
         // --- Member Edit & Delete Actions ---
         openEditMemberModal(member) {
-            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে মেম্বার তথ্য পরিবর্তনের অনুমতি নেই' : 'Viewer role cannot edit members', 'error');
                 return;
