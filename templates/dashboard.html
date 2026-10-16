@@ -721,13 +721,17 @@ function dashboardPage() {
     return {
         loading: true,
         saving: false,
-        lang: localStorage.getItem('tourmate_lang') || 'en',
+        lang: (function() {
+            try { return localStorage.getItem('tourmate_lang') || 'en'; } catch(e) { return 'en'; }
+        })(),
         tours: [],
         userName: 'User',
         userInitials: 'TM',
         showCreateModal: false,
         showSettingsModal: false,
-        theme: localStorage.getItem('tourmate_theme') || 'light',
+        theme: (function() {
+            try { return localStorage.getItem('tourmate_theme') || 'light'; } catch(e) { return 'light'; }
+        })(),
         settingsView: 'main',
         showEditTourModal: false,
         showDemoLockModal: false,

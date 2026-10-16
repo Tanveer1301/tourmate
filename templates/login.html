@@ -108,7 +108,9 @@
 function loginPage() {
     return {
         loading: false,
-        lang: localStorage.getItem('tourmate_lang') || 'en',
+        lang: (function() {
+            try { return localStorage.getItem('tourmate_lang') || 'en'; } catch(e) { return 'en'; }
+        })(),
         googleClientId: "{{ google_client_id|default:'' }}",
 
         getNextUrl() {

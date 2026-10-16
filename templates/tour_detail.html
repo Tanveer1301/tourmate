@@ -2254,11 +2254,15 @@
 function tourDetailPage(tourId) {
     return {
         tourId: tourId,
-        lang: localStorage.getItem('tourmate_lang') || 'en',
+        lang: (function() {
+            try { return localStorage.getItem('tourmate_lang') || 'en'; } catch(e) { return 'en'; }
+        })(),
         showSettingsModal: false,
         settingsView: 'main',
         showFinalReportModal: false,
-        theme: localStorage.getItem('tourmate_theme') || 'light',
+        theme: (function() {
+            try { return localStorage.getItem('tourmate_theme') || 'light'; } catch(e) { return 'light'; }
+        })(),
         profileForm: {
             first_name: '',
             last_name: '',

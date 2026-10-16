@@ -136,7 +136,13 @@
         <!-- Top-Right Discreet Offline / Sync Status Indicator (Below Navbar) -->
         <div x-data="{
                 isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-                pendingCount: (JSON.parse(localStorage.getItem('tourmate_offline_queue') || '[]')).length,
+                pendingCount: (function() {
+                    try {
+                        return (JSON.parse(localStorage.getItem('tourmate_offline_queue') || '[]')).length;
+                    } catch(e) {
+                        return 0;
+                    }
+                })(),
                 isSyncing: false,
                 update(detail) {
                     this.isOnline = detail.isOnline;

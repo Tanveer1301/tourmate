@@ -35,16 +35,31 @@ const TourMateAPI = {
     },
 
     getToken() {
-        const token = this._getItem(this.TOKEN_KEY);
+        let token = this._getItem(this.TOKEN_KEY);
         if (!token || token === 'undefined' || token === 'null' || token === '') {
-            return null;
+            try {
+                const match = document.cookie.match(new RegExp('(^| )tourmate_token=([^;]+)'));
+                if (match && match[2]) {
+                    token = decodeURIComponent(match[2]);
+                    this._setItem(this.TOKEN_KEY, token);
+                }
+            } catch (e) {}
         }
-        return token;
+        return (token && token !== 'undefined' && token !== 'null') ? token : null;
     },
 
     getUser() {
         try {
-            const raw = this._getItem(this.USER_KEY);
+            let raw = this._getItem(this.USER_KEY);
+            if (!raw) {
+                try {
+                    const match = document.cookie.match(new RegExp('(^| )tourmate_user=([^;]+)'));
+                    if (match && match[2]) {
+                        raw = decodeURIComponent(match[2]);
+                        this._setItem(this.USER_KEY, raw);
+                    }
+                } catch (e) {}
+            }
             return raw ? JSON.parse(raw) : null;
         } catch (e) {
             return null;
@@ -54,15 +69,25 @@ const TourMateAPI = {
     setAuth(token, user) {
         if (token) {
             this._setItem(this.TOKEN_KEY, token);
+            try {
+                document.cookie = `tourmate_token=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax`;
+            } catch (e) {}
         }
         if (user) {
             this._setItem(this.USER_KEY, JSON.stringify(user));
+            try {
+                document.cookie = `tourmate_user=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`;
+            } catch (e) {}
         }
     },
 
     clearAuth() {
         this._removeItem(this.TOKEN_KEY);
         this._removeItem(this.USER_KEY);
+        try {
+            document.cookie = 'tourmate_token=; path=/; max-age=0; SameSite=Lax';
+            document.cookie = 'tourmate_user=; path=/; max-age=0; SameSite=Lax';
+        } catch (e) {}
     },
 
     isAuthenticated() {

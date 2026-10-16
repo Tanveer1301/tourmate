@@ -241,6 +241,8 @@ def get_tour_dashboard(request, tour_id: UUID):
 
     if not tour or not membership:
         tour, membership = require_tour_access(user, tour_id, min_role=TourMember.Role.VIEWER)
+        if getattr(membership, "id", None) and not any(m.id == membership.id for m in members_qs):
+            members_qs.append(membership)
 
     # 2. Fetch all deposits in a single query
     all_deposits = list(Deposit.objects.filter(tour_id=tour_id).order_by("created_at"))

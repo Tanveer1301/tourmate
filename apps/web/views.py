@@ -163,10 +163,12 @@ def google_oauth_callback(request):
             const raw = document.getElementById('auth-data').textContent;
             const data = JSON.parse(raw);
             if (data.token) {{
-                localStorage.setItem('tourmate_token', data.token);
+                try {{ localStorage.setItem('tourmate_token', data.token); }} catch(e) {{}}
+                document.cookie = 'tourmate_token=' + encodeURIComponent(data.token) + '; path=/; max-age=604800; SameSite=Lax';
             }}
             if (data.user) {{
-                localStorage.setItem('tourmate_user', JSON.stringify(data.user));
+                try {{ localStorage.setItem('tourmate_user', JSON.stringify(data.user)); }} catch(e) {{}}
+                document.cookie = 'tourmate_user=' + encodeURIComponent(JSON.stringify(data.user)) + '; path=/; max-age=604800; SameSite=Lax';
             }}
             window.location.replace(data.next || '/tours');
         }} catch(e) {{
