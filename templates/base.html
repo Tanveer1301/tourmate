@@ -84,6 +84,37 @@
         .pt-safe {
             padding-top: max(0.75rem, env(safe-area-inset-top));
         }
+
+        /* High-contrast, crystal-clear inputs for Light & Dark mode */
+        input, textarea, select {
+            color: #0f172a;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8;
+        }
+        .dark input:not([type="checkbox"]):not([type="radio"]),
+        .dark textarea,
+        .dark select {
+            color: #f8fafc !important;
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        .dark input::placeholder,
+        .dark textarea::placeholder {
+            color: #94a3b8 !important;
+        }
+        .dark input:disabled,
+        .dark textarea:disabled,
+        .dark select:disabled {
+            background-color: #0f172a !important;
+            color: #64748b !important;
+            border-color: #1e293b !important;
+        }
+        .dark input:focus,
+        .dark textarea:focus,
+        .dark select:focus {
+            border-color: #3b82f6 !important;
+        }
     </style>
 </head>
 <body class="w-full bg-slate-100 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-100 antialiased min-h-full flex justify-center selection:bg-blue-100 transition-colors duration-200">

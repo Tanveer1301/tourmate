@@ -3,6 +3,7 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from apps.accounts.security import (
+    JWTAuth,
     generate_access_token,
     provision_google_user,
     verify_google_id_token,
@@ -11,6 +12,7 @@ from apps.tours.schemas import AuthTokenOut, ErrorOut, GoogleAuthIn, ProfileUpda
 
 User = get_user_model()
 router = Router(tags=["Authentication"])
+
 
 
 @router.post(
@@ -70,6 +72,7 @@ def demo_login(request):
 @router.put(
     "/profile",
     response={200: UserOut, 400: ErrorOut},
+    auth=JWTAuth(),
     summary="Update authenticated user profile",
 )
 def update_profile(request, payload: ProfileUpdateIn):
@@ -78,14 +81,25 @@ def update_profile(request, payload: ProfileUpdateIn):
         raise HttpError(401, "Authentication required.")
 
     updates = []
-    if payload.first_name is not None:
-        user.first_name = payload.first_name.strip()
-        updates.append("first_name")
-    if payload.last_name is not None:
-        user.last_name = payload.last_name.strip()
-        updates.append("last_name")
+    if payload.name is not None:
+        clean_name = payload.name.strip()
+        if clean_name:
+            parts = clean_name.split(maxsplit=1)
+            user.first_name = parts[0]
+            user.last_name = parts[1] if len(parts) > 1 else ""
+        else:
+            user.first_name = ""
+            user.last_name = ""
+        updates.extend(["first_name", "last_name"])
+    else:
+        if payload.first_name is not None:
+            user.first_name = payload.first_name.strip()
+            updates.append("first_name")
+        if payload.last_name is not None:
+            user.last_name = payload.last_name.strip()
+            updates.append("last_name")
 
     if updates:
-        user.save(update_fields=updates)
+        user.save(update_fields=list(set(updates)))
 
     return 200, user

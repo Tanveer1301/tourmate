@@ -207,7 +207,7 @@ const TourMateAPI = {
             method: 'PUT',
             body: JSON.stringify(payload)
         });
-        localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+        this.setAuth(null, user);
         return user;
     },
 
