@@ -730,6 +730,20 @@ function dashboardPage() {
             window.addEventListener('tourmate-synced-refresh', () => {
                 this.loadTours();
             });
+
+            // Silent Smart Sync: Updates tour cards on focus or gentle 15s interval
+            const silentToursSync = () => {
+                if (!document.hidden && navigator.onLine) {
+                    this.loadTours();
+                }
+            };
+            setInterval(silentToursSync, 15000);
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) silentToursSync();
+            });
+            window.addEventListener('focus', () => {
+                silentToursSync();
+            });
         },
 
         openSettingsModal(tab = 'main') {

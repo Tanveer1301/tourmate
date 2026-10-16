@@ -2085,6 +2085,29 @@ function tourDetailPage(tourId) {
                 this.loadActivity();
                 if (this.activeTab === 'settlement') this.loadSettlement();
             });
+
+            // Silent Smart Live Sync: No buttons needed, 100% background, zero UI clutter
+            const silentLiveSync = async () => {
+                if (!document.hidden && navigator.onLine) {
+                    await this.loadDashboard();
+                    if (this.activeTab === 'activity') {
+                        this.loadActivity();
+                    } else if (this.activeTab === 'settlement' && !this.settlementLoading) {
+                        this.loadSettlement();
+                    }
+                }
+            };
+
+            // 1. Polite 10s interval ONLY while tab is open & visible on screen
+            setInterval(silentLiveSync, 10000);
+
+            // 2. Instant revalidation when switching back to tab or unlocking screen
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) silentLiveSync();
+            });
+            window.addEventListener('focus', () => {
+                silentLiveSync();
+            });
         },
 
         openSettingsModal(tab = 'main') {
