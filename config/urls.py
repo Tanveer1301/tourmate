@@ -18,4 +18,9 @@ urlpatterns = [
     path("tours/", views.dashboard_view, name="tours_slash"),
     path("tours/<uuid:tour_id>", views.tour_detail_view, name="tour_detail"),
     path("tours/<uuid:tour_id>/", views.tour_detail_view, name="tour_detail_slash"),
+    # Direct Google OAuth2 Redirect Flow
+    path("auth/google/login", views.google_oauth_login, name="google_oauth_login"),
+    path("auth/google/login/", views.google_oauth_login, name="google_oauth_login_slash"),
+    path("auth/google/callback", views.google_oauth_callback, name="google_oauth_callback"),
+    path("auth/google/callback/", views.google_oauth_callback, name="google_oauth_callback_slash"),
 ]

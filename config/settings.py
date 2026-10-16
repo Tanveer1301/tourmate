@@ -37,6 +37,11 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8008",
 ]
 
+# Allow popups from Google OAuth to postMessage back without being isolated by COOP
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 # Custom User Model
 AUTH_USER_MODEL = "accounts.User"
 
@@ -119,15 +124,10 @@ if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
 # ---------------------------------------------------------------------------
 # Authentication & Google OAuth2 / JWT Configuration
 # ---------------------------------------------------------------------------
-GOOGLE_CLIENT_ID = os.environ.get(
-    "GOOGLE_CLIENT_ID",
-    "your-google-oauth-client-id.apps.googleusercontent.com",
-)
-
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
 JWT_ALGORITHM = "HS256"
 JWT_EXP_DAYS = int(os.environ.get("JWT_EXP_DAYS", 7))
-
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
 # ---------------------------------------------------------------------------
