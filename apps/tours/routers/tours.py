@@ -92,6 +92,7 @@ def list_tours(request):
         results.append({
             "id": t.id,
             "title": t.title,
+            "description": t.description or "",
             "color_theme": t.color_theme,
             "budget_limit": t.budget_limit,
             "is_archived": t.is_archived,

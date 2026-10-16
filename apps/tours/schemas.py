@@ -153,6 +153,7 @@ class TourDetailOut(Schema):
 class TourListOut(Schema):
     id: UUID
     title: str
+    description: Optional[str] = ""
     color_theme: str
     budget_limit: Optional[Decimal] = None
     is_archived: bool

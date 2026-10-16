@@ -1240,22 +1240,22 @@
     </div>
 
     <!-- Modal 10: View Full Tour Description (Slide-up Drawer) -->
-    <div x-show="showDescriptionModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-end justify-center" x-cloak>
+    <div x-show="showDescriptionModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end justify-center" x-cloak>
         <div class="absolute inset-0" @click="showDescriptionModal = false"></div>
         <div class="relative z-10 w-full max-w-md bg-white rounded-t-4xl p-6 shadow-2xl border-t border-slate-200 pb-safe">
             <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
                 <div class="flex items-center gap-2">
                     <div>
-                        <h3 class="text-sm font-bold text-slate-900" x-text="lang === 'bn' ? 'ট্যুরের বিবরণ' : 'Tour Description'"></h3>
+                        <h3 class="text-sm font-bold text-slate-900" x-text="lang === 'bn' ? 'ট্যুরের বিবরণ ও পরিকল্পনা' : 'Tour Itinerary & Plan'"></h3>
                         <p class="text-[10px] text-slate-400" x-text="tour.title"></p>
                     </div>
                 </div>
-                <button @click="showDescriptionModal = false" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
+                <button @click="showDescriptionModal = false" class="p-1.5 rounded-full text-slate-400 hover:bg-slate-100 active:scale-95">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="max-h-60 overflow-y-auto no-scrollbar py-2">
+            <div class="max-h-[70vh] overflow-y-auto no-scrollbar py-2">
                 <p class="text-xs text-slate-700 leading-relaxed whitespace-pre-line" x-text="tour.description"></p>
             </div>
         </div>
