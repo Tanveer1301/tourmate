@@ -33,6 +33,30 @@
         </div>
     </header>
 
+    <!-- Demo Showcase Tour Guidance Banner -->
+    <template x-if="isDemoTour">
+        <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white px-4 py-2 flex items-center justify-between text-xs shadow-md border-b border-blue-500/30">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="text-base flex-shrink-0">💡</span>
+                <div class="truncate">
+                    <span class="font-bold block text-white text-[11px]" x-text="lang === 'bn' ? 'প্রদর্শনী ডেমো ট্যুর (লক করা)' : 'Showcase Demo Tour (Locked)'"></span>
+                    <span class="text-[10px] text-blue-100 block truncate" x-text="lang === 'bn' ? 'ক্যালকুলেশন ও সিস্টেম বুঝতে গাইডলাইনটি পড়ুন' : 'Read guide to understand calculation & features'"></span>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <button @click="showDemoGuideModal = true; demoGuideStep = 1"
+                        class="px-2.5 py-1 bg-white text-blue-700 rounded-xl font-bold text-[11px] hover:bg-blue-50 active:scale-95 transition-all shadow-xs flex items-center gap-1">
+                    <span>📖</span>
+                    <span x-text="lang === 'bn' ? 'গাইডলাইন' : 'Guide'"></span>
+                </button>
+                <button @click="logout()"
+                        class="px-2 py-1 bg-blue-500/40 hover:bg-rose-600 text-white rounded-xl font-bold text-[11px] active:scale-95 transition-all">
+                    <span x-text="lang === 'bn' ? 'লগআউট' : 'Logout'"></span>
+                </button>
+            </div>
+        </div>
+    </template>
+
     <!-- Tour Archived Warning Banner (Lock Status) -->
     <template x-if="tour.is_archived">
         <div class="bg-amber-500/15 border-b border-amber-500/25 px-4 py-2 flex items-center justify-between text-xs text-amber-900 animate-fadeIn">
@@ -143,7 +167,7 @@
              class="p-3.5 flex-1">
         <div class="flex items-center justify-between mb-3 px-1">
             <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider" x-text="lang === 'bn' ? 'মেম্বার তালিকা ও জমার ব্রেকডাউন' : 'Members & Deposit Breakdown'"></span>
-            <button @click="showShareModal = true" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
+            <button @click="openShareModal()" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
                 + <span x-text="lang === 'bn' ? 'নতুন মেম্বার' : 'Add Member'"></span>
             </button>
         </div>
@@ -1935,6 +1959,293 @@
         </div>
     </div>
 
+    <!-- Demo Tour Full Interactive Guideline Modal -->
+    <div x-show="showDemoGuideModal"
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
+         x-cloak>
+        <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-slideUp">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">📖</span>
+                    <div>
+                        <h3 class="text-sm font-bold text-white leading-tight" x-text="lang === 'bn' ? 'ট্যুরমেট সিস্টেম গাইডলাইন' : 'TourMate System Guideline'"></h3>
+                        <p class="text-[10px] text-blue-100" x-text="lang === 'bn' ? `ধাপ ${demoGuideStep} এর ৫ • কীভাবে হিসাব কাজ করে` : `Step ${demoGuideStep} of 5 • How calculation works`"></p>
+                    </div>
+                </div>
+                <button @click="showDemoGuideModal = false" class="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-xs font-bold">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Step Navigation Tabs / Dots -->
+            <div class="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 px-2 py-1.5 gap-1 overflow-x-auto no-scrollbar">
+                <button @click="demoGuideStep = 1"
+                        :class="demoGuideStep === 1 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>1. ব্যালেন্স</span>
+                </button>
+                <button @click="demoGuideStep = 2"
+                        :class="demoGuideStep === 2 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>2. খরচের ভাগ</span>
+                </button>
+                <button @click="demoGuideStep = 3"
+                        :class="demoGuideStep === 3 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>3. ইনভাইট</span>
+                </button>
+                <button @click="demoGuideStep = 4"
+                        :class="demoGuideStep === 4 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>4. দেনা-পাওনা</span>
+                </button>
+                <button @click="demoGuideStep = 5"
+                        :class="demoGuideStep === 5 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60'"
+                        class="flex-1 min-w-[64px] py-1.5 px-2 rounded-xl text-[10px] font-bold text-center transition-all flex items-center justify-center gap-1">
+                    <span>5. লগআউট</span>
+                </button>
+            </div>
+
+            <!-- Step Content Body (Scrollable) -->
+            <div class="p-5 flex-1 overflow-y-auto text-slate-700 dark:text-slate-200 text-xs leading-relaxed space-y-4">
+                
+                <!-- STEP 1: Calculation & Data Location -->
+                <div x-show="demoGuideStep === 1" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl font-bold">
+                        💰
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '১. কমন ফান্ড ও ফিন্যান্সিয়াল ব্যালেন্স কোথায় দেখা যাবে?' : '1. Common Fund & Live Financial Balance'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'স্ক্রিনের শীর্ষে নীল রঙের বড় ফন্টে সর্বদা দেখা যায় আপনার ট্যুরের আসল নগদ অবশিষ্ট ফান্ড (Remaining Fund)।' : 'At the very top of the screen, you always see the real live Remaining Fund in a prominent banner.'"></p>
+                    
+                    <div class="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-2">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block" x-text="lang === 'bn' ? 'স্বয়ংক্রিয় ফর্মুলা:' : 'Automatic Math Formula:'"></span>
+                        <div class="font-mono text-xs font-bold text-blue-700 dark:text-blue-300">
+                            মোট ফান্ড জমা (Credit) - মোট খরচ (Debit) = অবশিষ্ট ফান্ড
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 dark:border-slate-700 text-[11px] grid grid-cols-3 text-center gap-2">
+                            <div class="bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-xl border border-emerald-200/50">
+                                <span class="text-[10px] text-emerald-600 font-bold block">মোট জমা</span>
+                                <span class="font-mono font-bold text-emerald-800 dark:text-emerald-300">৳ ১,৯৯৫</span>
+                            </div>
+                            <div class="bg-rose-50 dark:bg-rose-950/40 p-2 rounded-xl border border-rose-200/50">
+                                <span class="text-[10px] text-rose-600 font-bold block">মোট খরচ</span>
+                                <span class="font-mono font-bold text-rose-800 dark:text-rose-300">৳ ৯৯৫</span>
+                            </div>
+                            <div class="bg-blue-50 dark:bg-blue-950/40 p-2 rounded-xl border border-blue-200/50">
+                                <span class="text-[10px] text-blue-600 font-bold block">অবশিষ্ট ফান্ড</span>
+                                <span class="font-mono font-bold text-blue-800 dark:text-blue-300">৳ ১,০০০</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-slate-500" x-text="lang === 'bn' ? 'ক্যালকুলেটরের কোনো ঝামেলা ছাড়া যেকোনো মেম্বারের নতুন জমা বা খরচ যুক্ত হওয়ামাত্রই এই ব্যালেন্স লাইভ আপডেট হয়।' : 'Whenever any member adds a deposit or expense, this remaining fund updates automatically in real-time.'"></p>
+                </div>
+
+                <!-- STEP 2: Individual Cost Split & Selective Breakdown -->
+                <div x-show="demoGuideStep === 2" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl font-bold">
+                        🧾
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '২. খরচের একক হিসাব ও সিলেক্টিভ স্প্লিট (Individual Cost Split)' : '2. Individual Cost Split & Selective Tagging'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'ট্যুরে সব খরচ সবার সমান হয় না। TourMate-এ প্রতি খরচে আলাদাভাবে সিলেক্ট করা যায় এটি কাদের জন্য খরচ হয়েছে।' : 'Not all expenses apply to everyone. TourMate lets you selectively choose who shares each expense.'"></p>
+
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">🏨 হোটেল বুকিং (৳ ২৫০)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">সবার মাঝে ভাগ (All)</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500">৬ জন সদস্যের মাঝেই সমানভাবে ভাগ হয়ে প্রত্যেকের ভাগে পড়েছে <strong>৳ ৪১.৬৭</strong>।</p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">🥤 Drinks (৳ ৯০)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">সিলেক্টিভ স্প্লিট (Selective)</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300">এটি শুধু <strong>Alex</strong> ও <strong>Meow</strong> খেয়েছে। তাই তাদের দুজনের ভাগে <strong>৳ ৪৫.০০</strong> করে পড়েছে। বাকি ৪ জন সদস্যের থেকে ১ পয়সাও কাটা হয়নি!</p>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 bg-blue-50 dark:bg-blue-950/40 rounded-xl text-[11px] text-blue-700 dark:text-blue-300">
+                        💡 <strong>টিপস:</strong> "খরচের তালিকা" ট্যাবে যেকোনো খরচের উপর ট্যাপ করলে পুরো বিবরণ ও কার ভাগে কত পড়েছে তা দেখা যায়।
+                    </div>
+                </div>
+
+                <!-- STEP 3: Member Invitation & Permissions -->
+                <div x-show="demoGuideStep === 3" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl font-bold">
+                        👥
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '৩. মেম্বার ইনভাইটেশন ও ৩টি পারমিশন রোল' : '3. Member Invitation & Permission Roles'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'সদস্যদের সহজে গ্রুপে ইনভাইট করতে এবং কাকে কী অনুমতি দিবেন তা নিয়ন্ত্রণ করতে পারবেন।' : 'Invite members via WhatsApp/Messenger and control their access levels.'"></p>
+
+                    <div class="space-y-2">
+                        <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
+                            <span class="text-base">👑</span>
+                            <div>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Owner (ট্যুর অ্যাডমিন)</strong>
+                                <span class="text-[11px] text-slate-500">ট্যুরের প্রধান নির্মাতা। সব কিছু নিয়ন্ত্রণ, লক/আনলক ও হিসাব পরিচালনা করতে পারে।</span>
+                            </div>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
+                            <span class="text-base">✏️</span>
+                            <div>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Editor (খরচ/জমা ইনপুটকারী)</strong>
+                                <span class="text-[11px] text-slate-500">ট্যুরের হিসাবরক্ষক বা ম্যানেজার। নতুন খরচ বা জমা এন্ট্রি করতে পারে।</span>
+                            </div>
+                        </div>
+
+                        <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-start gap-2.5">
+                            <span class="text-base">👁️</span>
+                            <div>
+                                <strong class="text-slate-800 dark:text-slate-100 block text-xs">Viewer (ভিউ-অনলি)</strong>
+                                <span class="text-[11px] text-slate-500">সাধারণ মেম্বার। হিসাব বা টাকা এডিট করতে পারবে না, কেবল স্বচ্ছভাবে লাইভ দেখতে পাবে।</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300">
+                        📲 <strong>ইনভাইট করার নিয়ম:</strong> "সদস্য (Members)" ট্যাবে গিয়ে যেকোনো মেম্বারের নামের উপর ক্লিক করে <strong>"Send Invite Link"</strong> চাপলেই লিংক কপি হয়ে যাবে।
+                    </div>
+                </div>
+
+                <!-- STEP 4: Settlement - Who Gets Refund vs Who Pays -->
+                <div x-show="demoGuideStep === 4" class="space-y-3 animate-fadeIn">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl font-bold">
+                        ⚖️
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? '৪. কে কত পাবে বা দিবে (Final Settlement)' : '4. Final Settlement (Who Gets Refund vs Who Pays)'"></h4>
+                    <p class="text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'নিচে \'হিসাব-নিকাশ (Settlement)\' ট্যাবে ক্লিক করলেই পুরো ট্যুরের চূড়ান্ত দেনা-পাওনা স্বচ্ছভাবে পেয়ে যাবেন।' : 'Click the \'Settlement\' tab below to see the complete transparent refund vs due balancing.'"></p>
+
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-emerald-800 dark:text-emerald-300 text-xs">🟢 Refundable (সবুজ - ফেরত পাবেন)</span>
+                                <span class="text-[10px] font-bold text-emerald-700">ফান্ড থেকে ফেরত</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300">
+                                যিনি খরচের চেয়ে বেশি টাকা জমা দিয়েছেন:<br>
+                                • <strong>Alex Rivers</strong> পাবে <strong>+৳ ৯৯৯.১৭</strong> ফেরত<br>
+                                • <strong>Alomgir</strong> পাবে <strong>+৳ ৪৪৯.১৭</strong> ফেরত<br>
+                                • <strong>Meow</strong> পাবে <strong>+৳ ৪.১৭</strong> ফেরত
+                            </p>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-rose-800 dark:text-rose-300 text-xs">🔴 Payable (লাল - পরিশোধ করবেন)</span>
+                                <span class="text-[10px] font-bold text-rose-700">ফান্ডে জমা দিতে হবে</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300">
+                                যিনি কোনো জমা দেননি কিন্তু খরচ ভোগ করেছেন:<br>
+                                • <strong>রফিক বাবু</strong> দিবে <strong>-৳ ১৫০.৮৩</strong><br>
+                                • <strong>কবির ভাই</strong> দিবে <strong>-৳ ১৫০.৮৩</strong><br>
+                                • <strong>তানভীর আহমেদ</strong> দিবে <strong>-৳ ১৫০.৮৩</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-slate-500" x-text="lang === 'bn' ? 'ফান্ডের নগদ অবশিষ্ট টাকা (৳ ১,০০০) এবং এই তিনজনের পাওনা টাকা (৳ ৪৫২.৪৯) একত্রিত করলে ফেরতযোগ্য টাকার সমান হয়—যাতে ট্যুর শেষে ১ টাকারও গড়মিল (Zero Discrepancy) না থাকে।' : 'The remaining fund plus collected dues exactly equal total refundable amounts, ensuring mathematically zero discrepancy.'"></p>
+                </div>
+
+                <!-- STEP 5: Logout & Start Real Tour -->
+                <div x-show="demoGuideStep === 5" class="space-y-4 animate-fadeIn text-center py-2">
+                    <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-3xl font-bold mx-auto shadow-xl shadow-blue-500/25">
+                        🚀
+                    </div>
+                    <div>
+                        <h4 class="text-base font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? 'ডেমো দেখা শেষ? নিজের ট্যুর শুরু করুন!' : 'Ready to Start Your Own Tour?'"></h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" x-text="lang === 'bn' ? 'ডেমো অ্যাকাউন্ট কেবল হিসাব দেখার ও নির্দেশিকা বোঝার জন্য। এখন নিজের বন্ধুদের নিয়ে আসল ট্যুর খুলতে ডেমো থেকে লগআউট করুন।' : 'Demo is for preview only. Log out from demo and sign in with Google to create your real group tour!'"></p>
+                    </div>
+
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-left space-y-1.5 text-[11px]">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">১</span>
+                            <span>নিচের <strong>"ডেমো থেকে লগআউট করুন"</strong> বাটনে ক্লিক করুন।</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">২</span>
+                            <span>লগইন পেজে <strong>"Google দিয়ে প্রবেশ করুন"</strong> চাপুন।</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">৩</span>
+                            <span><strong>"+ নতুন ট্যুর"</strong> যোগ করে বন্ধুদের ইনভাইট লিংক পাঠিয়ে হিসাব শুরু করুন!</span>
+                        </div>
+                    </div>
+
+                    <button @click="logout()"
+                            class="w-full py-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold rounded-2xl text-xs active:scale-95 transition-all shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2">
+                        <span>🚪</span>
+                        <span x-text="lang === 'bn' ? 'ডেমো থেকে লগআউট করুন' : 'Log Out from Demo'"></span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer Controls -->
+            <div class="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
+                <button type="button"
+                        @click="demoGuideStep = Math.max(1, demoGuideStep - 1)"
+                        :disabled="demoGuideStep === 1"
+                        class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 disabled:opacity-40 active:scale-95 transition-all">
+                    ← পূর্ববর্তী
+                </button>
+
+                <div class="text-[11px] font-bold text-slate-400">
+                    <span x-text="demoGuideStep"></span> / 5
+                </div>
+
+                <template x-if="demoGuideStep < 5">
+                    <button type="button"
+                            @click="demoGuideStep = Math.min(5, demoGuideStep + 1)"
+                            class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white active:scale-95 transition-all shadow-sm">
+                        পরবর্তী →
+                    </button>
+                </template>
+                <template x-if="demoGuideStep === 5">
+                    <button type="button"
+                            @click="showDemoGuideModal = false"
+                            class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-95 transition-all">
+                        বন্ধ করুন
+                    </button>
+                </template>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Demo Action Locked Modal -->
+    <div x-show="showDemoLockModal"
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+         x-cloak>
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 dark:border-slate-800 animate-scaleUp">
+            <div class="w-14 h-14 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-3xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                🔒
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1" x-text="lang === 'bn' ? 'ডেমো ট্যুর লক করা রয়েছে' : 'Demo Tour is Locked'"></h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-5 leading-relaxed" x-text="lang === 'bn' ? 'ডেমোর নমুনা হিসাব ও গাইডলাইন অক্ষুণ্ণ রাখতে ডেটা পরিবর্তন লক করা হয়েছে। আপনার নিজস্ব বন্ধুদের নিয়ে নতুন ট্যুর পরিচালনা করতে এখনই Google দিয়ে লগইন করুন।' : 'This demo showcase tour is locked to preserve sample calculations. Log in with Google to create and manage your own real tours!'"></p>
+            
+            <div class="flex flex-col gap-2">
+                <button @click="logout()"
+                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs active:scale-95 transition-all shadow-md">
+                    <span x-text="lang === 'bn' ? 'লগআউট করে আমার একাউন্টে ঢুকুন' : 'Log Out & Start My Tour'"></span>
+                </button>
+                <button @click="showDemoLockModal = false; showDemoGuideModal = true; demoGuideStep = 1"
+                        class="w-full py-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold rounded-2xl text-xs hover:bg-indigo-100">
+                    <span x-text="lang === 'bn' ? '📖 ডেমো গাইডলাইনটি পড়ুন' : '📖 Read Demo Guideline'"></span>
+                </button>
+                <button @click="showDemoLockModal = false"
+                        class="w-full py-2 text-slate-400 font-medium text-xs hover:text-slate-600">
+                    <span x-text="lang === 'bn' ? 'বন্ধ করুন' : 'Close'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -2031,6 +2342,30 @@ function tourDetailPage(tourId) {
         showShareModal: false,
         shareForm: { name: '', email: '', role: 'VIEWER', designation_select: 'None', custom_designation: '', saving: false },
 
+        // Demo Guidance & Lock State
+        showDemoGuideModal: false,
+        demoGuideStep: 1,
+        showDemoLockModal: false,
+
+        get isDemoTour() {
+            const u = TourMateAPI.getUser();
+            return (u && u.email === 'alex@tourmate.test') ||
+                   (this.tour && this.tour.created_by && this.tour.created_by.email === 'alex@tourmate.test');
+        },
+
+        checkDemoLock() {
+            if (this.isDemoTour) {
+                this.showDemoLockModal = true;
+                return true;
+            }
+            return false;
+        },
+
+        openShareModal() {
+            if (this.checkDemoLock()) return;
+            this.showShareModal = true;
+        },
+
         switchTab(tab) {
             this.activeTab = tab;
             if (tab === 'settlement' && !this.settlementData) {
@@ -2047,6 +2382,20 @@ function tourDetailPage(tourId) {
 
         async init() {
             if (!TourMateAPI.ensureAuth()) return;
+
+            // Auto-display demo guideline for first-time session visitors in demo tour
+            if (this.isDemoTour) {
+                try {
+                    const seen = sessionStorage.getItem('tm_demo_guide_seen');
+                    if (!seen) {
+                        setTimeout(() => {
+                            this.showDemoGuideModal = true;
+                            this.demoGuideStep = 1;
+                            sessionStorage.setItem('tm_demo_guide_seen', 'true');
+                        }, 700);
+                    }
+                } catch (e) {}
+            }
 
             // SWR Instant Paint: Load cached tour data from localStorage immediately (0ms paint)
             try {
@@ -2616,6 +2965,7 @@ function tourDetailPage(tourId) {
         },
 
         openDepositModalFromDrawer() {
+            if (this.checkDemoLock()) return;
             if (this.tour.is_archived) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে (হিসাব লক)' : 'Tour is archived (Calculations locked)', 'error');
                 return;
@@ -2624,10 +2974,12 @@ function tourDetailPage(tourId) {
         },
 
         openEditMemberFromDrawer() {
+            if (this.checkDemoLock()) return;
             this.openEditMemberModal(this.selectedMemberDetail.member);
         },
 
         async deleteMemberFromDrawer() {
+            if (this.checkDemoLock()) return;
             if (this.isOwnerMember(this.selectedMemberDetail?.member)) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুর ওনারকে ডিলিট করা সম্ভব নয়' : 'Tour Owner cannot be deleted', 'error');
                 return;
@@ -2653,6 +3005,7 @@ function tourDetailPage(tourId) {
         },
 
         editExpenseFromDrawer() {
+            if (this.checkDemoLock()) return;
             if (this.tour.is_archived) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে (হিসাব লক)' : 'Tour is archived (Calculations locked)', 'error');
                 return;
@@ -2662,6 +3015,7 @@ function tourDetailPage(tourId) {
         },
 
         async deleteExpenseFromDrawer() {
+            if (this.checkDemoLock()) return;
             if (this.tour.is_archived) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে (হিসাব লক)' : 'Tour is archived (Calculations locked)', 'error');
                 return;
@@ -2726,6 +3080,7 @@ function tourDetailPage(tourId) {
 
         // --- Deposit Actions ---
         openDepositModal(member) {
+            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে টাকা জমা যোগ করার অনুমতি নেই' : 'Viewer role has read-only access', 'error');
                 return;
@@ -2740,6 +3095,7 @@ function tourDetailPage(tourId) {
         },
 
         openEditDepositModal(dep, member) {
+            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে জমা পরিবর্তন করার অনুমতি নেই' : 'Viewer role has read-only access', 'error');
                 return;
@@ -2754,6 +3110,7 @@ function tourDetailPage(tourId) {
         },
 
         async submitDeposit() {
+            if (this.checkDemoLock()) return;
             if (this.tour.is_archived) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে (হিসাব লক)' : 'Tour is archived (Calculations locked)', 'error');
                 return;
@@ -2833,6 +3190,7 @@ function tourDetailPage(tourId) {
         },
 
         async confirmDeleteDeposit(dep) {
+            if (this.checkDemoLock()) return;
             if (this.tour.is_archived) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে (হিসাব লক)' : 'Tour is archived (Calculations locked)', 'error');
                 return;
@@ -2868,6 +3226,7 @@ function tourDetailPage(tourId) {
 
         // --- Expense Actions ---
         openExpenseModal() {
+            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে খরচ যোগ করার অনুমতি নেই' : 'Viewer role has read-only access', 'error');
                 return;
@@ -2894,6 +3253,7 @@ function tourDetailPage(tourId) {
         },
 
         openEditExpenseModal(exp) {
+            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে খরচ পরিবর্তন করার অনুমতি নেই' : 'Viewer role has read-only access', 'error');
                 return;
@@ -2956,6 +3316,7 @@ function tourDetailPage(tourId) {
         },
 
         async submitExpense() {
+            if (this.checkDemoLock()) return;
             if (this.tour.is_archived) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুরটি আর্কাইভ করা হয়েছে (হিসাব লক)' : 'Tour is archived (Calculations locked)', 'error');
                 return;
@@ -3085,6 +3446,7 @@ function tourDetailPage(tourId) {
 
         // --- Tour & Budget & Archive Actions ---
         openEditTourModal() {
+            if (this.checkDemoLock()) return;
             this.editTourForm = {
                 title: this.tour.title,
                 description: this.tour.description || '',
@@ -3095,6 +3457,7 @@ function tourDetailPage(tourId) {
         },
 
         async clearTourBudget() {
+            if (this.checkDemoLock()) return;
             try {
                 await TourMateAPI.updateTour(this.tourId, { clear_budget: true });
                 window.showToast(this.lang === 'bn' ? 'বাজেট সফলভাবে মুছে ফেলা হয়েছে' : 'Budget limit removed', 'info');
@@ -3109,6 +3472,7 @@ function tourDetailPage(tourId) {
         },
 
         async toggleArchive() {
+            if (this.checkDemoLock()) return;
             try {
                 const updated = await TourMateAPI.toggleArchiveTour(this.tourId);
                 this.tour.is_archived = updated.is_archived;
@@ -3124,6 +3488,7 @@ function tourDetailPage(tourId) {
         },
 
         async submitEditTour() {
+            if (this.checkDemoLock()) return;
             if (!this.editTourForm.title) return;
             this.editTourForm.saving = true;
             try {
@@ -3151,6 +3516,7 @@ function tourDetailPage(tourId) {
 
         // --- Member Edit & Delete Actions ---
         openEditMemberModal(member) {
+            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে মেম্বার তথ্য পরিবর্তনের অনুমতি নেই' : 'Viewer role cannot edit members', 'error');
                 return;
@@ -3180,6 +3546,7 @@ function tourDetailPage(tourId) {
         },
 
         async submitEditMember() {
+            if (this.checkDemoLock()) return;
             if (!this.editMemberForm.name) return;
             this.editMemberForm.saving = true;
             let finalDesignation = '';
@@ -3216,6 +3583,7 @@ function tourDetailPage(tourId) {
         },
 
         async confirmDeleteMember() {
+            if (this.checkDemoLock()) return;
             if (this.isOwnerMember(this.editMemberForm)) {
                 window.showToast(this.lang === 'bn' ? 'ট্যুর ওনারকে ডিলিট করা সম্ভব নয়' : 'Tour Owner cannot be deleted', 'error');
                 return;
@@ -3236,6 +3604,7 @@ function tourDetailPage(tourId) {
 
         // --- Share Action ---
         async submitShare() {
+            if (this.checkDemoLock()) return;
             if (this.myRoleText === 'VIEWER') {
                 window.showToast(this.lang === 'bn' ? 'ভিউয়ার হিসেবে নতুন মেম্বার যুক্ত করার অনুমতি নেই' : 'Viewer role cannot add members', 'error');
                 return;

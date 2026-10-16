@@ -43,6 +43,35 @@
     <!-- Main Content Area -->
     <div class="px-4 py-4 flex-1 flex flex-col">
 
+        <!-- Demo Account Mode Banner -->
+        <template x-if="isDemoUser">
+            <div class="mb-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white rounded-3xl p-4 shadow-lg shadow-blue-500/20 border border-blue-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fadeIn">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-xl flex-shrink-0">
+                        💡
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                            <span x-text="lang === 'bn' ? 'ডেমো অ্যাকাউন্ট মোড' : 'Demo Account Mode'"></span>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-400 text-slate-900">🔒 নমুনা ডেমো ডেটা</span>
+                        </h3>
+                        <p class="text-xs text-blue-100 mt-0.5 leading-relaxed" x-text="lang === 'bn' ? 'ট্যুরমেটের কমন ফান্ড ব্যালেন্স, মেম্বারদের একক খরচের ভাগ, দেনা-পাওনা ও পূর্ণাঙ্গ গাইডলাইন দেখতে ডেমো ট্যুরে প্রবেশ করুন।' : 'Explore demo tour to understand common fund calculation, individual cost split, settlement and guidelines.'"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button @click="goToDemoTour()"
+                            class="px-3.5 py-2 bg-white text-blue-700 rounded-xl font-bold text-xs hover:bg-blue-50 active:scale-95 transition-all shadow-xs flex items-center gap-1">
+                        <span>👀</span>
+                        <span x-text="lang === 'bn' ? 'ডেমো ট্যুর দেখুন' : 'View Demo Tour'"></span>
+                    </button>
+                    <button @click="logout()"
+                            class="px-3 py-2 bg-white/20 hover:bg-rose-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all">
+                        <span x-text="lang === 'bn' ? 'লগআউট' : 'Logout'"></span>
+                    </button>
+                </div>
+            </div>
+        </template>
+
         <!-- Top Header: Simple Total Tours Count -->
         <div class="flex items-center justify-between mb-4 px-1 pt-1">
             <div>
@@ -655,6 +684,34 @@
         </div>
     </div>
 
+    <!-- Demo Action Locked Modal -->
+    <div x-show="showDemoLockModal"
+         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+         x-cloak>
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 dark:border-slate-800 animate-scaleUp">
+            <div class="w-14 h-14 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-3xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                🔒
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1" x-text="lang === 'bn' ? 'ডেমো অ্যাকাউন্ট লক করা রয়েছে' : 'Demo Account is Locked'"></h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-5 leading-relaxed" x-text="lang === 'bn' ? 'ডেমো অ্যাকাউন্টে নতুন ট্যুর তৈরি বা মুছে ফেলা লক রাখা হয়েছে। আপনার বন্ধুদের নিয়ে বাস্তব ট্যুর খুলতে ও পরিচালনা করতে অনুগ্রহ করে লগআউট করে Google দিয়ে লগইন করুন।' : 'Creating or deleting tours is locked in demo mode. Please log out and sign in with Google to manage your own real tours!'"></p>
+            
+            <div class="flex flex-col gap-2">
+                <button @click="logout()"
+                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs active:scale-95 transition-all shadow-md">
+                    <span x-text="lang === 'bn' ? 'লগআউট করে Google দিয়ে ঢুকুন' : 'Log Out & Sign In with Google'"></span>
+                </button>
+                <button @click="showDemoLockModal = false; goToDemoTour()"
+                        class="w-full py-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-semibold rounded-2xl text-xs hover:bg-indigo-100">
+                    <span x-text="lang === 'bn' ? '👀 ডেমো ট্যুরে ফিরে যান' : '👀 Return to Demo Tour'"></span>
+                </button>
+                <button @click="showDemoLockModal = false"
+                        class="w-full py-2 text-slate-400 font-medium text-xs hover:text-slate-600">
+                    <span x-text="lang === 'bn' ? 'বন্ধ করুন' : 'Close'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -673,6 +730,21 @@ function dashboardPage() {
         theme: localStorage.getItem('tourmate_theme') || 'light',
         settingsView: 'main',
         showEditTourModal: false,
+        showDemoLockModal: false,
+
+        get isDemoUser() {
+            const user = TourMateAPI.getUser();
+            return user && user.email === 'alex@tourmate.test';
+        },
+
+        goToDemoTour() {
+            if (this.tours && this.tours.length > 0) {
+                this.goToTour(this.tours[0].id);
+            } else {
+                window.location.href = '/tours/6c718b10-c0e7-4ca7-9c71-66b320f94a8d';
+            }
+        },
+
         editTourForm: {
             id: '',
             title: '',
@@ -761,6 +833,10 @@ function dashboardPage() {
         },
 
         openEditTour(tour) {
+            if (this.isDemoUser) {
+                this.showDemoLockModal = true;
+                return;
+            }
             this.editTourForm = {
                 id: tour.id,
                 title: tour.title || '',
@@ -773,6 +849,10 @@ function dashboardPage() {
         },
 
         async submitEditTour() {
+            if (this.isDemoUser) {
+                this.showDemoLockModal = true;
+                return;
+            }
             if (!this.editTourForm.title || !this.editTourForm.id) return;
             this.editTourForm.saving = true;
             try {
@@ -893,6 +973,10 @@ function dashboardPage() {
         },
 
         openCreateModal() {
+            if (this.isDemoUser) {
+                this.showDemoLockModal = true;
+                return;
+            }
             this.newTour = {
                 title: '',
                 description: '',
@@ -926,6 +1010,10 @@ function dashboardPage() {
         },
 
         async confirmDeleteTour(tour) {
+            if (this.isDemoUser) {
+                this.showDemoLockModal = true;
+                return;
+            }
             const msg = this.lang === 'bn' 
                 ? `আপনি কি নিশ্চিত যে '${tour.title}' ট্যুরটি সম্পূর্ণ মুছে ফেলতে চান?` 
                 : `Are you sure you want to permanently delete '${tour.title}'?`;
