@@ -1961,9 +1961,10 @@
 
     <!-- Demo Tour Full Interactive Guideline Modal -->
     <div x-show="showDemoGuideModal"
-         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
+         @click.self="showDemoGuideModal = false"
+         class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
          x-cloak>
-        <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden animate-slideUp">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             
             <!-- Modal Header -->
             <div class="px-5 py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-between">
@@ -2220,7 +2221,8 @@
 
     <!-- Demo Action Locked Modal -->
     <div x-show="showDemoLockModal"
-         class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+         @click.self="showDemoLockModal = false"
+         class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
          x-cloak>
         <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 dark:border-slate-800 animate-scaleUp">
             <div class="w-14 h-14 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-3xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
@@ -2354,7 +2356,8 @@ function tourDetailPage(tourId) {
         get isDemoTour() {
             const u = TourMateAPI.getUser();
             return (u && u.email === 'alex@tourmate.test') ||
-                   (this.tour && this.tour.created_by && this.tour.created_by.email === 'alex@tourmate.test');
+                   (this.tour && this.tour.created_by && this.tour.created_by.email === 'alex@tourmate.test') ||
+                   (this.tourId === '6c718b10-c0e7-4ca7-9c71-66b320f94a8d');
         },
 
         checkDemoLock() {
@@ -2385,20 +2388,17 @@ function tourDetailPage(tourId) {
         },
 
         async init() {
-            if (!TourMateAPI.ensureAuth()) return;
-
-            // Auto-display demo guideline for first-time session visitors in demo tour
+            // For showcase demo tour, ensure seamless direct access even if visitor is not logged in!
             if (this.isDemoTour) {
-                try {
-                    const seen = sessionStorage.getItem('tm_demo_guide_seen');
-                    if (!seen) {
-                        setTimeout(() => {
-                            this.showDemoGuideModal = true;
-                            this.demoGuideStep = 1;
-                            sessionStorage.setItem('tm_demo_guide_seen', 'true');
-                        }, 700);
+                if (!TourMateAPI.isAuthenticated()) {
+                    try {
+                        await TourMateAPI.authDemo();
+                    } catch (e) {
+                        console.warn('Demo auth auto-login:', e);
                     }
-                } catch (e) {}
+                }
+            } else {
+                if (!TourMateAPI.ensureAuth()) return;
             }
 
             // SWR Instant Paint: Load cached tour data from localStorage immediately (0ms paint)

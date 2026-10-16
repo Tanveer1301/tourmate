@@ -150,30 +150,41 @@ def google_oauth_callback(request):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TourMate - প্রবেশ করা হচ্ছে...</title>
 </head>
-<body style="background:#0f172a;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
-    <div style="text-align:center;">
-        <div style="width:48px;height:48px;border:4px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
-        <p style="font-size:15px;font-weight:600;margin:0 0 6px 0;">লগইন সফল হয়েছে!</p>
-        <p style="font-size:12px;color:#94a3b8;margin:0;">ট্যুর ড্যাশবোর্ডে প্রবেশ করা হচ্ছে...</p>
+<body style="background:#f8fafc;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;">
+    <div style="text-align:center;background:#ffffff;border:1px solid #e2e8f0;border-radius:24px;padding:32px 24px;max-width:360px;width:100%;box-shadow:0 10px 25px -5px rgba(0,0,0,0.05);">
+        <div style="width:48px;height:48px;border:4px solid #e0e7ff;border-top-color:#2563eb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+        <p style="font-size:16px;font-weight:700;color:#0f172a;margin:0 0 6px 0;">লগইন সফল হয়েছে!</p>
+        <p style="font-size:13px;color:#64748b;margin:0 0 16px 0;">ট্যুর ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে...</p>
+        <a id="direct-btn" href="{next_url or '/tours'}" style="display:inline-block;padding:8px 16px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:12px;font-size:12px;font-weight:600;opacity:0.9;">সরাসরি প্রবেশ করুন &rarr;</a>
     </div>
     <style>@keyframes spin {{ to {{ transform: rotate(360deg); }} }}</style>
     <script id="auth-data" type="application/json">{payload_json}</script>
     <script>
-        try {{
-            const raw = document.getElementById('auth-data').textContent;
-            const data = JSON.parse(raw);
-            if (data.token) {{
-                try {{ localStorage.setItem('tourmate_token', data.token); }} catch(e) {{}}
-                document.cookie = 'tourmate_token=' + encodeURIComponent(data.token) + '; path=/; max-age=604800; SameSite=Lax';
+        (function() {{
+            try {{
+                const raw = document.getElementById('auth-data').textContent;
+                const data = JSON.parse(raw);
+                if (data.token) {{
+                    try {{ localStorage.setItem('tourmate_token', data.token); }} catch(e) {{}}
+                    document.cookie = 'tourmate_token=' + encodeURIComponent(data.token) + '; path=/; max-age=604800; SameSite=Lax';
+                }}
+                if (data.user) {{
+                    try {{ localStorage.setItem('tourmate_user', JSON.stringify(data.user)); }} catch(e) {{}}
+                    document.cookie = 'tourmate_user=' + encodeURIComponent(JSON.stringify(data.user)) + '; path=/; max-age=604800; SameSite=Lax';
+                }}
+                const target = data.next || '/tours';
+                try {{
+                    window.location.replace(target);
+                }} catch(e) {{
+                    window.location.href = target;
+                }}
+                setTimeout(function() {{
+                    window.location.href = target;
+                }}, 300);
+            }} catch(e) {{
+                window.location.href = '/tours';
             }}
-            if (data.user) {{
-                try {{ localStorage.setItem('tourmate_user', JSON.stringify(data.user)); }} catch(e) {{}}
-                document.cookie = 'tourmate_user=' + encodeURIComponent(JSON.stringify(data.user)) + '; path=/; max-age=604800; SameSite=Lax';
-            }}
-            window.location.replace(data.next || '/tours');
-        }} catch(e) {{
-            window.location.replace('/tours');
-        }}
+        }})();
     </script>
 </body>
 </html>"""
