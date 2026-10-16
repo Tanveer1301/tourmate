@@ -3,18 +3,48 @@
  * Manages JWT tokens, automatic Bearer headers, centralized error handling, and session management.
  */
 
+const _memoryStorage = {};
+
 const TourMateAPI = {
     TOKEN_KEY: 'tourmate_token',
     USER_KEY: 'tourmate_user',
     API_BASE: '/api/v1',
 
+    _getItem(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            return _memoryStorage[key] || null;
+        }
+    },
+
+    _setItem(key, val) {
+        try {
+            localStorage.setItem(key, val);
+        } catch (e) {
+            _memoryStorage[key] = val;
+        }
+    },
+
+    _removeItem(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            delete _memoryStorage[key];
+        }
+    },
+
     getToken() {
-        return localStorage.getItem(this.TOKEN_KEY);
+        const token = this._getItem(this.TOKEN_KEY);
+        if (!token || token === 'undefined' || token === 'null' || token === '') {
+            return null;
+        }
+        return token;
     },
 
     getUser() {
         try {
-            const raw = localStorage.getItem(this.USER_KEY);
+            const raw = this._getItem(this.USER_KEY);
             return raw ? JSON.parse(raw) : null;
         } catch (e) {
             return null;
@@ -22,15 +52,17 @@ const TourMateAPI = {
     },
 
     setAuth(token, user) {
-        localStorage.setItem(this.TOKEN_KEY, token);
+        if (token) {
+            this._setItem(this.TOKEN_KEY, token);
+        }
         if (user) {
-            localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+            this._setItem(this.USER_KEY, JSON.stringify(user));
         }
     },
 
     clearAuth() {
-        localStorage.removeItem(this.TOKEN_KEY);
-        localStorage.removeItem(this.USER_KEY);
+        this._removeItem(this.TOKEN_KEY);
+        this._removeItem(this.USER_KEY);
     },
 
     isAuthenticated() {

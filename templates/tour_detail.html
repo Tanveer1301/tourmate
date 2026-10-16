@@ -3273,8 +3273,15 @@ function tourDetailPage(tourId) {
             }
         },
 
+        getCanonicalOrigin() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return 'https://tourmate-hazel.vercel.app';
+            }
+            return window.location.origin;
+        },
+
         copyTourInviteLink() {
-            const inviteUrl = window.location.origin + '/tours/' + this.tourId;
+            const inviteUrl = this.getCanonicalOrigin() + '/tours/' + this.tourId;
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(inviteUrl).then(() => {
                     window.showToast(this.lang === 'bn' ? 'ট্যুর ইনভাইট লিংক ক্লিপবোর্ডে কপি হয়েছে!' : 'Tour invite link copied to clipboard!', 'success');
@@ -3287,7 +3294,7 @@ function tourDetailPage(tourId) {
         },
 
         shareTourLink() {
-            const inviteUrl = window.location.origin + '/tours/' + this.tourId;
+            const inviteUrl = this.getCanonicalOrigin() + '/tours/' + this.tourId;
             const tourTitle = this.tour.title || 'TourMate Tour';
             const shareText = this.lang === 'bn'
                 ? `আমি TourMate-এ '${tourTitle}' ট্যুরের হিসাব গ্রুপ তৈরি করেছি। যুক্ত হতে ও হিসাব দেখতে লিংকে ক্লিক করুন:`
@@ -3310,7 +3317,7 @@ function tourDetailPage(tourId) {
 
         shareWithMember(member) {
             if (!member) return;
-            const inviteUrl = window.location.origin + '/tours/' + this.tourId;
+            const inviteUrl = this.getCanonicalOrigin() + '/tours/' + this.tourId;
             const tourTitle = this.tour.title || 'TourMate Tour';
             const memberName = member.name || 'বন্ধু';
             const roleText = member.role === 'VIEWER' ? 'Viewer (ভিউ-অনলি)' : 'Editor (খরচ যুক্ত/এডিট)';
