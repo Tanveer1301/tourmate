@@ -539,11 +539,18 @@
 
                                                 <!-- Tours Created & Joined -->
                                                 <td class="py-3 px-4">
-                                                    <span class="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                    <button type="button"
+                                                            @click="openUserToursModal(user)"
+                                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800 text-xs font-bold text-blue-700 dark:text-blue-300 transition-all hover:scale-105 active:scale-95 shadow-xs group"
+                                                            :title="lang === 'bn' ? 'ট্যুরসমূহ ও অ্যাক্সেস বিস্তারিত দেখুন' : 'View connected tours & access'">
+                                                        <span>🎒</span>
                                                         <span x-text="`${user.tours_created_count} খোলা`"></span>
-                                                        <span class="text-slate-400">/</span>
+                                                        <span class="text-blue-300 dark:text-blue-700">•</span>
                                                         <span x-text="`${user.tours_joined_count} যুক্ত`"></span>
-                                                    </span>
+                                                        <svg class="w-3.5 h-3.5 text-blue-500 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </button>
                                                 </td>
 
                                                 <!-- Admin Role Dropdown -->
@@ -575,14 +582,22 @@
 
                                                 <!-- Action Buttons -->
                                                 <td class="py-3 px-4 text-right">
-                                                    <template x-if="adminUser.is_super_admin || adminUser.is_sub_admin">
-                                                        <button @click="toggleUserActive(user)"
-                                                                :disabled="user.id === adminUser.id"
-                                                                :class="user.is_active ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'"
-                                                                class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all disabled:opacity-40">
-                                                            <span x-text="user.is_active ? (lang === 'bn' ? 'ব্লক করুন' : 'Block') : (lang === 'bn' ? 'আনব্লক' : 'Unblock')"></span>
+                                                    <div class="inline-flex items-center gap-1 justify-end">
+                                                        <button type="button"
+                                                                @click="openUserToursModal(user)"
+                                                                class="px-2.5 py-1 rounded-xl text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all"
+                                                                :title="lang === 'bn' ? 'ইউজারের ট্যুরসমূহ দেখুন' : 'View User Tours'">
+                                                            <span x-text="lang === 'bn' ? 'ট্যুরসমূহ' : 'Tours'"></span>
                                                         </button>
-                                                    </template>
+                                                        <template x-if="adminUser.is_super_admin || adminUser.is_sub_admin">
+                                                            <button @click="toggleUserActive(user)"
+                                                                    :disabled="user.id === adminUser.id"
+                                                                    :class="user.is_active ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'"
+                                                                    class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all disabled:opacity-40">
+                                                                <span x-text="user.is_active ? (lang === 'bn' ? 'ব্লক' : 'Block') : (lang === 'bn' ? 'আনব্লক' : 'Unblock')"></span>
+                                                            </button>
+                                                        </template>
+                                                    </div>
                                                 </td>
 
                                             </tr>
@@ -1261,6 +1276,148 @@
             </div>
         </div>
 
+        <!-- MODAL: USER'S CREATED & CONNECTED TOURS MODAL (GOD-MODE ACCESS) -->
+        <div x-show="showUserToursModal"
+             x-cloak
+             class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div @click.away="showUserToursModal = false"
+                 class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 max-h-[90vh] flex flex-col">
+                
+                <!-- Modal Header -->
+                <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div class="flex items-center gap-3">
+                        <template x-if="selectedUserForTours?.avatar_url">
+                            <img :src="selectedUserForTours.avatar_url" class="w-11 h-11 rounded-2xl object-cover shadow-sm">
+                        </template>
+                        <template x-if="!selectedUserForTours?.avatar_url">
+                            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center text-base shadow-sm"
+                                 x-text="(selectedUserForTours?.first_name ? selectedUserForTours.first_name[0] : (selectedUserForTours?.email ? selectedUserForTours.email[0] : 'U')).toUpperCase()"></div>
+                        </template>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white" x-text="selectedUserForTours?.full_name || selectedUserForTours?.email"></h3>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                      :class="selectedUserForTours?.is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'"
+                                      x-text="selectedUserForTours?.is_active ? (lang === 'bn' ? 'সক্রিয়' : 'Active') : (lang === 'bn' ? 'ব্লক' : 'Blocked')"></span>
+                            </div>
+                            <p class="text-xs text-slate-400 font-mono" x-text="selectedUserForTours?.email"></p>
+                        </div>
+                    </div>
+                    <button @click="showUserToursModal = false"
+                            class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center justify-center transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <!-- Stats Badges -->
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="p-3 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 text-center">
+                        <div class="text-[11px] font-semibold text-blue-600 dark:text-blue-400" x-text="lang === 'bn' ? 'তৈরি করা ট্যুর' : 'Created Tours'"></div>
+                        <div class="text-lg font-black text-blue-700 dark:text-blue-300 mt-0.5" x-text="userToursData?.total_created || 0"></div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-center">
+                        <div class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400" x-text="lang === 'bn' ? 'যুক্ত থাকা ট্যুর' : 'Connected Tours'"></div>
+                        <div class="text-lg font-black text-indigo-700 dark:text-indigo-300 mt-0.5" x-text="userToursData?.total_connected || 0"></div>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/60 text-center">
+                        <div class="text-[11px] font-semibold text-purple-600 dark:text-purple-400" x-text="lang === 'bn' ? 'মোট ট্যুর সংযোগ' : 'Total Tours'"></div>
+                        <div class="text-lg font-black text-purple-700 dark:text-purple-300 mt-0.5" x-text="(userToursData?.tours?.length) || 0"></div>
+                    </div>
+                </div>
+
+                <!-- Filter Tabs for Tours -->
+                <div class="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-bold">
+                    <button type="button"
+                            @click="userToursFilter = 'ALL'"
+                            :class="userToursFilter === 'ALL' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-600 dark:text-slate-400'"
+                            class="flex-1 py-1.5 rounded-xl transition-all text-center">
+                        <span x-text="lang === 'bn' ? 'সবগুলো ট্যুর' : 'All Tours'"></span>
+                    </button>
+                    <button type="button"
+                            @click="userToursFilter = 'CREATED'"
+                            :class="userToursFilter === 'CREATED' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-600 dark:text-slate-400'"
+                            class="flex-1 py-1.5 rounded-xl transition-all text-center">
+                        <span x-text="lang === 'bn' ? '👑 নিজের তৈরি' : '👑 Created (Owner)'"></span>
+                    </button>
+                    <button type="button"
+                            @click="userToursFilter = 'CONNECTED'"
+                            :class="userToursFilter === 'CONNECTED' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs' : 'text-slate-600 dark:text-slate-400'"
+                            class="flex-1 py-1.5 rounded-xl transition-all text-center">
+                        <span x-text="lang === 'bn' ? '🤝 অন্যদের সাথে যুক্ত' : '🤝 Connected (Member)'"></span>
+                    </button>
+                </div>
+
+                <!-- Modal Scrollable Content -->
+                <div class="flex-1 overflow-y-auto space-y-3 pr-1">
+                    <template x-if="loadingUserTours">
+                        <div class="py-12 text-center text-xs text-slate-400 animate-pulse">
+                            <span x-text="lang === 'bn' ? 'ট্যুরসমূহ লোড হচ্ছে...' : 'Loading tours...'"></span>
+                        </div>
+                    </template>
+
+                    <template x-if="!loadingUserTours && filteredUserTours.length === 0">
+                        <div class="py-12 text-center text-xs text-slate-400">
+                            <p>📭 <span x-text="lang === 'bn' ? 'এই ক্যাটাগরিতে কোনো ট্যুর পাওয়া যায়নি।' : 'No tours found in this category.'"></span></p>
+                        </div>
+                    </template>
+
+                    <template x-for="tour in filteredUserTours" :key="tour.id">
+                        <div class="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 group">
+                            
+                            <!-- Tour Details -->
+                            <div class="space-y-1.5 flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate" x-text="tour.title"></h4>
+                                    
+                                    <!-- Role Badge -->
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                                          :class="tour.is_creator ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'">
+                                        <span x-text="tour.is_creator ? (lang === 'bn' ? '👑 ওনার / ক্রিয়েটর' : '👑 Owner / Creator') : `🤝 মেম্বার (${tour.role})`"></span>
+                                    </span>
+
+                                    <!-- Designation Badge if exists -->
+                                    <template x-if="tour.designation">
+                                        <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800 text-[10px] font-semibold"
+                                              x-text="tour.designation"></span>
+                                    </template>
+                                </div>
+
+                                <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                                    <span>👥 <strong class="text-slate-700 dark:text-slate-200" x-text="tour.members_count"></strong> <span x-text="lang === 'bn' ? 'সদস্য' : 'members'"></span></span>
+                                    <span>•</span>
+                                    <span>💸 <span x-text="lang === 'bn' ? 'মোট খরচ:' : 'Total spent:'"></span> <strong class="text-rose-600 dark:text-rose-400" x-text="`৳ ${formatMoney(tour.total_expenses)}`"></strong></span>
+                                    <template x-if="tour.budget_limit">
+                                        <span>•</span>
+                                        <span>🎯 <span x-text="lang === 'bn' ? 'বাজেট:' : 'Budget:'"></span> <strong class="text-slate-700 dark:text-slate-200" x-text="`৳ ${formatMoney(tour.budget_limit)}`"></strong></span>
+                                    </template>
+                                    <span>•</span>
+                                    <span class="text-[11px] text-slate-400" x-text="formatDate(tour.created_at)"></span>
+                                </div>
+                            </div>
+
+                            <!-- Super Admin Direct Access Link -->
+                            <div class="shrink-0 self-end sm:self-center">
+                                <a :href="'/tours/' + tour.id"
+                                   target="_blank"
+                                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shadow-blue-500/20 active:scale-95"
+                                   :title="lang === 'bn' ? 'সুপার অ্যাডমিন গড-মোডে ট্যুরে প্রবেশ করুন' : 'Open Tour in God-Mode'">
+                                    <span x-text="lang === 'bn' ? 'ট্যুরে প্রবেশ ↗' : 'View Tour ↗'"></span>
+                                </a>
+                            </div>
+
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
+                    <span x-text="lang === 'bn' ? '⚡ সুপার অ্যাডমিন প্রতিটি ট্যুরে পূর্ণ CRED অধিকার সহ প্রবেশ করতে পারেন।' : '⚡ Super Admin has full God-mode CRUD access to any tour.'"></span>
+                    <button type="button" @click="showUserToursModal = false" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" x-text="lang === 'bn' ? 'বন্ধ করুন' : 'Close'"></button>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
     <!-- Admin Console Alpine Logic Script -->
@@ -1281,6 +1438,11 @@
                 userRoleFilter: 'ALL',
                 userStatusFilter: 'ALL',
                 userActivityFilter: 'ALL',
+                showUserToursModal: false,
+                selectedUserForTours: null,
+                userToursData: null,
+                loadingUserTours: false,
+                userToursFilter: 'ALL',
 
                 toursList: [],
                 loadingTours: false,
@@ -1535,6 +1697,33 @@
                     } catch (err) {
                         window.showToast(err.message || 'Failed to update status', 'error');
                     }
+                },
+
+                async openUserToursModal(user) {
+                    this.selectedUserForTours = user;
+                    this.userToursData = null;
+                    this.userToursFilter = 'ALL';
+                    this.loadingUserTours = true;
+                    this.showUserToursModal = true;
+                    try {
+                        const data = await TourMateAPI.getAdminUserTours(user.id);
+                        this.userToursData = data;
+                    } catch (err) {
+                        window.showToast(err.message || 'Error loading user tours', 'error');
+                    } finally {
+                        this.loadingUserTours = false;
+                    }
+                },
+
+                get filteredUserTours() {
+                    if (!this.userToursData || !this.userToursData.tours) return [];
+                    if (this.userToursFilter === 'CREATED') {
+                        return this.userToursData.tours.filter(t => t.is_creator);
+                    }
+                    if (this.userToursFilter === 'CONNECTED') {
+                        return this.userToursData.tours.filter(t => !t.is_creator);
+                    }
+                    return this.userToursData.tours;
                 },
 
                 async loadTours() {

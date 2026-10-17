@@ -381,6 +381,31 @@ class AdminUserStatusIn(Schema):
     is_active: bool
 
 
+class AdminUserTourItem(Schema):
+    id: UUID
+    title: str
+    description: str = ""
+    color_theme: str = "#2563EB"
+    budget_limit: Optional[Decimal] = None
+    total_expenses: Decimal = Decimal("0.00")
+    total_deposits: Decimal = Decimal("0.00")
+    members_count: int = 0
+    created_at: datetime
+    role: str = "VIEWER"
+    designation: str = ""
+    is_creator: bool = False
+
+
+class AdminUserToursOut(Schema):
+    user_id: int
+    email: str
+    full_name: str
+    avatar_url: Optional[str] = None
+    total_created: int
+    total_connected: int
+    tours: List[AdminUserTourItem]
+
+
 class AdminTourOut(Schema):
     id: UUID
     title: str

@@ -378,6 +378,10 @@ const TourMateAPI = {
         });
     },
 
+    async getAdminUserTours(userId) {
+        return this.request(`/admin/users/${userId}/tours`);
+    },
+
     async getAdminTours(params = {}) {
         const query = new URLSearchParams();
         Object.entries(params).forEach(([k, v]) => {

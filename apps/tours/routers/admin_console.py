@@ -24,6 +24,8 @@ from apps.tours.schemas import (
     AdminUserOut,
     AdminUserRoleIn,
     AdminUserStatusIn,
+    AdminUserTourItem,
+    AdminUserToursOut,
     ErrorOut,
     SiteConfigIn,
     SiteConfigOut,
@@ -243,6 +245,108 @@ def list_users(
             )
         )
     return 200, out
+
+
+@router.get(
+    "/users/{user_id}/tours",
+    response={200: AdminUserToursOut, 403: ErrorOut, 404: ErrorOut},
+    summary="Get all tours created by or connected to a specific user (Super Admin / Moderator)"
+)
+def get_user_tours(request, user_id: int):
+    admin = _get_admin_user(request)
+    _ensure_can_moderate(admin)
+
+    target_user = User.objects.filter(pk=user_id).first()
+    if not target_user:
+        raise HttpError(404, "ইউজার পাওয়া যায়নি (User not found).")
+
+    # Link unlinked memberships with this user's email
+    if target_user.email:
+        TourMember.objects.filter(email__iexact=target_user.email, user__isnull=True).update(user=target_user)
+
+    # 1. Fetch created tours
+    created_tours = list(Tour.objects.filter(created_by=target_user).order_by("-created_at"))
+    created_tour_ids = {t.id for t in created_tours}
+
+    # 2. Fetch memberships for connected tours
+    memberships = list(
+        TourMember.objects.filter(
+            Q(user=target_user) | Q(email__iexact=target_user.email)
+        )
+        .select_related("tour")
+        .order_by("-joined_at")
+    )
+
+    member_map = {}
+    for m in memberships:
+        if m.tour_id not in member_map:
+            member_map[m.tour_id] = m
+
+    all_tour_ids = list(created_tour_ids.union(member_map.keys()))
+    all_tours = list(Tour.objects.filter(id__in=all_tour_ids).order_by("-created_at"))
+
+    expense_totals = dict(
+        Expense.objects.filter(tour_id__in=all_tour_ids)
+        .values("tour_id")
+        .annotate(total=Sum("amount"))
+        .values_list("tour_id", "total")
+    )
+    deposit_totals = dict(
+        Deposit.objects.filter(tour_id__in=all_tour_ids)
+        .values("tour_id")
+        .annotate(total=Sum("amount"))
+        .values_list("tour_id", "total")
+    )
+    member_counts = dict(
+        TourMember.objects.filter(tour_id__in=all_tour_ids)
+        .values("tour_id")
+        .annotate(cnt=Count("id"))
+        .values_list("tour_id", "cnt")
+    )
+
+    items = []
+    total_created = 0
+    total_connected = 0
+
+    for t in all_tours:
+        is_creator = (t.created_by_id == target_user.id)
+        mem = member_map.get(t.id)
+
+        if is_creator:
+            total_created += 1
+            role = "OWNER"
+            designation = mem.designation if mem else ""
+        else:
+            total_connected += 1
+            role = mem.role if mem else "VIEWER"
+            designation = mem.designation if mem else ""
+
+        items.append(
+            AdminUserTourItem(
+                id=t.id,
+                title=t.title,
+                description=t.description or "",
+                color_theme=t.color_theme or "#2563EB",
+                budget_limit=t.budget_limit,
+                total_expenses=expense_totals.get(t.id) or Decimal("0.00"),
+                total_deposits=deposit_totals.get(t.id) or Decimal("0.00"),
+                members_count=member_counts.get(t.id, 0),
+                created_at=t.created_at,
+                role=role,
+                designation=designation or "",
+                is_creator=is_creator,
+            )
+        )
+
+    return 200, AdminUserToursOut(
+        user_id=target_user.id,
+        email=target_user.email,
+        full_name=target_user.full_name,
+        avatar_url=target_user.avatar_url or None,
+        total_created=total_created,
+        total_connected=total_connected,
+        tours=items,
+    )
 
 
 @router.put("/users/{user_id}/role", response={200: AdminUserOut, 400: ErrorOut, 403: ErrorOut}, summary="Change a user's admin role")

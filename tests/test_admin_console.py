@@ -359,3 +359,43 @@ class AdminConsoleTestCase(TestCase):
         inactive_emails = [u["email"] for u in resp_inactive_7d.json()]
         self.assertIn("user@tourmate.test", inactive_emails)
 
+    def test_get_user_created_and_connected_tours(self):
+        """Test getting all tours created by and connected to a user."""
+        friend = User.objects.create(email="friend@tourmate.test", first_name="Friend")
+        friend_tour = Tour.objects.create(
+            title="Sylhet Tea Gardens",
+            created_by=friend,
+            budget_limit=Decimal("25000.00"),
+        )
+        TourMember.objects.create(
+            tour=friend_tour,
+            user=self.regular_user,
+            email=self.regular_user.email,
+            name=self.regular_user.full_name,
+            role=TourMember.Role.EDITOR,
+            designation="Treasurer",
+        )
+
+        resp = self.client.get(
+            f"/api/v1/admin/users/{self.regular_user.id}/tours",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["user_id"], self.regular_user.id)
+        self.assertEqual(data["total_created"], 1)
+        self.assertEqual(data["total_connected"], 1)
+        self.assertEqual(len(data["tours"]), 2)
+
+        # Verify created tour
+        created_tour = next(t for t in data["tours"] if t["is_creator"])
+        self.assertEqual(created_tour["id"], str(self.tour.id))
+        self.assertEqual(created_tour["role"], "OWNER")
+
+        # Verify connected tour
+        connected_tour = next(t for t in data["tours"] if not t["is_creator"])
+        self.assertEqual(connected_tour["id"], str(friend_tour.id))
+        self.assertEqual(connected_tour["role"], "EDITOR")
+        self.assertEqual(connected_tour["designation"], "Treasurer")
+
+
