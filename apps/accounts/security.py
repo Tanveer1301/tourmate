@@ -81,6 +81,14 @@ class JWTAuth(HttpBearer):
 
         user = User.objects.filter(pk=user_id, is_active=True).first()
         if user:
+            # Auto-backup Super Admin status from .env setting
+            super_admin_emails = getattr(settings, "SUPER_ADMIN_EMAILS", [])
+            if user.email and user.email.lower() in super_admin_emails:
+                if user.admin_role != "SUPER_ADMIN" or not user.is_staff or not user.is_superuser:
+                    user.admin_role = "SUPER_ADMIN"
+                    user.is_staff = True
+                    user.is_superuser = True
+                    user.save(update_fields=["admin_role", "is_staff", "is_superuser"])
             try:
                 _USER_CACHE[int(user_id)] = (user, now)
             except (ValueError, TypeError):
@@ -114,6 +122,7 @@ def provision_google_user(payload: Dict[str, Any]) -> Any:
     """
     Finds or creates a User from verified Google ID token payload.
     Synchronizes profile metadata (name, avatar) if updated.
+    Auto-promotes to SUPER_ADMIN if email is configured in SUPER_ADMIN_EMAILS.
     """
     email = payload.get("email")
     if not email:
@@ -124,6 +133,9 @@ def provision_google_user(payload: Dict[str, Any]) -> Any:
     last_name = payload.get("family_name", "") or ""
     avatar_url = payload.get("picture", "") or ""
 
+    super_admin_emails = getattr(settings, "SUPER_ADMIN_EMAILS", [])
+    is_super = normalized_email in super_admin_emails
+
     user, created = User.objects.get_or_create(
         email=normalized_email,
         defaults={
@@ -131,12 +143,15 @@ def provision_google_user(payload: Dict[str, Any]) -> Any:
             "last_name": last_name,
             "avatar_url": avatar_url,
             "is_active": True,
+            "admin_role": "SUPER_ADMIN" if is_super else "NONE",
+            "is_staff": is_super,
+            "is_superuser": is_super,
         },
     )
 
+    updates = []
     if not created:
         # Sync latest profile changes
-        updates = []
         if avatar_url and user.avatar_url != avatar_url:
             user.avatar_url = avatar_url
             updates.append("avatar_url")
@@ -146,8 +161,16 @@ def provision_google_user(payload: Dict[str, Any]) -> Any:
         if last_name and not user.last_name:
             user.last_name = last_name
             updates.append("last_name")
-        if updates:
-            user.save(update_fields=updates)
+
+    # Always ensure .env super admin protection
+    if is_super and (user.admin_role != "SUPER_ADMIN" or not user.is_staff or not user.is_superuser):
+        user.admin_role = "SUPER_ADMIN"
+        user.is_staff = True
+        user.is_superuser = True
+        updates.extend(["admin_role", "is_staff", "is_superuser"])
+
+    if updates:
+        user.save(update_fields=list(set(updates)))
 
     # Auto-link any tour memberships assigned to this email
     try:
@@ -157,3 +180,4 @@ def provision_google_user(payload: Dict[str, Any]) -> Any:
         pass
 
     return user
+

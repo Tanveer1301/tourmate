@@ -18,9 +18,21 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <!-- Hidden Admin Console Tab / Button (Visible only to authorized admin roles) -->
+            <template x-if="isAdminUser">
+                <a href="/admin-console"
+                   class="px-2.5 py-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-amber-500/25 active:scale-95 transition-all"
+                   :title="lang === 'bn' ? 'অ্যাডমিন কনসোলে প্রবেশ করুন' : 'Open Admin Console'">
+                    <span>⚡</span>
+                    <span class="hidden sm:inline font-extrabold">Admin Console</span>
+                    <span class="px-1.5 py-0.2 rounded-md bg-white/20 text-[10px] font-black" x-text="adminRoleBadge"></span>
+                </a>
+            </template>
+
             <!-- Add Tour Button -->
             <button @click="openCreateModal()"
                     class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shadow-md shadow-blue-500/20 active:scale-95 transition-all">
+
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                 </svg>
@@ -514,10 +526,33 @@
                         </button>
 
 
+                        <!-- Clickable Item: Admin Console (Visible if Admin Role) -->
+                        <template x-if="isAdminUser">
+                            <a href="/admin-console"
+                               class="w-full p-3 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 dark:from-amber-950/40 dark:to-orange-950/30 rounded-2xl border border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between transition-all group active:scale-[0.99]">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-base shadow-sm">
+                                        ⚡
+                                    </div>
+                                    <div class="text-left">
+                                        <div class="flex items-center gap-1.5">
+                                            <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200">Admin Console</h4>
+                                            <span class="px-1.5 py-0.2 rounded-md bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 text-[9px] font-black" x-text="adminRoleBadge"></span>
+                                        </div>
+                                        <p class="text-[10px] text-amber-700/80 dark:text-amber-400" x-text="lang === 'bn' ? 'সিস্টেম, ইউজার ও থিম নিয়ন্ত্রণ' : 'Platform control & analytics'"></p>
+                                    </div>
+                                </div>
+                                <svg class="w-4 h-4 text-amber-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        </template>
+
                         <!-- Clickable Item: Logout -->
                         <button type="button"
                                 @click="logout()"
                                 class="w-full p-3 bg-rose-50/60 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 rounded-2xl border border-rose-200/60 dark:border-rose-900/50 flex items-center justify-between transition-all group active:scale-[0.99]">
+
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold text-base">
                                     🚪
@@ -664,10 +699,26 @@
                                             <span class="text-[10px] text-slate-400" x-text="new Date(item.created_at).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })"></span>
                                         </div>
                                         <p class="text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-medium" x-text="item.message"></p>
+                                        
+                                        <!-- Official Admin Reply Display -->
+                                        <template x-if="item.admin_reply">
+                                            <div class="mt-2 p-2.5 rounded-xl bg-blue-50 dark:bg-slate-700/70 border border-blue-200 dark:border-blue-900/60 text-xs space-y-1">
+                                                <div class="flex items-center justify-between text-[10px]">
+                                                    <span class="font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1">
+                                                        <span>🛡️</span>
+                                                        <span x-text="lang === 'bn' ? 'অ্যাডমিনের উত্তর' : 'Admin Reply'"></span>
+                                                    </span>
+                                                    <span class="text-slate-400 font-mono" x-text="item.replied_at ? new Date(item.replied_at).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''"></span>
+                                                </div>
+                                                <p class="text-xs text-slate-800 dark:text-slate-100 font-medium leading-relaxed" x-text="item.admin_reply"></p>
+                                            </div>
+                                        </template>
+
                                         <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
                                             <span class="font-bold text-slate-700 dark:text-slate-300" x-text="`${lang === 'bn' ? 'প্রেরক:' : 'From:'} ${item.user_name}`"></span>
                                             <span class="font-mono text-slate-400 truncate max-w-[140px]" x-text="item.user_email"></span>
                                         </div>
+
                                     </div>
                                 </template>
                             </div>
@@ -1124,7 +1175,9 @@ function dashboardPage() {
         feedbackSaving: false,
         feedbacks: [],
         loadingFeedbacks: false,
-        themePresets: ['#2563EB', '#059669', '#E11D48', '#D97706', '#7C3AED'],
+        isAdminUser: false,
+        adminRole: 'NONE',
+        adminRoleBadge: '',
 
         newTour: {
             title: '',
@@ -1140,7 +1193,19 @@ function dashboardPage() {
             if (user) {
                 this.userName = user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.email;
                 this.userInitials = (user.first_name ? user.first_name[0] : user.email[0]).toUpperCase();
+                this.adminRole = user.admin_role || 'NONE';
+                this.isAdminUser = !!(user.admin_role && user.admin_role !== 'NONE') || !!user.is_staff || !!user.is_superuser;
+                const badges = {
+                    'SUPER_ADMIN': 'Super Admin',
+                    'SUB_ADMIN': 'Sub-Admin',
+                    'CONTENT_MANAGER': 'UI Manager',
+                    'SUPPORT': 'Support'
+                };
+                this.adminRoleBadge = badges[user.admin_role] || (user.is_superuser ? 'Super Admin' : 'Admin');
             }
+
+            // Verify live admin credentials in background
+            this.checkAdminStatus();
 
             // SWR Instant Paint: Render cached tours in 0ms
             try {
@@ -1155,6 +1220,7 @@ function dashboardPage() {
             } catch (e) {}
 
             this.loadTours();
+
 
             window.addEventListener('tourmate-synced-refresh', () => {
                 this.loadTours();
@@ -1175,7 +1241,27 @@ function dashboardPage() {
             });
         },
 
+        async checkAdminStatus() {
+            try {
+                const me = await TourMateAPI.getAdminMe();
+                if (me && me.id) {
+                    this.isAdminUser = true;
+                    this.adminRole = me.admin_role;
+                    const badges = {
+                        'SUPER_ADMIN': 'Super Admin',
+                        'SUB_ADMIN': 'Sub-Admin',
+                        'CONTENT_MANAGER': 'UI Manager',
+                        'SUPPORT': 'Support'
+                    };
+                    this.adminRoleBadge = badges[me.admin_role] || (me.is_super_admin ? 'Super Admin' : 'Admin');
+                }
+            } catch(e) {
+                // Not an admin user, keep default
+            }
+        },
+
         openSettingsModal(tab = 'main') {
+
             this.settingsView = tab;
             const user = TourMateAPI.getUser() || {};
             this.profileForm.name = [user.first_name, user.last_name].filter(Boolean).join(' ') || '';

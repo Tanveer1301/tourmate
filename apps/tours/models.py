@@ -251,6 +251,11 @@ class Feedback(models.Model):
         SUGGESTION = "SUGGESTION", "Suggestion"
         COMPLAINT = "COMPLAINT", "Complaint"
 
+    class FeedbackStatus(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        RESOLVED = "RESOLVED", "Resolved"
+        CLOSED = "CLOSED", "Closed"
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -264,6 +269,21 @@ class Feedback(models.Model):
         default=FeedbackType.SUGGESTION,
     )
     message = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=FeedbackStatus.choices,
+        default=FeedbackStatus.PENDING,
+        db_index=True,
+    )
+    admin_reply = models.TextField(blank=True, default="")
+    replied_at = models.DateTimeField(null=True, blank=True)
+    replied_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="replied_feedbacks",
+    )
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -271,8 +291,91 @@ class Feedback(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["feedback_type", "created_at"]),
+            models.Index(fields=["status", "created_at"]),
         ]
 
     def __str__(self) -> str:
         return f"[{self.feedback_type}] {self.user_name} ({self.user_email}): {self.message[:30]}"
+
+
+class SiteConfig(models.Model):
+    """
+    Singleton configuration model for No-Code Site Customizer (Appearance & CMS).
+    Allows modifying branding, live texts, color theme presets, member designations,
+    and scheduled global pop-up announcements without code redeployments.
+    """
+    key = models.CharField(max_length=50, unique=True, default="default")
+
+    # Live Text & Language CMS
+    app_name = models.CharField(max_length=100, default="TourMate")
+    slogan_bn = models.CharField(max_length=255, default="ট্যুর হোক সহজ, হিসাব থাকুক নির্ভুল")
+    slogan_en = models.CharField(max_length=255, default="Smart Tour Expense Tracker")
+    welcome_title_bn = models.CharField(max_length=255, default="স্বাগতম")
+    welcome_title_en = models.CharField(max_length=255, default="Welcome")
+    welcome_msg_bn = models.TextField(blank=True, default="বন্ধুদের সাথে ট্যুরের কমন ফান্ড ও খরচের নির্ভুল হিসাব রাখুন সহজে।")
+    welcome_msg_en = models.TextField(blank=True, default="Track group tour expenses, deposits, and split settlements effortlessly.")
+    footer_text_bn = models.CharField(max_length=255, default="TourMate - ট্যুর হোক সহজ, হিসাব থাকুক নির্ভুল")
+    footer_text_en = models.CharField(max_length=255, default="TourMate - Smart Tour Expense Tracker")
+
+    # Colors & Theme Customizer
+    primary_color = models.CharField(max_length=20, default="#2563EB")
+    bg_shade = models.CharField(max_length=20, default="#F8FAFC")
+    custom_themes = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Available tour color palette hex codes"
+    )
+    custom_designations = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Available fun member designations"
+    )
+
+    # Global Announcement Pop-up
+    announcement_enabled = models.BooleanField(default=False)
+    announcement_id = models.CharField(max_length=50, default="announcement-1")
+    announcement_title_bn = models.CharField(max_length=255, blank=True, default="")
+    announcement_title_en = models.CharField(max_length=255, blank=True, default="")
+    announcement_msg_bn = models.TextField(blank=True, default="")
+    announcement_msg_en = models.TextField(blank=True, default="")
+    announcement_start = models.DateTimeField(null=True, blank=True)
+    announcement_end = models.DateTimeField(null=True, blank=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "site_config"
+        verbose_name = "Site Configuration"
+
+    def __str__(self) -> str:
+        return f"Site Configuration ({self.app_name})"
+
+    @classmethod
+    def get_solo(cls):
+        default_themes = ["#2563EB", "#059669", "#E11D48", "#D97706", "#7C3AED", "#0891B2", "#4F46E5"]
+        default_designations = [
+            "ক্যাশিয়ার / হিসাবরক্ষক",
+            "ট্যুর লিডার",
+            "ট্যুর ম্যানেজার",
+            "ভোজনরসিক / খাদক",
+            "অফিসিয়াল ফটোগ্রাফার",
+            "ন্যাভিগেটর / দিকনির্দেশক",
+            "ডিজে / এন্টারটেইনার",
+            "দোকানদার পার্টনার",
+        ]
+        obj, created = cls.objects.get_or_create(
+            key="default",
+            defaults={
+                "custom_themes": default_themes,
+                "custom_designations": default_designations,
+            }
+        )
+        if not obj.custom_themes:
+            obj.custom_themes = default_themes
+            obj.save(update_fields=["custom_themes"])
+        if not obj.custom_designations:
+            obj.custom_designations = default_designations
+            obj.save(update_fields=["custom_designations"])
+        return obj
+
 

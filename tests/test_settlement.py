@@ -96,8 +96,10 @@ class SettlementServiceTestCase(TestCase):
             amount=Decimal("40.00"),
             paid_by=self.member_a,
             created_by=self.creator,
+            split_all=False,
         )
         exp2.tagged_members.set([self.member_b, self.member_c])
+
 
         settlement = SettlementService.get_member_settlements(self.tour.id)
         member_results = {m["member_id"]: m for m in settlement["members"]}

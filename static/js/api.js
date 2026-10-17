@@ -339,8 +339,95 @@ const TourMateAPI = {
 
     async getFeedbacks() {
         return this.request('/feedback/');
+    },
+
+    // Public Config & Scheduled Announcement
+    async getPublicConfig() {
+        return this.request('/public/config');
+    },
+
+    // Admin Console Endpoints
+    async getAdminMe() {
+        return this.request('/admin/me');
+    },
+
+    async getAdminMetrics() {
+        return this.request('/admin/metrics');
+    },
+
+    async getAdminUsers(params = {}) {
+        const query = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') query.append(k, v);
+        });
+        const qStr = query.toString();
+        return this.request(`/admin/users${qStr ? '?' + qStr : ''}`);
+    },
+
+    async updateAdminUserRole(userId, role) {
+        return this.request(`/admin/users/${userId}/role`, {
+            method: 'PUT',
+            body: JSON.stringify({ admin_role: role })
+        });
+    },
+
+    async updateAdminUserStatus(userId, isActive) {
+        return this.request(`/admin/users/${userId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ is_active: isActive })
+        });
+    },
+
+    async getAdminTours(params = {}) {
+        const query = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') query.append(k, v);
+        });
+        const qStr = query.toString();
+        return this.request(`/admin/tours${qStr ? '?' + qStr : ''}`);
+    },
+
+    async updateAdminTour(tourId, payload) {
+        return this.request(`/admin/tours/${tourId}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+    },
+
+    async deleteAdminTour(tourId) {
+        return this.request(`/admin/tours/${tourId}`, {
+            method: 'DELETE'
+        });
+    },
+
+    async getAdminConfig() {
+        return this.request('/admin/config');
+    },
+
+    async updateAdminConfig(payload) {
+        return this.request('/admin/config', {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+    },
+
+    async getAdminFeedbacks(params = {}) {
+        const query = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') query.append(k, v);
+        });
+        const qStr = query.toString();
+        return this.request(`/admin/feedbacks${qStr ? '?' + qStr : ''}`);
+    },
+
+    async replyAdminFeedback(feedbackId, payload) {
+        return this.request(`/admin/feedbacks/${feedbackId}/reply`, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
     }
 };
+
 
 window.showToast = function(message, type = 'success') {
     window.dispatchEvent(new CustomEvent('tourmate-toast', {

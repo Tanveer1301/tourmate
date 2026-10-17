@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="bn" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TourMate - ⚡ Admin Console</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Hind Siliguri"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', '"Hind Siliguri"', 'sans-serif']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <script>
+        (function() {
+            try {
+                const theme = localStorage.getItem('tourmate_theme') || 'light';
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <script src="/static/js/api.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input, textarea, select { color: #0f172a; }
+        .dark input:not([type="checkbox"]):not([type="radio"]),
+        .dark textarea,
+        .dark select {
+            color: #f8fafc !important;
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        .dark input:focus, .dark textarea:focus, .dark select:focus {
+            border-color: #3b82f6 !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 min-h-screen antialiased transition-colors duration-200">
+
+    <!-- Global Toast Component -->
+    <div x-data="{
+            show: false,
+            message: '',
+            type: 'success',
+            trigger(msg, t = 'success') {
+                this.message = msg;
+                this.type = t;
+                this.show = true;
+                setTimeout(() => { this.show = false; }, 3200);
+            }
+         }"
+         x-init="window.addEventListener('tourmate-toast', e => trigger(e.detail.message, e.detail.type))"
+         class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-sm pointer-events-none"
+         x-cloak>
+        <div x-show="show"
+             x-transition
+             :class="{
+                'bg-emerald-600 text-white shadow-emerald-200': type === 'success',
+                'bg-rose-600 text-white shadow-rose-200': type === 'error',
+                'bg-slate-900 text-white shadow-slate-300': type === 'info'
+             }"
+             class="px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-medium border border-white/10 pointer-events-auto">
+            <span class="flex-1" x-text="message"></span>
+        </div>
+    </div>
+
+    <!-- Main Admin Shell -->
+    <div x-data="adminConsolePage()" x-init="init()" class="min-h-screen flex flex-col">
+
+        <!-- Top Header Bar -->
+        <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-3.5 transition-colors">
+            <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+                
+                <!-- Left: Brand Logo & Title -->
+                <div class="flex items-center gap-3">
+                    <a href="/tours" class="flex items-center gap-2 group">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                            TM
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-base tracking-tight text-slate-900 dark:text-white" x-text="configForm.app_name || 'TourMate'"></span>
+                                <span class="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm flex items-center gap-1">
+                                    <span>⚡</span>
+                                    <span>Admin Console</span>
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 font-medium" x-text="lang === 'bn' ? 'সিস্টেম ও প্ল্যাটফর্ম নিয়ন্ত্রণ কেন্দ্র' : 'System & Platform Command Center'"></p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Right: Role Pill, Language, Theme, Back Button -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    
+                    <!-- Admin Role Badge -->
+                    <template x-if="adminUser">
+                        <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="text-xs" x-text="getRoleIcon(adminUser.admin_role)"></span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300" x-text="getRoleName(adminUser.admin_role)"></span>
+                        </div>
+                    </template>
+
+                    <!-- Language Toggle -->
+                    <button @click="toggleLang()"
+                            class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+                        <span :class="lang === 'bn' ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-slate-400'">BN</span>
+                        <span class="text-slate-400">/</span>
+                        <span :class="lang === 'en' ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-slate-400'">EN</span>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button @click="toggleTheme()"
+                            class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-all">
+                        <span x-text="theme === 'dark' ? '☀️' : '🌙'"></span>
+                    </button>
+
+                    <!-- Back to Tours Button -->
+                    <a href="/tours"
+                       class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        <span x-text="lang === 'bn' ? 'ট্যুর ড্যাশবোর্ড' : 'Tours'"></span>
+                    </a>
+                </div>
+
+            </div>
+        </header>
+
+        <!-- Unauthorized Screen if User has no Admin Role -->
+        <template x-if="!loading && !isAuthorized">
+            <div class="flex-1 max-w-md mx-auto flex flex-col items-center justify-center p-6 text-center">
+                <div class="w-16 h-16 rounded-3xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center text-3xl mb-4">
+                    🚫
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2" x-text="lang === 'bn' ? 'অ্যাডমিন অ্যাক্সেস সীমাবদ্ধ' : 'Admin Access Restricted'"></h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed" x-text="lang === 'bn' ? 'এই অ্যাডমিন কনসোলে প্রবেশের জন্য আপনার অ্যাকাউন্টে অ্যাডমিন রোল প্রয়োজন। অনুগ্রহ করে সুপার অ্যাডমিনের সাথে যোগাযোগ করুন অথবা সাধারণ ট্যুর ড্যাশবোর্ডে ফিরে যান।' : 'You need an administrator role to access this console. Please contact a Super Admin or return to your tours dashboard.'"></p>
+                <a href="/tours" class="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-2xl text-xs shadow-md">
+                    <span x-text="lang === 'bn' ? 'আমার ট্যুরে ফিরে যান' : 'Back to My Tours'"></span>
+                </a>
+            </div>
+        </template>
+
+        <!-- Authorized Admin Console Workspace -->
+        <template x-if="isAuthorized">
+            <div class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 flex flex-col gap-6">
+
+                <!-- Navigation Tabs Bar -->
+                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 border-b border-slate-200 dark:border-slate-800">
+                    
+                    <!-- Tab 1: Overview & Metrics -->
+                    <button type="button"
+                            id="tab-btn-overview"
+                            @click="setTab('overview')"
+                            :class="activeTab === 'overview' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
+                            class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
+                        <span>📊</span>
+                        <span x-text="lang === 'bn' ? 'ওভারভিউ ও মেট্রিক্স' : 'Overview & Metrics'"></span>
+                    </button>
+
+                    <!-- Tab 2: User & Role Manager -->
+                    <button type="button"
+                            id="tab-btn-users"
+                            @click="setTab('users')"
+                            :class="activeTab === 'users' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
+                            class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
+                        <span>👥</span>
+                        <span x-text="lang === 'bn' ? 'ইউজার ও রোল ম্যানেজার' : 'Users & Roles'"></span>
+                        <template x-if="usersList.length > 0">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                  :class="activeTab === 'users' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'"
+                                  x-text="usersList.length"></span>
+                        </template>
+                    </button>
+
+                    <!-- Tab 3: Tours Explorer -->
+                    <button type="button"
+                            id="tab-btn-tours"
+                            @click="setTab('tours')"
+                            :class="activeTab === 'tours' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
+                            class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
+                        <span>🗺️</span>
+                        <span x-text="lang === 'bn' ? 'ট্যুর এক্সপ্লোরার (God-Mode)' : 'Tours Explorer'"></span>
+                        <template x-if="toursList.length > 0">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                  :class="activeTab === 'tours' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'"
+                                  x-text="toursList.length"></span>
+                        </template>
+                    </button>
+
+                    <!-- Tab 4: Appearance & CMS -->
+                    <button type="button"
+                            id="tab-btn-cms"
+                            @click="setTab('cms')"
+                            :class="activeTab === 'cms' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
+                            class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
+                        <span>🎨</span>
+                        <span x-text="lang === 'bn' ? 'সাইট কাস্টমাইজার (CMS)' : 'Appearance & CMS'"></span>
+                    </button>
+
+                    <!-- Tab 5: Complaints & Suggestions Desk -->
+                    <button type="button"
+                            id="tab-btn-feedback"
+                            @click="setTab('feedback')"
+                            :class="activeTab === 'feedback' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
+                            class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
+                        <span>💬</span>
+                        <span x-text="lang === 'bn' ? 'অভিযোগ ও পরামর্শ ডেস্ক' : 'Complaints & Desk'"></span>
+                        <template x-if="metrics && metrics.feedbacks_pending > 0">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white animate-pulse"
+                                  x-text="metrics.feedbacks_pending"></span>
+                        </template>
+                    </button>
+
+                </div>
+
+
+                <!-- TAB 1: OVERVIEW & METRICS -->
+                <div x-show="activeTab === 'overview'" class="space-y-6">
+                    
+                    <!-- Metrics Cards Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        
+                        <!-- Card 1: Users Overview -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'মোট রেজিস্টার্ড ইউজার' : 'Registered Users'"></span>
+                                <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-bold">
+                                    👥
+                                </div>
+                            </div>
+                            <div class="text-2xl font-extrabold text-slate-900 dark:text-white" x-text="metrics.users_total || 0"></div>
+                            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'আজ নতুন:' : 'Today:'"></span>
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="`+${metrics.users_today || 0}`"></span>
+                                </div>
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'চলতি মাস:' : 'This Month:'"></span>
+                                    <span class="font-bold text-blue-600 dark:text-blue-400" x-text="`+${metrics.users_month || 0}`"></span>
+                                </div>
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'চলতি বছর:' : 'This Year:'"></span>
+                                    <span class="font-bold text-slate-700 dark:text-slate-300" x-text="`+${metrics.users_year || 0}`"></span>
+                                </div>
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'নিষ্ক্রিয় / ব্লক:' : 'Inactive:'"></span>
+                                    <span class="font-bold text-rose-500" x-text="metrics.users_inactive || 0"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Tours Activity -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'ট্যুরসমূহ' : 'Tours'"></span>
+                                <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm font-bold">
+                                    🗺️
+                                </div>
+                            </div>
+                            <div class="text-2xl font-extrabold text-slate-900 dark:text-white" x-text="metrics.tours_total || 0"></div>
+                            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'চলমান ট্যুর:' : 'Active:'"></span>
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="metrics.tours_active || 0"></span>
+                                </div>
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'আর্কাইভড:' : 'Archived:'"></span>
+                                    <span class="font-bold text-amber-600 dark:text-amber-400" x-text="metrics.tours_archived || 0"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Financial Volume -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'প্ল্যাটফর্ম ভলিউম' : 'Platform Volume'"></span>
+                                <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">
+                                    💰
+                                </div>
+                            </div>
+                            <div class="text-lg font-extrabold text-slate-900 dark:text-white truncate">
+                                ৳ <span x-text="formatNumber(metrics.total_expenses_volume)"></span>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'মোট জমা (কমন ফান্ড):' : 'Total Deposits:'"></span>
+                                    <span class="font-bold text-emerald-600" x-text="`৳ ${formatNumber(metrics.total_deposits_volume)}`"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Feedback & Support -->
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400" x-text="lang === 'bn' ? 'অভিযোগ ও পরামর্শ' : 'Feedback Desk'"></span>
+                                <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold">
+                                    🎧
+                                </div>
+                            </div>
+                            <div class="text-2xl font-extrabold text-amber-600 dark:text-amber-400" x-text="metrics.feedbacks_pending || 0">
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'অপেক্ষমান উত্তর:' : 'Pending Reply:'"></span>
+                                    <span class="font-bold text-amber-500" x-text="metrics.feedbacks_pending || 0"></span>
+                                </div>
+                                <div>
+                                    <span class="block text-slate-400 font-medium" x-text="lang === 'bn' ? 'সমাধানকৃত:' : 'Resolved:'"></span>
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="metrics.feedbacks_resolved || 0"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Quick Action Shortcuts -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <div @click="setTab('users')" class="cursor-pointer p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500 shadow-sm transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg">
+                                    👑
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors" x-text="lang === 'bn' ? 'রোল ও পারমিশন ম্যানেজ করুন' : 'Manage Roles & Permissions'"></h4>
+                                    <p class="text-[11px] text-slate-400" x-text="lang === 'bn' ? 'বিশ্বস্ত ইউজারদের Super Admin বা Sub-Admin রোল দিন' : 'Assign roles to trusted users'"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div @click="setTab('cms')" class="cursor-pointer p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500 shadow-sm transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg">
+                                    📢
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors" x-text="lang === 'bn' ? 'গ্লোবাল পপ-আপ নোটিশ দিন' : 'Set Global Announcement'"></h4>
+                                    <p class="text-[11px] text-slate-400" x-text="lang === 'bn' ? 'লগইন করার পর ইউজারদের সামনে জরুরি বার্তা প্রদর্শন' : 'Schedule pop-up announcement on dashboard'"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div @click="setTab('feedback')" class="cursor-pointer p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500 shadow-sm transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
+                                    💬
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors" x-text="lang === 'bn' ? 'পরামর্শ ও অভিযোগের রিপ্লাই' : 'Reply to Complaints'"></h4>
+                                    <p class="text-[11px] text-slate-400" x-text="lang === 'bn' ? 'ইউজারদের মেসেজে সরাসরি উত্তর দিন' : 'Respond directly with timestamp'"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: USER & ROLE MANAGER -->
+                <div x-show="activeTab === 'users'" class="space-y-4">
+                    
+                    <!-- Search & Filter Controls -->
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        
+                        <div class="w-full sm:w-72 relative">
+                            <input type="text"
+                                   x-model="userSearch"
+                                   @input.debounce.350ms="loadUsers()"
+                                   :placeholder="lang === 'bn' ? 'নাম বা ইমেইল দিয়ে খুঁজুন...' : 'Search by name or email...'"
+                                   class="w-full pl-9 pr-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+                            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+
+                        <div class="w-full sm:w-auto flex items-center gap-2">
+                            <!-- Role Filter -->
+                            <select x-model="userRoleFilter" @change="loadUsers()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                                <option value="ALL" x-text="lang === 'bn' ? 'সকল রোল' : 'All Roles'"></option>
+                                <option value="SUPER_ADMIN">👑 Super Admin</option>
+                                <option value="SUB_ADMIN">🛡️ Sub-Admin / Moderator</option>
+                                <option value="CONTENT_MANAGER">🎨 UI & Content Manager</option>
+                                <option value="SUPPORT">🎧 Support Executive</option>
+                                <option value="NONE" x-text="lang === 'bn' ? 'সাধারণ ইউজার' : 'Regular User'"></option>
+                            </select>
+
+                            <!-- Status Filter -->
+                            <select x-model="userStatusFilter" @change="loadUsers()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                                <option value="ALL" x-text="lang === 'bn' ? 'সকল স্ট্যাটাস' : 'All Status'"></option>
+                                <option value="active" x-text="lang === 'bn' ? 'সক্রিয়' : 'Active'"></option>
+                                <option value="inactive" x-text="lang === 'bn' ? 'ব্লক / নিষ্ক্রিয়' : 'Blocked'"></option>
+                            </select>
+
+                            <button @click="loadUsers()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <!-- Users List / Table -->
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                        
+                        <template x-if="loadingUsers">
+                            <div class="p-8 text-center text-xs text-slate-400">
+                                <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                                <span x-text="lang === 'bn' ? 'ইউজার তালিকা লোড হচ্ছে...' : 'Loading users...'"></span>
+                            </div>
+                        </template>
+
+                        <template x-if="!loadingUsers && usersList.length === 0">
+                            <div class="p-8 text-center text-xs text-slate-400" x-text="lang === 'bn' ? 'কোনো ইউজার পাওয়া যায়নি।' : 'No users found.'"></div>
+                        </template>
+
+                        <template x-if="!loadingUsers && usersList.length > 0">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 font-semibold border-b border-slate-100 dark:border-slate-800">
+                                        <tr>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'ইউজার' : 'User'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'জয়েন করার তারিখ' : 'Joined Date'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'ট্যুর সংখ্যা' : 'Tours'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'অ্যাডমিন রোল' : 'Admin Role'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'স্ট্যাটাস' : 'Status'"></th>
+                                            <th class="py-3.5 px-4 text-right" x-text="lang === 'bn' ? 'অ্যাকশন' : 'Action'"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <template x-for="user in usersList" :key="user.id">
+                                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                                                
+                                                <!-- User Info -->
+                                                <td class="py-3 px-4">
+                                                    <div class="flex items-center gap-2.5">
+                                                        <template x-if="user.avatar_url">
+                                                            <img :src="user.avatar_url" class="w-8 h-8 rounded-full object-cover">
+                                                        </template>
+                                                        <template x-if="!user.avatar_url">
+                                                            <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs"
+                                                                 x-text="(user.first_name ? user.first_name[0] : user.email[0]).toUpperCase()"></div>
+                                                        </template>
+                                                        <div>
+                                                            <div class="font-bold text-slate-900 dark:text-white" x-text="user.full_name"></div>
+                                                            <div class="text-[11px] text-slate-400 font-mono" x-text="user.email"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Joined Date -->
+                                                <td class="py-3 px-4 text-slate-500 dark:text-slate-400" x-text="formatDate(user.date_joined)"></td>
+
+                                                <!-- Tours Created & Joined -->
+                                                <td class="py-3 px-4">
+                                                    <span class="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                                                        <span x-text="`${user.tours_created_count} খোলা`"></span>
+                                                        <span class="text-slate-400">/</span>
+                                                        <span x-text="`${user.tours_joined_count} যুক্ত`"></span>
+                                                    </span>
+                                                </td>
+
+                                                <!-- Admin Role Dropdown -->
+                                                <td class="py-3 px-4">
+                                                    <template x-if="adminUser.is_super_admin">
+                                                        <select :value="user.admin_role"
+                                                                @change="changeUserRole(user, $event.target.value)"
+                                                                class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none">
+                                                            <option value="NONE" x-text="lang === 'bn' ? 'সাধারণ ইউজার' : 'Regular User'"></option>
+                                                            <option value="SUPER_ADMIN">👑 Super Admin</option>
+                                                            <option value="SUB_ADMIN">🛡️ Sub-Admin / Moderator</option>
+                                                            <option value="CONTENT_MANAGER">🎨 UI & Content Manager</option>
+                                                            <option value="SUPPORT">🎧 Support Executive</option>
+                                                        </select>
+                                                    </template>
+                                                    <template x-if="!adminUser.is_super_admin">
+                                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold"
+                                                              :class="user.admin_role === 'SUPER_ADMIN' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'"
+                                                              x-text="getRoleName(user.admin_role)"></span>
+                                                    </template>
+                                                </td>
+
+                                                <!-- Status Badge -->
+                                                <td class="py-3 px-4">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                                          :class="user.is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'"
+                                                          x-text="user.is_active ? (lang === 'bn' ? 'সক্রিয়' : 'Active') : (lang === 'bn' ? 'ব্লক' : 'Blocked')"></span>
+                                                </td>
+
+                                                <!-- Action Buttons -->
+                                                <td class="py-3 px-4 text-right">
+                                                    <template x-if="adminUser.is_super_admin || adminUser.is_sub_admin">
+                                                        <button @click="toggleUserActive(user)"
+                                                                :disabled="user.id === adminUser.id"
+                                                                :class="user.is_active ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'"
+                                                                class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all disabled:opacity-40">
+                                                            <span x-text="user.is_active ? (lang === 'bn' ? 'ব্লক করুন' : 'Block') : (lang === 'bn' ? 'আনব্লক' : 'Unblock')"></span>
+                                                        </button>
+                                                    </template>
+                                                </td>
+
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+
+                    </div>
+
+                </div>
+
+                <!-- TAB 3: TOURS EXPLORER (GOD-MODE) -->
+                <div x-show="activeTab === 'tours'" class="space-y-4">
+                    
+                    <!-- Search & Filter Bar -->
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        
+                        <div class="w-full sm:w-80 relative">
+                            <input type="text"
+                                   x-model="tourSearch"
+                                   @input.debounce.350ms="loadTours()"
+                                   :placeholder="lang === 'bn' ? 'ট্যুর শিরোনাম বা ক্রিয়েটর খুঁজুন...' : 'Search tour title or creator...'"
+                                   class="w-full pl-9 pr-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+                            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+
+                        <div class="w-full sm:w-auto flex flex-wrap items-center gap-2">
+                            <!-- Sort Filter -->
+                            <select x-model="tourSortBy" @change="loadTours()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                                <option value="latest" x-text="lang === 'bn' ? 'সর্বশেষ তৈরি (Newest)' : 'Newest First'"></option>
+                                <option value="oldest" x-text="lang === 'bn' ? 'প্রাচীনতম (Oldest)' : 'Oldest First'"></option>
+                                <option value="budget_desc" x-text="lang === 'bn' ? 'সর্বোচ্চ বাজেট (Highest Budget)' : 'Highest Budget'"></option>
+                                <option value="members_desc" x-text="lang === 'bn' ? 'সর্বাধিক মেম্বার (Most Members)' : 'Most Members'"></option>
+                                <option value="expenses_desc" x-text="lang === 'bn' ? 'সর্বোচ্চ খরচ (Highest Expenses)' : 'Highest Expenses'"></option>
+                            </select>
+
+                            <!-- Status Filter -->
+                            <select x-model="tourStatusFilter" @change="loadTours()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                                <option value="all" x-text="lang === 'bn' ? 'সকল ট্যুর' : 'All Tours'"></option>
+                                <option value="active" x-text="lang === 'bn' ? 'চলমান ট্যুর' : 'Active Only'"></option>
+                                <option value="archived" x-text="lang === 'bn' ? 'আর্কাইভড' : 'Archived Only'"></option>
+                            </select>
+
+                            <button @click="loadTours()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <!-- Tours Table -->
+                    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                        
+                        <template x-if="loadingTours">
+                            <div class="p-8 text-center text-xs text-slate-400">
+                                <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                                <span x-text="lang === 'bn' ? 'ট্যুর তালিকা লোড হচ্ছে...' : 'Loading tours...'"></span>
+                            </div>
+                        </template>
+
+                        <template x-if="!loadingTours && toursList.length === 0">
+                            <div class="p-8 text-center text-xs text-slate-400" x-text="lang === 'bn' ? 'কোনো ট্যুর পাওয়া যায়নি।' : 'No tours found.'"></div>
+                        </template>
+
+                        <template x-if="!loadingTours && toursList.length > 0">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 font-semibold border-b border-slate-100 dark:border-slate-800">
+                                        <tr>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'ট্যুর শিরোনাম' : 'Tour Title'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'ক্রিয়েটর' : 'Creator'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'মেম্বার' : 'Members'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'কমন ফান্ড ব্যালেন্স' : 'Common Fund'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'স্ট্যাটাস' : 'Status'"></th>
+                                            <th class="py-3.5 px-4 text-right" x-text="lang === 'bn' ? 'অ্যাকশন (God-Mode)' : 'Actions'"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <template x-for="t in toursList" :key="t.id">
+                                            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                                                
+                                                <!-- Title & Color Theme -->
+                                                <td class="py-3.5 px-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="w-3 h-3 rounded-full flex-shrink-0" :style="`background-color: ${t.color_theme}`"></span>
+                                                        <div>
+                                                            <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                                                <span x-text="t.title"></span>
+                                                                <template x-if="t.is_archived">
+                                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">🔒</span>
+                                                                </template>
+                                                            </div>
+                                                            <div class="text-[11px] text-slate-400" x-text="formatDate(t.created_at)"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Creator -->
+                                                <td class="py-3.5 px-4">
+                                                    <div class="font-bold text-slate-700 dark:text-slate-300" x-text="t.created_by_name"></div>
+                                                    <div class="text-[11px] text-slate-400 font-mono" x-text="t.created_by_email"></div>
+                                                </td>
+
+                                                <!-- Members Count -->
+                                                <td class="py-3.5 px-4">
+                                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                                                          x-text="`${t.members_count} জন`"></span>
+                                                </td>
+
+                                                <!-- Deposits vs Expenses -->
+                                                <td class="py-3.5 px-4">
+                                                    <div class="font-bold text-slate-900 dark:text-white"
+                                                         :class="t.fund_balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+                                                         x-text="`৳ ${formatNumber(t.fund_balance)}`"></div>
+                                                    <div class="text-[10px] text-slate-400"
+                                                         x-text="`জমা ৳${formatNumber(t.total_deposits)} | খরচ ৳${formatNumber(t.total_expenses)}`"></div>
+                                                </td>
+
+                                                <!-- Status -->
+                                                <td class="py-3.5 px-4">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                                          :class="t.is_archived ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'"
+                                                          x-text="t.is_archived ? (lang === 'bn' ? 'আর্কাইভড' : 'Archived') : (lang === 'bn' ? 'চলমান' : 'Active')"></span>
+                                                </td>
+
+                                                <!-- Actions -->
+                                                <td class="py-3.5 px-4 text-right">
+                                                    <div class="flex items-center justify-end gap-1.5">
+                                                        <a :href="`/tours/${t.id}`" target="_blank"
+                                                           class="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
+                                                           :title="lang === 'bn' ? 'ট্যুর দেখুন' : 'View Tour'">
+                                                            🔗
+                                                        </a>
+                                                        <button @click="openTourEditModal(t)"
+                                                                class="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                                :title="lang === 'bn' ? 'এডিট করুন' : 'Edit Tour'">
+                                                            ✏️
+                                                        </button>
+                                                        <button @click="deleteTour(t)"
+                                                                class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                                                :title="lang === 'bn' ? 'ডিলিট করুন' : 'Delete Tour'">
+                                                            🗑️
+                                                        </button>
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+
+                    </div>
+
+                </div>
+
+                <!-- TAB 4: APPEARANCE & CMS CUSTOMIZER -->
+                <div x-show="activeTab === 'cms'" class="space-y-6">
+                    
+                    <form @submit.prevent="saveSiteConfig()" class="space-y-6">
+
+                        <!-- SECTION A: LIVE TEXT & LANGUAGE CMS -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+                            
+                            <div class="border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span>✍️</span>
+                                        <span x-text="lang === 'bn' ? 'টেক্সট ও ভাষা এডিটর (Live Text & Language CMS)' : 'Live Text & Language CMS'"></span>
+                                    </h3>
+                                    <p class="text-xs text-slate-400 mt-0.5" x-text="lang === 'bn' ? 'কোড বা ডিপ্লয় ছাড়া ফ্রন্টএন্ডের সকল লেখা লাইভ পরিবর্তন করুন' : 'Change site copy instantly without touching code'"></p>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                    BN + EN
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                
+                                <!-- App Name -->
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'অ্যাপ্লিকেশনের নাম (App Name)' : 'Application Name'"></label>
+                                    <input type="text" x-model="configForm.app_name" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                                </div>
+
+                                <!-- Slogan BN -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇧🇩 স্লোগান (বাংলা)</span>
+                                    </label>
+                                    <input type="text" x-model="configForm.slogan_bn" placeholder="ট্যুর হোক সহজ, হিসাব থাকুক নির্ভুল" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
+                                </div>
+
+                                <!-- Slogan EN -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇬🇧 Slogan (English)</span>
+                                    </label>
+                                    <input type="text" x-model="configForm.slogan_en" placeholder="Smart Tour Expense Tracker" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
+                                </div>
+
+                                <!-- Welcome Msg BN -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇧🇩 লগইন স্বাগতম বার্তা (বাংলা)</span>
+                                    </label>
+                                    <textarea x-model="configForm.welcome_msg_bn" rows="2" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium"></textarea>
+                                </div>
+
+                                <!-- Welcome Msg EN -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇬🇧 Login Welcome Message (English)</span>
+                                    </label>
+                                    <textarea x-model="configForm.welcome_msg_en" rows="2" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium"></textarea>
+                                </div>
+
+                                <!-- Footer Text BN -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇧🇩 ফুটার টেক্সট (বাংলা)</span>
+                                    </label>
+                                    <input type="text" x-model="configForm.footer_text_bn" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
+                                </div>
+
+                                <!-- Footer Text EN -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇬🇧 Footer Text (English)</span>
+                                    </label>
+                                    <input type="text" x-model="configForm.footer_text_en" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- SECTION B: COLORS & THEME CONTROLLER -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+                            
+                            <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>🎨</span>
+                                    <span x-text="lang === 'bn' ? 'কালার ও থিম কন্ট্রোলার' : 'Colors & Theme Controller'"></span>
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5" x-text="lang === 'bn' ? 'সাইটের প্রাইমারি কালার ও ট্যুর তৈরির কালার প্যালেট নিয়ন্ত্রণ করুন' : 'Control brand primary color and custom tour theme hex presets'"></p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                
+                                <!-- Primary Brand Color -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" x-text="lang === 'bn' ? 'সাইটের প্রাইমারি বাটন কালার (Primary Hex)' : 'Primary Button Color'"></label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="color" x-model="configForm.primary_color" class="w-10 h-10 rounded-xl cursor-pointer border border-slate-200 dark:border-slate-700 bg-transparent">
+                                        <input type="text" x-model="configForm.primary_color" class="flex-1 px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold uppercase">
+                                    </div>
+                                </div>
+
+                                <!-- Tour Color Themes Presets -->
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" x-text="lang === 'bn' ? 'ট্যুর তৈরির সময় কালার প্যালেট প্রি-সেটসমূহ (Hex Presets)' : 'Tour Color Theme Palette'"></label>
+                                    
+                                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                                        <template x-for="(col, idx) in configForm.custom_themes" :key="idx">
+                                            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold">
+                                                <span class="w-3.5 h-3.5 rounded-full" :style="`background-color: ${col}`"></span>
+                                                <span class="font-mono text-[11px]" x-text="col"></span>
+                                                <button type="button" @click="removeThemePreset(idx)" class="text-slate-400 hover:text-rose-500 font-bold ml-1">&times;</button>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 max-w-sm">
+                                        <input type="color" x-model="newThemeColor" class="w-9 h-9 rounded-xl cursor-pointer border border-slate-200 bg-transparent">
+                                        <input type="text" x-model="newThemeColor" placeholder="#3B82F6" class="flex-1 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold uppercase">
+                                        <button type="button" @click="addThemePreset()" class="px-3 py-1.5 bg-slate-800 dark:bg-slate-700 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors">
+                                            + <span x-text="lang === 'bn' ? 'যোগ করুন' : 'Add'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Fun Member Designations -->
+                                <div class="md:col-span-2 pt-2">
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" x-text="lang === 'bn' ? 'মেম্বারদের মজার পদবি তালিকা (Designations)' : 'Tour Member Designations'"></label>
+                                    
+                                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                                        <template x-for="(des, idx) in configForm.custom_designations" :key="idx">
+                                            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800 text-xs font-bold text-blue-700 dark:text-blue-300">
+                                                <span x-text="des"></span>
+                                                <button type="button" @click="removeDesignation(idx)" class="text-blue-400 hover:text-rose-500 font-bold ml-1">&times;</button>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 max-w-md">
+                                        <input type="text" x-model="newDesignationText" :placeholder="lang === 'bn' ? 'নতুন পদবি (যেমন: ডিজে / এন্টারটেইনার)' : 'New designation title...'" class="flex-1 px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
+                                        <button type="button" @click="addDesignation()" class="px-3.5 py-2 bg-blue-600 text-white rounded-2xl text-xs font-bold hover:bg-blue-700 transition-colors">
+                                            + <span x-text="lang === 'bn' ? 'যোগ করুন' : 'Add'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- SECTION C: GLOBAL ANNOUNCEMENT POP-UP (NO BELL ICON) -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+                            
+                            <div class="border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span>📢</span>
+                                        <span x-text="lang === 'bn' ? 'গ্লোবাল নোটিশ পপ-আপ (Login Pop-up Modal)' : 'Global Scheduled Announcement Pop-up'"></span>
+                                    </h3>
+                                    <p class="text-xs text-slate-400 mt-0.5" x-text="lang === 'bn' ? 'লগইন করার সাথে সাথে ইউজারের স্ক্রিনে পপ-আপ মেসেজ ভেসে উঠবে। ক্রস (✕) দিলে বন্ধ হবে।' : 'Pops up as a modal once logged in. No bell icon required.'"></p>
+                                </div>
+                                
+                                <!-- Toggle Active -->
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="configForm.announcement_enabled" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇧🇩 নোটিশ শিরোনাম (বাংলা)</span>
+                                    </label>
+                                    <input type="text" x-model="configForm.announcement_title_bn" placeholder="নতুন ফিচার আপডেট!" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇬🇧 Notice Title (English)</span>
+                                    </label>
+                                    <input type="text" x-model="configForm.announcement_title_en" placeholder="Important Platform Update!" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇧🇩 নোটিশ বিস্তারিত বার্তা (বাংলা)</span>
+                                    </label>
+                                    <textarea x-model="configForm.announcement_msg_bn" rows="3" placeholder="এখন থেকে খরচের রশিদ ডাউনলোড করা আরও সহজ..." class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                        <span>🇬🇧 Notice Message (English)</span>
+                                    </label>
+                                    <textarea x-model="configForm.announcement_msg_en" rows="3" placeholder="Now downloading tour expense receipts is easier than ever..." class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'শুরুর সময় (Start Time)' : 'Start Time'"></label>
+                                    <input type="datetime-local" x-model="configForm.announcement_start" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'শেষের সময় (End Time)' : 'End Time'"></label>
+                                    <input type="datetime-local" x-model="configForm.announcement_end" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Sticky Bottom Save Bar -->
+                        <div class="sticky bottom-4 z-20 flex justify-end">
+                            <button type="submit"
+                                    :disabled="savingConfig"
+                                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs shadow-xl shadow-blue-500/30 flex items-center gap-2 active:scale-95 transition-all">
+                                <template x-if="savingConfig">
+                                    <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                </template>
+                                <span>💾</span>
+                                <span x-text="savingConfig ? (lang === 'bn' ? 'সংরক্ষণ করা হচ্ছে...' : 'Saving Changes...') : (lang === 'bn' ? 'পরিবর্তন লাইভ সংরক্ষণ করুন' : 'Save Live Configuration')"></span>
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+
+                <!-- TAB 5: COMPLAINTS & SUGGESTIONS DESK -->
+                <div x-show="activeTab === 'feedback'" class="space-y-4">
+                    
+                    <!-- Filter & Tabs Header -->
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <!-- Type Filter -->
+                            <button @click="feedbackTypeFilter = 'ALL'; loadFeedbacks()"
+                                    :class="feedbackTypeFilter === 'ALL' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+                                <span x-text="lang === 'bn' ? 'সকল' : 'All'"></span>
+                            </button>
+                            <button @click="feedbackTypeFilter = 'SUGGESTION'; loadFeedbacks()"
+                                    :class="feedbackTypeFilter === 'SUGGESTION' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+                                <span>💡</span> <span x-text="lang === 'bn' ? 'পরামর্শ' : 'Suggestions'"></span>
+                            </button>
+                            <button @click="feedbackTypeFilter = 'COMPLAINT'; loadFeedbacks()"
+                                    :class="feedbackTypeFilter === 'COMPLAINT' ? 'bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+                                <span>⚠️</span> <span x-text="lang === 'bn' ? 'অভিযোগ' : 'Complaints'"></span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <!-- Status Filter -->
+                            <select x-model="feedbackStatusFilter" @change="loadFeedbacks()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                                <option value="ALL" x-text="lang === 'bn' ? 'সকল স্ট্যাটাস' : 'All Status'"></option>
+                                <option value="PENDING" x-text="lang === 'bn' ? '⏳ অপেক্ষমান (Pending)' : 'Pending'"></option>
+                                <option value="RESOLVED" x-text="lang === 'bn' ? '✅ সমাধানকৃত (Resolved)' : 'Resolved'"></option>
+                            </select>
+
+                            <button @click="loadFeedbacks()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <!-- Feedbacks List -->
+                    <template x-if="loadingFeedbacks">
+                        <div class="p-8 text-center text-xs text-slate-400">
+                            <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                            <span x-text="lang === 'bn' ? 'ফিডব্যাক লোড হচ্ছে...' : 'Loading feedback desk...'"></span>
+                        </div>
+                    </template>
+
+                    <template x-if="!loadingFeedbacks && feedbacksList.length === 0">
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center text-xs text-slate-400 border border-slate-200/80 dark:border-slate-800" x-text="lang === 'bn' ? 'কোনো অভিযোগ বা পরামর্শ জমা নেই।' : 'No tickets or feedback submitted.'"></div>
+                    </template>
+
+                    <template x-if="!loadingFeedbacks && feedbacksList.length > 0">
+                        <div class="space-y-3">
+                            <template x-for="item in feedbacksList" :key="item.id">
+                                <div class="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3 transition-all hover:border-blue-300">
+                                    
+                                    <!-- Header Info -->
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold"
+                                                  :class="item.feedback_type === 'COMPLAINT' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'"
+                                                  x-text="item.feedback_type === 'COMPLAINT' ? (lang === 'bn' ? '⚠️ অভিযোগ' : '⚠️ Complaint') : (lang === 'bn' ? '💡 পরামর্শ' : '💡 Suggestion')"></span>
+
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                                  :class="item.status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'"
+                                                  x-text="item.status === 'RESOLVED' ? (lang === 'bn' ? '✅ সমাধান করা হয়েছে' : 'Resolved') : (lang === 'bn' ? '⏳ অপেক্ষমান' : 'Pending')"></span>
+                                        </div>
+
+                                        <div class="text-[11px] text-slate-400" x-text="formatDate(item.created_at)"></div>
+                                    </div>
+
+                                    <!-- User message body -->
+                                    <p class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed" x-text="item.message"></p>
+
+                                    <!-- Sender info -->
+                                    <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                                        <div>
+                                            <span class="font-bold text-slate-800 dark:text-slate-200" x-text="item.user_name"></span>
+                                            <span class="font-mono text-slate-400 ml-1" x-text="`(${item.user_email})`"></span>
+                                        </div>
+
+                                        <!-- Reply Toggle Button -->
+                                        <button @click="openReplyBox(item)"
+                                                class="px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-100 transition-colors">
+                                            <span x-text="item.admin_reply ? (lang === 'bn' ? 'উত্তর সম্পাদন' : 'Edit Reply') : (lang === 'bn' ? 'উত্তর লিখুন' : 'Write Reply')"></span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Admin Reply Display Card -->
+                                    <template x-if="item.admin_reply">
+                                        <div class="mt-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 space-y-1">
+                                            <div class="flex items-center justify-between text-[11px]">
+                                                <span class="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                                    <span>🛡️</span>
+                                                    <span x-text="lang === 'bn' ? 'অ্যাডমিনের অফিসিয়াল উত্তর' : 'Official Admin Reply'"></span>
+                                                    <template x-if="item.replied_by_name">
+                                                        <span class="text-slate-400 font-normal" x-text="`(${item.replied_by_name})`"></span>
+                                                    </template>
+                                                </span>
+                                                <span class="text-slate-400 text-[10px]" x-text="formatDate(item.replied_at)"></span>
+                                            </div>
+                                            <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed" x-text="item.admin_reply"></p>
+                                        </div>
+                                    </template>
+
+                                    <!-- Inline Reply Form -->
+                                    <template x-if="activeReplyId === item.id">
+                                        <div class="mt-3 p-4 rounded-2xl bg-blue-50/70 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 space-y-3">
+                                            <label class="block text-xs font-bold text-slate-800 dark:text-slate-200" x-text="lang === 'bn' ? 'ইউজারকে অফিসিয়াল উত্তর পাঠান:' : 'Send Official Reply:'"></label>
+                                            <textarea x-model="replyText" rows="3" class="w-full px-3 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500" :placeholder="lang === 'bn' ? 'আপনার উত্তর লিখুন...' : 'Type your response here...'"></textarea>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5 cursor-pointer">
+                                                        <input type="checkbox" x-model="replyMarkResolved" class="rounded text-blue-600">
+                                                        <span x-text="lang === 'bn' ? 'সমস্যা সমাধানকৃত হিসেবে মার্ক করুন' : 'Mark ticket as Resolved'"></span>
+                                                    </label>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <button type="button" @click="activeReplyId = null" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700" x-text="lang === 'bn' ? 'বাতিল' : 'Cancel'"></button>
+                                                    <button type="button" @click="submitReply(item.id)" :disabled="replySubmitting || !replyText.trim()" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all">
+                                                        <span x-text="replySubmitting ? '...' : (lang === 'bn' ? 'উত্তর পাঠান' : 'Send Reply')"></span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                </div>
+
+            </div>
+        </template>
+
+        <!-- Tour Quick Edit Modal (God-Mode) -->
+        <div x-show="showTourEditModal"
+             @click.self="showTourEditModal = false"
+             class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+             x-cloak>
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>✏️</span>
+                        <span x-text="lang === 'bn' ? 'ট্যুর সম্পাদনা (God-Mode)' : 'Edit Tour (God-Mode)'"></span>
+                    </h3>
+                    <button @click="showTourEditModal = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'ট্যুর শিরোনাম' : 'Tour Title'"></label>
+                        <input type="text" x-model="tourEditForm.title" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'বিবরণ / নোটস' : 'Description'"></label>
+                        <textarea x-model="tourEditForm.description" rows="2" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'বাজেট সিলিং (৳)' : 'Budget Limit (৳)'"></label>
+                            <input type="number" step="0.01" x-model="tourEditForm.budget_limit" class="w-full px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'কালার থিম' : 'Color Theme'"></label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" x-model="tourEditForm.color_theme" class="w-9 h-9 rounded-xl border border-slate-200 bg-transparent">
+                                <input type="text" x-model="tourEditForm.color_theme" class="flex-1 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono uppercase">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300">
+                            <input type="checkbox" x-model="tourEditForm.is_archived" class="rounded text-blue-600">
+                            <span x-text="lang === 'bn' ? '🔒 ট্যুর আর্কাইভ করুন (Archived Mode)' : 'Archive Tour'"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="showTourEditModal = false" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700" x-text="lang === 'bn' ? 'বাতিল' : 'Cancel'"></button>
+                    <button type="button" @click="saveTourEdit()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-md transition-all">
+                        <span x-text="lang === 'bn' ? 'সংরক্ষণ করুন' : 'Save Changes'"></span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Admin Console Alpine Logic Script -->
+    <script>
+        function adminConsolePage() {
+            return {
+                lang: localStorage.getItem('tourmate_lang') || 'bn',
+                theme: localStorage.getItem('tourmate_theme') || 'light',
+                activeTab: 'overview',
+                isAuthorized: false,
+                loading: true,
+                adminUser: null,
+
+                metrics: {},
+                usersList: [],
+                loadingUsers: false,
+                userSearch: '',
+                userRoleFilter: 'ALL',
+                userStatusFilter: 'ALL',
+
+                toursList: [],
+                loadingTours: false,
+                tourSearch: '',
+                tourSortBy: 'latest',
+                tourStatusFilter: 'all',
+
+                showTourEditModal: false,
+                tourEditForm: {
+                    id: null,
+                    title: '',
+                    description: '',
+                    budget_limit: '',
+                    color_theme: '#2563EB',
+                    is_archived: false
+                },
+
+                configForm: {
+                    app_name: 'TourMate',
+                    slogan_bn: '',
+                    slogan_en: '',
+                    welcome_title_bn: '',
+                    welcome_title_en: '',
+                    welcome_msg_bn: '',
+                    welcome_msg_en: '',
+                    footer_text_bn: '',
+                    footer_text_en: '',
+                    primary_color: '#2563EB',
+                    bg_shade: '#F8FAFC',
+                    custom_themes: [],
+                    custom_designations: [],
+                    announcement_enabled: false,
+                    announcement_id: 'announcement-1',
+                    announcement_title_bn: '',
+                    announcement_title_en: '',
+                    announcement_msg_bn: '',
+                    announcement_msg_en: '',
+                    announcement_start: '',
+                    announcement_end: ''
+                },
+                newThemeColor: '#3B82F6',
+                newDesignationText: '',
+                savingConfig: false,
+
+                feedbacksList: [],
+                loadingFeedbacks: false,
+                feedbackTypeFilter: 'ALL',
+                feedbackStatusFilter: 'ALL',
+                activeReplyId: null,
+                replyText: '',
+                replyMarkResolved: true,
+                replySubmitting: false,
+
+                async init() {
+                    if (!TourMateAPI.ensureAuth()) return;
+                    await this.checkAuthAndRole();
+                    if (this.isAuthorized) {
+                        this.loadMetrics();
+                        this.loadUsers();
+                        this.loadTours();
+                        this.loadConfig();
+                        this.loadFeedbacks();
+                    }
+                },
+
+                async checkAuthAndRole() {
+                    this.loading = true;
+                    try {
+                        const me = await TourMateAPI.getAdminMe();
+                        this.adminUser = me;
+                        this.isAuthorized = !!me.id;
+                    } catch (err) {
+                        console.warn('Admin check error:', err);
+                        this.isAuthorized = false;
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                setTab(tab) {
+                    this.activeTab = tab;
+                    if (tab === 'overview') this.loadMetrics();
+                    else if (tab === 'users') this.loadUsers();
+                    else if (tab === 'tours') this.loadTours();
+                    else if (tab === 'cms') this.loadConfig();
+                    else if (tab === 'feedback') this.loadFeedbacks();
+                },
+
+                toggleLang() {
+                    this.lang = this.lang === 'bn' ? 'en' : 'bn';
+                    localStorage.setItem('tourmate_lang', this.lang);
+                },
+
+                toggleTheme() {
+                    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+                    localStorage.setItem('tourmate_theme', this.theme);
+                    if (this.theme === 'dark') {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+
+                getRoleIcon(role) {
+                    const icons = {
+                        'SUPER_ADMIN': '👑',
+                        'SUB_ADMIN': '🛡️',
+                        'CONTENT_MANAGER': '🎨',
+                        'SUPPORT': '🎧',
+                        'NONE': '👤'
+                    };
+                    return icons[role] || '👤';
+                },
+
+                getRoleName(role) {
+                    const namesBn = {
+                        'SUPER_ADMIN': 'Super Admin',
+                        'SUB_ADMIN': 'Sub-Admin / Moderator',
+                        'CONTENT_MANAGER': 'UI & Content Manager',
+                        'SUPPORT': 'Support Executive',
+                        'NONE': 'Regular User'
+                    };
+                    return namesBn[role] || role;
+                },
+
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    try {
+                        const d = new Date(dateStr);
+                        return d.toLocaleDateString(this.lang === 'bn' ? 'bn-BD' : 'en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                    } catch(e) {
+                        return dateStr;
+                    }
+                },
+
+                formatNumber(num) {
+                    if (!num && num !== 0) return '0.00';
+                    return Number(num).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                },
+
+                async loadMetrics() {
+                    try {
+                        this.metrics = await TourMateAPI.getAdminMetrics();
+                    } catch (err) {
+                        console.error('Metrics load failed:', err);
+                    }
+                },
+
+                async loadUsers() {
+                    this.loadingUsers = true;
+                    try {
+                        const params = {};
+                        if (this.userSearch.trim()) params.search = this.userSearch.trim();
+                        if (this.userRoleFilter !== 'ALL') params.role = this.userRoleFilter;
+                        if (this.userStatusFilter !== 'ALL') params.status = this.userStatusFilter;
+                        this.usersList = await TourMateAPI.getAdminUsers(params);
+                    } catch (err) {
+                        console.error('Failed to load users:', err);
+                        window.showToast(err.message || 'Users load failed', 'error');
+                    } finally {
+                        this.loadingUsers = false;
+                    }
+                },
+
+                async changeUserRole(user, newRole) {
+                    try {
+                        const updated = await TourMateAPI.updateAdminUserRole(user.id, newRole);
+                        user.admin_role = updated.admin_role;
+                        window.showToast(this.lang === 'bn' ? `ইউজারের রোল সফলভাবে '${this.getRoleName(newRole)}' এ পরিবর্তন করা হয়েছে!` : 'Role updated successfully!', 'success');
+                    } catch (err) {
+                        window.showToast(err.message || 'Failed to update role', 'error');
+                        this.loadUsers();
+                    }
+                },
+
+                async toggleUserActive(user) {
+                    const nextActive = !user.is_active;
+                    const confirmMsg = this.lang === 'bn'
+                        ? `আপনি কি নিশ্চিতভাবে এই ইউজারকে ${nextActive ? 'সক্রিয়' : 'ব্লক'} করতে চান?`
+                        : `Are you sure you want to ${nextActive ? 'unblock' : 'block'} this user?`;
+                    if (!confirm(confirmMsg)) return;
+
+                    try {
+                        await TourMateAPI.updateAdminUserStatus(user.id, nextActive);
+                        user.is_active = nextActive;
+                        window.showToast(this.lang === 'bn' ? 'ইউজার স্ট্যাটাস পরিবর্তন হয়েছে।' : 'User status updated.', 'success');
+                    } catch (err) {
+                        window.showToast(err.message || 'Failed to update status', 'error');
+                    }
+                },
+
+                async loadTours() {
+                    this.loadingTours = true;
+                    try {
+                        const params = {};
+                        if (this.tourSearch.trim()) params.search = this.tourSearch.trim();
+                        if (this.tourSortBy) params.sort_by = this.tourSortBy;
+                        if (this.tourStatusFilter !== 'all') params.filter_status = this.tourStatusFilter;
+                        this.toursList = await TourMateAPI.getAdminTours(params);
+                    } catch (err) {
+                        console.error('Failed to load tours:', err);
+                        window.showToast(err.message || 'Tours load failed', 'error');
+                    } finally {
+                        this.loadingTours = false;
+                    }
+                },
+
+                openTourEditModal(tour) {
+                    this.tourEditForm = {
+                        id: tour.id,
+                        title: tour.title || '',
+                        description: tour.description || '',
+                        budget_limit: tour.budget_limit || '',
+                        color_theme: tour.color_theme || '#2563EB',
+                        is_archived: !!tour.is_archived
+                    };
+                    this.showTourEditModal = true;
+                },
+
+                async saveTourEdit() {
+                    if (!this.tourEditForm.id) return;
+                    try {
+                        const payload = {
+                            title: this.tourEditForm.title,
+                            description: this.tourEditForm.description,
+                            budget_limit: this.tourEditForm.budget_limit ? Number(this.tourEditForm.budget_limit) : null,
+                            color_theme: this.tourEditForm.color_theme,
+                            is_archived: this.tourEditForm.is_archived
+                        };
+                        const updated = await TourMateAPI.updateAdminTour(this.tourEditForm.id, payload);
+                        this.showTourEditModal = false;
+                        window.showToast(this.lang === 'bn' ? 'ট্যুর সফলভাবে আপডেট করা হয়েছে!' : 'Tour updated successfully!', 'success');
+                        this.loadTours();
+                    } catch (err) {
+                        window.showToast(err.message || 'Failed to update tour', 'error');
+                    }
+                },
+
+                async deleteTour(tour) {
+                    const confirmMsg = this.lang === 'bn'
+                        ? `সাবধান! আপনি কি নিশ্চিতভাবে '${tour.title}' ট্যুরটি স্থায়ীভাবে মুছে ফেলতে চান? এর সকল ডেপোজিট ও খরচ মুছে যাবে!`
+                        : `Danger! Are you sure you want to permanently delete '${tour.title}'? All deposits & expenses will be deleted!`;
+                    if (!confirm(confirmMsg)) return;
+
+                    try {
+                        await TourMateAPI.deleteAdminTour(tour.id);
+                        window.showToast(this.lang === 'bn' ? 'ট্যুর সফলভাবে মুছে ফেলা হয়েছে।' : 'Tour deleted.', 'success');
+                        this.loadTours();
+                        this.loadMetrics();
+                    } catch (err) {
+                        window.showToast(err.message || 'Failed to delete tour', 'error');
+                    }
+                },
+
+                async loadConfig() {
+                    try {
+                        const cfg = await TourMateAPI.getAdminConfig();
+                        this.configForm = {
+                            app_name: cfg.app_name || 'TourMate',
+                            slogan_bn: cfg.slogan_bn || '',
+                            slogan_en: cfg.slogan_en || '',
+                            welcome_title_bn: cfg.welcome_title_bn || '',
+                            welcome_title_en: cfg.welcome_title_en || '',
+                            welcome_msg_bn: cfg.welcome_msg_bn || '',
+                            welcome_msg_en: cfg.welcome_msg_en || '',
+                            footer_text_bn: cfg.footer_text_bn || '',
+                            footer_text_en: cfg.footer_text_en || '',
+                            primary_color: cfg.primary_color || '#2563EB',
+                            bg_shade: cfg.bg_shade || '#F8FAFC',
+                            custom_themes: Array.isArray(cfg.custom_themes) ? [...cfg.custom_themes] : [],
+                            custom_designations: Array.isArray(cfg.custom_designations) ? [...cfg.custom_designations] : [],
+                            announcement_enabled: !!cfg.announcement_enabled,
+                            announcement_id: cfg.announcement_id || 'announcement-1',
+                            announcement_title_bn: cfg.announcement_title_bn || '',
+                            announcement_title_en: cfg.announcement_title_en || '',
+                            announcement_msg_bn: cfg.announcement_msg_bn || '',
+                            announcement_msg_en: cfg.announcement_msg_en || '',
+                            announcement_start: cfg.announcement_start ? cfg.announcement_start.slice(0, 16) : '',
+                            announcement_end: cfg.announcement_end ? cfg.announcement_end.slice(0, 16) : ''
+                        };
+                    } catch (err) {
+                        console.error('Config load failed:', err);
+                    }
+                },
+
+                addThemePreset() {
+                    const hex = this.newThemeColor.trim().toUpperCase();
+                    if (!hex || this.configForm.custom_themes.includes(hex)) return;
+                    this.configForm.custom_themes.push(hex);
+                },
+
+                removeThemePreset(index) {
+                    this.configForm.custom_themes.splice(index, 1);
+                },
+
+                addDesignation() {
+                    const val = this.newDesignationText.trim();
+                    if (!val || this.configForm.custom_designations.includes(val)) return;
+                    this.configForm.custom_designations.push(val);
+                    this.newDesignationText = '';
+                },
+
+                removeDesignation(index) {
+                    this.configForm.custom_designations.splice(index, 1);
+                },
+
+                async saveSiteConfig() {
+                    this.savingConfig = true;
+                    try {
+                        const payload = {
+                            ...this.configForm,
+                            announcement_start: this.configForm.announcement_start ? new Date(this.configForm.announcement_start).toISOString() : null,
+                            announcement_end: this.configForm.announcement_end ? new Date(this.configForm.announcement_end).toISOString() : null
+                        };
+                        await TourMateAPI.updateAdminConfig(payload);
+                        window.showToast(this.lang === 'bn' ? '🎉 সাইটের সকল কনফিগারেশন সফলভাবে লাইভ সংরক্ষিত হয়েছে!' : 'Site configuration saved live!', 'success');
+                    } catch (err) {
+                        window.showToast(err.message || 'Config save failed', 'error');
+                    } finally {
+                        this.savingConfig = false;
+                    }
+                },
+
+                async loadFeedbacks() {
+                    this.loadingFeedbacks = true;
+                    try {
+                        const params = {};
+                        if (this.feedbackTypeFilter !== 'ALL') params.feedback_type = this.feedbackTypeFilter;
+                        if (this.feedbackStatusFilter !== 'ALL') params.status = this.feedbackStatusFilter;
+                        this.feedbacksList = await TourMateAPI.getAdminFeedbacks(params);
+                    } catch (err) {
+                        console.error('Feedbacks load failed:', err);
+                    } finally {
+                        this.loadingFeedbacks = false;
+                    }
+                },
+
+                openReplyBox(item) {
+                    this.activeReplyId = item.id;
+                    this.replyText = item.admin_reply || '';
+                    this.replyMarkResolved = true;
+                },
+
+                async submitReply(feedbackId) {
+                    if (!this.replyText.trim()) return;
+                    this.replySubmitting = true;
+                    try {
+                        const payload = {
+                            reply: this.replyText.trim(),
+                            status: this.replyMarkResolved ? 'RESOLVED' : 'PENDING'
+                        };
+                        const updated = await TourMateAPI.replyAdminFeedback(feedbackId, payload);
+                        const idx = this.feedbacksList.findIndex(f => f.id === feedbackId);
+                        if (idx !== -1) {
+                            this.feedbacksList[idx] = updated;
+                        }
+                        this.activeReplyId = null;
+                        this.replyText = '';
+                        window.showToast(this.lang === 'bn' ? 'ইউজারের মেসেজে সফলভাবে উত্তর পাঠানো হয়েছে!' : 'Reply sent successfully!', 'success');
+                        this.loadMetrics();
+                    } catch (err) {
+                        window.showToast(err.message || 'Failed to send reply', 'error');
+                    } finally {
+                        this.replySubmitting = false;
+                    }
+                }
+            };
+        }
+    </script>
+</body>
+</html>

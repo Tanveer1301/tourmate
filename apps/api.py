@@ -3,11 +3,13 @@ from ninja.errors import ValidationError
 
 from apps.accounts.security import JWTAuth
 from apps.tours.routers import (
+    admin_router,
     auth_router,
     collaboration_router,
     deposits_router,
     expenses_router,
     feedback_router,
+    public_config_router,
     settlement_router,
     tours_router,
 )
@@ -47,4 +49,11 @@ api.add_router("/tours", collaboration_router)
 
 # 3. Mount User Feedback & Suggestions router
 api.add_router("/feedback", feedback_router)
+
+# 4. Mount Admin Console router
+api.add_router("/admin", admin_router)
+
+# 5. Mount Public Config router (unauthenticated)
+api.add_router("/public", public_config_router, auth=None)
+
 

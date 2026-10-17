@@ -54,6 +54,12 @@ def tour_detail_view(request, tour_id):
     return render(request, "tour_detail.html", {"tour_id": str(tour_id)})
 
 
+def admin_console_view(request):
+    """Renders the comprehensive TourMate Admin Console workspace."""
+    return render(request, "admin_console.html")
+
+
+
 def google_oauth_login(request):
     """Direct Google OAuth2 redirect flow (works 100% across all mobile browsers and webviews)."""
     client_id = getattr(settings, "GOOGLE_CLIENT_ID", "")
@@ -132,6 +138,7 @@ def google_oauth_callback(request):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "avatar_url": user.avatar_url,
+            "admin_role": getattr(user, "admin_role", "NONE"),
             "is_staff": user.is_staff,
             "is_superuser": user.is_superuser,
         }

@@ -32,6 +32,14 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+class AdminRole(models.TextChoices):
+    SUPER_ADMIN = "SUPER_ADMIN", "Super Admin"
+    SUB_ADMIN = "SUB_ADMIN", "Sub-Admin / Moderator"
+    CONTENT_MANAGER = "CONTENT_MANAGER", "UI & Content Manager"
+    SUPPORT = "SUPPORT", "Support Executive"
+    NONE = "NONE", "Regular User"
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     """
     Stateless, email-centric user model tailored for Google OAuth2 and JWT authentication.
@@ -41,6 +49,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=150, blank=True, default="")
     avatar_url = models.URLField(max_length=1024, blank=True, default="")
     
+    admin_role = models.CharField(
+        max_length=20,
+        choices=AdminRole.choices,
+        default=AdminRole.NONE,
+        db_index=True,
+    )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
@@ -56,6 +70,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = "Users"
         indexes = [
             models.Index(fields=["email"]),
+            models.Index(fields=["admin_role"]),
         ]
 
     def __str__(self):
@@ -65,3 +80,24 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self) -> str:
         name = f"{self.first_name} {self.last_name}".strip()
         return name or self.email
+
+    def get_full_name(self) -> str:
+        return self.full_name
+
+    def get_short_name(self) -> str:
+        return self.first_name or self.email.split("@")[0]
+
+    @property
+    def is_super_admin(self) -> bool:
+
+        return self.admin_role == AdminRole.SUPER_ADMIN or self.is_superuser
+
+    @property
+    def is_any_admin(self) -> bool:
+        return self.admin_role in {
+            AdminRole.SUPER_ADMIN,
+            AdminRole.SUB_ADMIN,
+            AdminRole.CONTENT_MANAGER,
+            AdminRole.SUPPORT,
+        } or self.is_staff or self.is_superuser
+

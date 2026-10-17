@@ -34,8 +34,10 @@ class UserOut(Schema):
     first_name: str
     last_name: str
     avatar_url: Optional[str] = None
+    admin_role: str = "NONE"
     is_staff: bool = False
     is_superuser: bool = False
+
 
 
 class AuthTokenOut(Schema):
@@ -329,5 +331,144 @@ class FeedbackOut(Schema):
     user_email: str
     feedback_type: str
     message: str
+    status: str = "PENDING"
+    admin_reply: str = ""
+    replied_at: Optional[datetime] = None
     created_at: datetime
+
+
+# ---------------------------------------------------------------------------
+# Admin Console Schemas
+# ---------------------------------------------------------------------------
+
+class AdminMetricsOut(Schema):
+    users_total: int
+    users_today: int
+    users_month: int
+    users_year: int
+    users_inactive: int
+    tours_total: int
+    tours_active: int
+    tours_archived: int
+    total_deposits_volume: Decimal
+    total_expenses_volume: Decimal
+    feedbacks_pending: int
+    feedbacks_resolved: int
+
+
+class AdminUserOut(Schema):
+    id: int
+    email: str
+    full_name: str
+    first_name: str
+    last_name: str
+    avatar_url: Optional[str] = None
+    admin_role: str
+    is_active: bool
+    is_staff: bool
+    is_superuser: bool
+    date_joined: datetime
+    tours_created_count: int = 0
+    tours_joined_count: int = 0
+
+
+class AdminUserRoleIn(Schema):
+    admin_role: str
+
+
+class AdminUserStatusIn(Schema):
+    is_active: bool
+
+
+class AdminTourOut(Schema):
+    id: UUID
+    title: str
+    description: str
+    color_theme: str
+    budget_limit: Optional[Decimal] = None
+    is_archived: bool
+    created_at: datetime
+    created_by_email: str
+    created_by_name: str
+    members_count: int
+    total_deposits: Decimal
+    total_expenses: Decimal
+    fund_balance: Decimal
+
+
+class AdminTourUpdateIn(Schema):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    color_theme: Optional[str] = None
+    budget_limit: Optional[Decimal] = None
+    is_archived: Optional[bool] = None
+
+
+class SiteConfigOut(Schema):
+    app_name: str
+    slogan_bn: str
+    slogan_en: str
+    welcome_title_bn: str
+    welcome_title_en: str
+    welcome_msg_bn: str
+    welcome_msg_en: str
+    footer_text_bn: str
+    footer_text_en: str
+    primary_color: str
+    bg_shade: str
+    custom_themes: List[str]
+    custom_designations: List[str]
+    announcement_enabled: bool
+    announcement_id: str
+    announcement_title_bn: str
+    announcement_title_en: str
+    announcement_msg_bn: str
+    announcement_msg_en: str
+    announcement_start: Optional[datetime] = None
+    announcement_end: Optional[datetime] = None
+    updated_at: datetime
+
+
+class SiteConfigIn(Schema):
+    app_name: Optional[str] = None
+    slogan_bn: Optional[str] = None
+    slogan_en: Optional[str] = None
+    welcome_title_bn: Optional[str] = None
+    welcome_title_en: Optional[str] = None
+    welcome_msg_bn: Optional[str] = None
+    welcome_msg_en: Optional[str] = None
+    footer_text_bn: Optional[str] = None
+    footer_text_en: Optional[str] = None
+    primary_color: Optional[str] = None
+    bg_shade: Optional[str] = None
+    custom_themes: Optional[List[str]] = None
+    custom_designations: Optional[List[str]] = None
+    announcement_enabled: Optional[bool] = None
+    announcement_id: Optional[str] = None
+    announcement_title_bn: Optional[str] = None
+    announcement_title_en: Optional[str] = None
+    announcement_msg_bn: Optional[str] = None
+    announcement_msg_en: Optional[str] = None
+    announcement_start: Optional[datetime] = None
+    announcement_end: Optional[datetime] = None
+
+
+class AdminFeedbackOut(Schema):
+    id: int
+    user_id: Optional[int] = None
+    user_name: str
+    user_email: str
+    feedback_type: str
+    message: str
+    status: str
+    admin_reply: str
+    replied_at: Optional[datetime] = None
+    replied_by_name: Optional[str] = None
+    created_at: datetime
+
+
+class AdminFeedbackReplyIn(Schema):
+    reply: str
+    status: Optional[str] = "RESOLVED"
+
 

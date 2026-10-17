@@ -107,19 +107,29 @@ ASGI_APPLICATION = "config.asgi.application"
 LOCAL_SQLITE_URL = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
 DATABASE_URL = os.environ.get("DATABASE_URL", LOCAL_SQLITE_URL)
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=int(os.environ.get("CONN_MAX_AGE", 300)),  # Persistent connection for fast responses
-        conn_health_checks=True,
-    )
-}
+import sys
+if "test" in sys.argv:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+    }
+else:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=int(os.environ.get("CONN_MAX_AGE", 300)),  # Persistent connection for fast responses
+            conn_health_checks=True,
+        )
+    }
 
-# Apply PgBouncer-compatible options when running on PostgreSQL
-if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
-    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
-    DATABASES["default"].setdefault("OPTIONS", {})
-    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+    # Apply PgBouncer-compatible options when running on PostgreSQL
+    if DATABASES["default"].get("ENGINE") == "django.db.backends.postgresql":
+        DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
+        DATABASES["default"].setdefault("OPTIONS", {})
+        DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+
 
 # ---------------------------------------------------------------------------
 # Authentication & Google OAuth2 / JWT Configuration
@@ -129,6 +139,14 @@ JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
 JWT_ALGORITHM = "HS256"
 JWT_EXP_DAYS = int(os.environ.get("JWT_EXP_DAYS", 7))
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+SUPER_ADMIN_EMAILS: List[str] = [
+    email.strip().lower()
+    for email in os.environ.get(
+        "SUPER_ADMIN_EMAILS",
+        "warrior.tanveer13@gmail.com",
+    ).split(",")
+    if email.strip()
+]
 
 # ---------------------------------------------------------------------------
 # Email Configuration (Instant Invitation Delivery)
