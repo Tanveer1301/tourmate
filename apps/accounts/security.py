@@ -83,12 +83,23 @@ class JWTAuth(HttpBearer):
         if user:
             # Auto-backup Super Admin status from .env setting
             super_admin_emails = getattr(settings, "SUPER_ADMIN_EMAILS", [])
+            save_fields = []
             if user.email and user.email.lower() in super_admin_emails:
                 if user.admin_role != "SUPER_ADMIN" or not user.is_staff or not user.is_superuser:
                     user.admin_role = "SUPER_ADMIN"
                     user.is_staff = True
                     user.is_superuser = True
-                    user.save(update_fields=["admin_role", "is_staff", "is_superuser"])
+                    save_fields.extend(["admin_role", "is_staff", "is_superuser"])
+
+            # Track activity timestamp (throttled to 1 hr to avoid high SQL load)
+            from django.utils import timezone as django_tz
+            if not user.last_login or (django_tz.now() - user.last_login).total_seconds() > 3600:
+                user.last_login = django_tz.now()
+                save_fields.append("last_login")
+
+            if save_fields:
+                user.save(update_fields=list(set(save_fields)))
+
             try:
                 _USER_CACHE[int(user_id)] = (user, now)
             except (ValueError, TypeError):
@@ -136,6 +147,8 @@ def provision_google_user(payload: Dict[str, Any]) -> Any:
     super_admin_emails = getattr(settings, "SUPER_ADMIN_EMAILS", [])
     is_super = normalized_email in super_admin_emails
 
+    from django.utils import timezone as django_tz
+
     user, created = User.objects.get_or_create(
         email=normalized_email,
         defaults={
@@ -146,10 +159,12 @@ def provision_google_user(payload: Dict[str, Any]) -> Any:
             "admin_role": "SUPER_ADMIN" if is_super else "NONE",
             "is_staff": is_super,
             "is_superuser": is_super,
+            "last_login": django_tz.now(),
         },
     )
 
-    updates = []
+    updates = ["last_login"]
+    user.last_login = django_tz.now()
     if not created:
         # Sync latest profile changes
         if avatar_url and user.avatar_url != avatar_url:

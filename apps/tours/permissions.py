@@ -62,8 +62,22 @@ def require_tour_access(
                     email=getattr(user, "email", ""),
                     role=TourMember.Role.VIEWER,
                 )
+            elif getattr(user, "is_super_admin", False) or getattr(user, "is_superuser", False):
+                # Super Admin God-Mode: In-memory OWNER access across all tours
+                membership = TourMember(
+                    id=0,
+                    tour=tour,
+                    user=user,
+                    name=getattr(user, "full_name", "") or "Super Admin",
+                    email=getattr(user, "email", "") or "",
+                    role=TourMember.Role.OWNER,
+                )
             else:
                 raise HttpError(403, "You do not have access to this tour.")
+
+    # Super Admin always possesses OWNER privileges across any tour
+    if getattr(user, "is_super_admin", False) or getattr(user, "is_superuser", False):
+        membership.role = TourMember.Role.OWNER
 
     user_level = ROLE_LEVELS.get(membership.role, 0)
     required_level = ROLE_LEVELS.get(min_role, 1)

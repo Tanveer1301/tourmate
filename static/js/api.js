@@ -425,6 +425,19 @@ const TourMateAPI = {
             method: 'POST',
             body: JSON.stringify(payload)
         });
+    },
+
+    async updateAdminFeedback(feedbackId, payload) {
+        return this.request(`/admin/feedbacks/${feedbackId}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+    },
+
+    async deleteAdminFeedback(feedbackId) {
+        return this.request(`/admin/feedbacks/${feedbackId}`, {
+            method: 'DELETE'
+        });
     }
 };
 

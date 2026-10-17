@@ -368,6 +368,7 @@ class AdminUserOut(Schema):
     is_staff: bool
     is_superuser: bool
     date_joined: datetime
+    last_login: Optional[datetime] = None
     tours_created_count: int = 0
     tours_joined_count: int = 0
 
@@ -470,5 +471,12 @@ class AdminFeedbackOut(Schema):
 class AdminFeedbackReplyIn(Schema):
     reply: str
     status: Optional[str] = "RESOLVED"
+
+
+class AdminFeedbackUpdateIn(Schema):
+    message: Optional[str] = None
+    feedback_type: Optional[str] = None
+    status: Optional[str] = None
+    admin_reply: Optional[str] = None
 
 

@@ -394,41 +394,81 @@
                 <div x-show="activeTab === 'users'" class="space-y-4">
                     
                     <!-- Search & Filter Controls -->
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col gap-3">
                         
-                        <div class="w-full sm:w-72 relative">
-                            <input type="text"
-                                   x-model="userSearch"
-                                   @input.debounce.350ms="loadUsers()"
-                                   :placeholder="lang === 'bn' ? 'নাম বা ইমেইল দিয়ে খুঁজুন...' : 'Search by name or email...'"
-                                   class="w-full pl-9 pr-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none">
-                            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                            <div class="w-full sm:w-72 relative">
+                                <input type="text"
+                                       x-model="userSearch"
+                                       @input.debounce.350ms="loadUsers()"
+                                       :placeholder="lang === 'bn' ? 'নাম বা ইমেইল দিয়ে খুঁজুন...' : 'Search by name or email...'"
+                                       class="w-full pl-9 pr-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+                                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+
+                            <div class="w-full sm:w-auto flex items-center gap-2">
+                                <!-- Role Filter -->
+                                <select x-model="userRoleFilter" @change="loadUsers()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                                    <option value="ALL" x-text="lang === 'bn' ? 'সকল রোল' : 'All Roles'"></option>
+                                    <option value="SUPER_ADMIN">👑 Super Admin</option>
+                                    <option value="SUB_ADMIN">🛡️ Sub-Admin / Moderator</option>
+                                    <option value="CONTENT_MANAGER">🎨 UI & Content Manager</option>
+                                    <option value="SUPPORT">🎧 Support Executive</option>
+                                    <option value="NONE" x-text="lang === 'bn' ? 'সাধারণ ইউজার' : 'Regular User'"></option>
+                                </select>
+
+                                <!-- Status Filter -->
+                                <select x-model="userStatusFilter" @change="loadUsers()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                                    <option value="ALL" x-text="lang === 'bn' ? 'সকল স্ট্যাটাস' : 'All Status'"></option>
+                                    <option value="active" x-text="lang === 'bn' ? 'সক্রিয়' : 'Active'"></option>
+                                    <option value="inactive" x-text="lang === 'bn' ? 'ব্লক / নিষ্ক্রিয়' : 'Blocked'"></option>
+                                </select>
+
+                                <button @click="loadUsers()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="w-full sm:w-auto flex items-center gap-2">
-                            <!-- Role Filter -->
-                            <select x-model="userRoleFilter" @change="loadUsers()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
-                                <option value="ALL" x-text="lang === 'bn' ? 'সকল রোল' : 'All Roles'"></option>
-                                <option value="SUPER_ADMIN">👑 Super Admin</option>
-                                <option value="SUB_ADMIN">🛡️ Sub-Admin / Moderator</option>
-                                <option value="CONTENT_MANAGER">🎨 UI & Content Manager</option>
-                                <option value="SUPPORT">🎧 Support Executive</option>
-                                <option value="NONE" x-text="lang === 'bn' ? 'সাধারণ ইউজার' : 'Regular User'"></option>
-                            </select>
+                        <!-- Inactivity / Last Active Quick Filters -->
+                        <div class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                            <span class="text-[11px] font-bold text-slate-400 mr-1" x-text="lang === 'bn' ? 'সক্রিয়তা ফিল্টার:' : 'Activity:'"></span>
+                            
+                            <button @click="userActivityFilter = 'ALL'; loadUsers()"
+                                    :class="userActivityFilter === 'ALL' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                    class="px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all"
+                                    x-text="lang === 'bn' ? 'সকল' : 'All'"></button>
 
-                            <!-- Status Filter -->
-                            <select x-model="userStatusFilter" @change="loadUsers()" class="px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
-                                <option value="ALL" x-text="lang === 'bn' ? 'সকল স্ট্যাটাস' : 'All Status'"></option>
-                                <option value="active" x-text="lang === 'bn' ? 'সক্রিয়' : 'Active'"></option>
-                                <option value="inactive" x-text="lang === 'bn' ? 'ব্লক / নিষ্ক্রিয়' : 'Blocked'"></option>
-                            </select>
+                            <button @click="userActivityFilter = 'active_7d'; loadUsers()"
+                                    :class="userActivityFilter === 'active_7d' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                    class="px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                <span x-text="lang === 'bn' ? 'সক্রিয় (৭ দিন)' : 'Active (7d)'"></span>
+                            </button>
 
-                            <button @click="loadUsers()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
+                            <button @click="userActivityFilter = 'inactive_7d'; loadUsers()"
+                                    :class="userActivityFilter === 'inactive_7d' ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                    class="px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
+                                <span x-text="lang === 'bn' ? 'নিষ্ক্রিয় (৭+ দিন)' : 'Inactive (7d+)'"></span>
+                            </button>
+
+                            <button @click="userActivityFilter = 'inactive_30d'; loadUsers()"
+                                    :class="userActivityFilter === 'inactive_30d' ? 'bg-rose-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                    class="px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-300"></span>
+                                <span x-text="lang === 'bn' ? 'নিষ্ক্রিয় (৩০+ দিন)' : 'Inactive (30d+)'"></span>
+                            </button>
+
+                            <button @click="userActivityFilter = 'never'; loadUsers()"
+                                    :class="userActivityFilter === 'never' ? 'bg-slate-700 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                    class="px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                <span x-text="lang === 'bn' ? 'কখনো সক্রিয় হয়নি' : 'Never Active'"></span>
                             </button>
                         </div>
 
@@ -454,6 +494,7 @@
                                     <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 font-semibold border-b border-slate-100 dark:border-slate-800">
                                         <tr>
                                             <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'ইউজার' : 'User'"></th>
+                                            <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'সর্বশেষ সক্রিয়' : 'Last Active'"></th>
                                             <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'জয়েন করার তারিখ' : 'Joined Date'"></th>
                                             <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'ট্যুর সংখ্যা' : 'Tours'"></th>
                                             <th class="py-3.5 px-4" x-text="lang === 'bn' ? 'অ্যাডমিন রোল' : 'Admin Role'"></th>
@@ -479,6 +520,17 @@
                                                             <div class="font-bold text-slate-900 dark:text-white" x-text="user.full_name"></div>
                                                             <div class="text-[11px] text-slate-400 font-mono" x-text="user.email"></div>
                                                         </div>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Last Active / Inactivity Tracker -->
+                                                <td class="py-3 px-4">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span class="w-2 h-2 rounded-full shrink-0"
+                                                              :class="getActivityBadgeClass(user)"></span>
+                                                        <span class="text-[11px]"
+                                                              :class="getActivityTextClass(user)"
+                                                              x-text="formatLastActive(user)"></span>
                                                     </div>
                                                 </td>
 
@@ -1002,18 +1054,34 @@
                                     <!-- User message body -->
                                     <p class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed" x-text="item.message"></p>
 
-                                    <!-- Sender info -->
+                                    <!-- Sender info & actions -->
                                     <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                                         <div>
                                             <span class="font-bold text-slate-800 dark:text-slate-200" x-text="item.user_name"></span>
                                             <span class="font-mono text-slate-400 ml-1" x-text="`(${item.user_email})`"></span>
                                         </div>
 
-                                        <!-- Reply Toggle Button -->
-                                        <button @click="openReplyBox(item)"
-                                                class="px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-100 transition-colors">
-                                            <span x-text="item.admin_reply ? (lang === 'bn' ? 'উত্তর সম্পাদন' : 'Edit Reply') : (lang === 'bn' ? 'উত্তর লিখুন' : 'Write Reply')"></span>
-                                        </button>
+                                        <div class="flex items-center gap-1.5">
+                                            <!-- Reply Toggle Button -->
+                                            <button @click="openReplyBox(item)"
+                                                    class="px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
+                                                <span x-text="item.admin_reply ? (lang === 'bn' ? 'উত্তর সম্পাদন' : 'Edit Reply') : (lang === 'bn' ? 'উত্তর লিখুন' : 'Write Reply')"></span>
+                                            </button>
+
+                                            <!-- Edit Feedback Button (Super Admin / Support) -->
+                                            <button @click="openEditFeedbackModal(item)"
+                                                    class="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                                    :title="lang === 'bn' ? 'মেসেজ এডিট করুন' : 'Edit Ticket'">
+                                                ✏️
+                                            </button>
+
+                                            <!-- Delete Feedback Button (Super Admin / Support) -->
+                                            <button @click="deleteFeedback(item)"
+                                                    class="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
+                                                    :title="lang === 'bn' ? 'মেসেজ মুছে ফেলুন' : 'Delete Ticket'">
+                                                🗑️
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Admin Reply Display Card -->
@@ -1123,6 +1191,76 @@
             </div>
         </div>
 
+        <!-- Feedback Edit Modal (Super Admin / Support) -->
+        <div x-show="showFeedbackEditModal"
+             @click.self="showFeedbackEditModal = false"
+             class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+             x-cloak>
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>✏️</span>
+                        <span x-text="lang === 'bn' ? 'মতামত বা অভিযোগ সম্পাদন' : 'Edit Feedback / Complaint'"></span>
+                    </h3>
+                    <button @click="showFeedbackEditModal = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+                </div>
+
+                <div class="space-y-3">
+                    <!-- Type Selection -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'মেসেজের ধরন' : 'Feedback Type'"></label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button"
+                                    @click="feedbackEditForm.feedback_type = 'SUGGESTION'"
+                                    :class="feedbackEditForm.feedback_type === 'SUGGESTION' ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                                    class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                                <span>💡</span>
+                                <span x-text="lang === 'bn' ? 'পরামর্শ' : 'Suggestion'"></span>
+                            </button>
+                            <button type="button"
+                                    @click="feedbackEditForm.feedback_type = 'COMPLAINT'"
+                                    :class="feedbackEditForm.feedback_type === 'COMPLAINT' ? 'bg-rose-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                                    class="py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+                                <span>⚠️</span>
+                                <span x-text="lang === 'bn' ? 'অভিযোগ' : 'Complaint'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Status Selection -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'স্ট্যাটাস' : 'Status'"></label>
+                        <select x-model="feedbackEditForm.status" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold outline-none">
+                            <option value="PENDING" x-text="lang === 'bn' ? '⏳ অপেক্ষমান (Pending)' : 'Pending'"></option>
+                            <option value="RESOLVED" x-text="lang === 'bn' ? '✅ সমাধানকৃত (Resolved)' : 'Resolved'"></option>
+                            <option value="CLOSED" x-text="lang === 'bn' ? '🔒 বন্ধ (Closed)' : 'Closed'"></option>
+                        </select>
+                    </div>
+
+                    <!-- Message Body -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'ইউজারের মূল বক্তব্য / মেসেজ' : 'Message Content'"></label>
+                        <textarea x-model="feedbackEditForm.message" rows="4" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <!-- Admin Reply (Optional) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'অ্যাডমিন রিপ্লাই (যদি থাকে)' : 'Admin Reply (Optional)'"></label>
+                        <textarea x-model="feedbackEditForm.admin_reply" rows="3" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500" :placeholder="lang === 'bn' ? 'অফিসিয়াল উত্তর লিখুন...' : 'Write official reply...'"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="showFeedbackEditModal = false" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700" x-text="lang === 'bn' ? 'বাতিল' : 'Cancel'"></button>
+                    <button type="button" @click="saveFeedbackEdit()" :disabled="savingFeedbackEdit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-md transition-all disabled:opacity-50">
+                        <span x-text="savingFeedbackEdit ? (lang === 'bn' ? 'সংরক্ষণ হচ্ছে...' : 'Saving...') : (lang === 'bn' ? 'আপডেট সংরক্ষণ করুন' : 'Save Changes')"></span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 
     <!-- Admin Console Alpine Logic Script -->
@@ -1142,6 +1280,7 @@
                 userSearch: '',
                 userRoleFilter: 'ALL',
                 userStatusFilter: 'ALL',
+                userActivityFilter: 'ALL',
 
                 toursList: [],
                 loadingTours: false,
@@ -1194,6 +1333,16 @@
                 replyText: '',
                 replyMarkResolved: true,
                 replySubmitting: false,
+
+                showFeedbackEditModal: false,
+                feedbackEditForm: {
+                    id: null,
+                    message: '',
+                    feedback_type: 'SUGGESTION',
+                    status: 'PENDING',
+                    admin_reply: '',
+                },
+                savingFeedbackEdit: false,
 
                 async init() {
                     if (!TourMateAPI.ensureAuth()) return;
@@ -1304,6 +1453,7 @@
                         if (this.userSearch.trim()) params.search = this.userSearch.trim();
                         if (this.userRoleFilter !== 'ALL') params.role = this.userRoleFilter;
                         if (this.userStatusFilter !== 'ALL') params.status = this.userStatusFilter;
+                        if (this.userActivityFilter && this.userActivityFilter !== 'ALL') params.activity = this.userActivityFilter;
                         this.usersList = await TourMateAPI.getAdminUsers(params);
                     } catch (err) {
                         console.error('Failed to load users:', err);
@@ -1311,6 +1461,53 @@
                     } finally {
                         this.loadingUsers = false;
                     }
+                },
+
+                formatLastActive(user) {
+                    if (!user.last_login) {
+                        return this.lang === 'bn' ? 'কখনো সক্রিয় হয়নি' : 'Never logged in';
+                    }
+                    try {
+                        const now = new Date();
+                        const login = new Date(user.last_login);
+                        const diffMs = now - login;
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMs / 3600000);
+                        const diffDays = Math.floor(diffMs / 86400000);
+
+                        if (diffMins < 60) {
+                            return this.lang === 'bn' ? 'এইমাত্র সক্রিয়' : 'Active just now';
+                        }
+                        if (diffHours < 24) {
+                            return this.lang === 'bn' ? `${diffHours} ঘণ্টা আগে` : `${diffHours}h ago`;
+                        }
+                        if (diffDays === 1) {
+                            return this.lang === 'bn' ? 'গতকাল সক্রিয়' : 'Yesterday';
+                        }
+                        if (diffDays < 30) {
+                            return this.lang === 'bn' ? `${diffDays} দিন আগে` : `${diffDays}d ago`;
+                        }
+                        const months = Math.floor(diffDays / 30);
+                        return this.lang === 'bn' ? `${months} মাস ধরে নিষ্ক্রিয়` : `${months}mo inactive`;
+                    } catch(e) {
+                        return '';
+                    }
+                },
+
+                getActivityBadgeClass(user) {
+                    if (!user.last_login) return 'bg-slate-300 dark:bg-slate-600';
+                    const days = (new Date() - new Date(user.last_login)) / 86400000;
+                    if (days < 7) return 'bg-emerald-500 animate-pulse';
+                    if (days < 30) return 'bg-amber-500';
+                    return 'bg-rose-500';
+                },
+
+                getActivityTextClass(user) {
+                    if (!user.last_login) return 'text-slate-400 dark:text-slate-500';
+                    const days = (new Date() - new Date(user.last_login)) / 86400000;
+                    if (days < 7) return 'text-emerald-700 dark:text-emerald-400 font-semibold';
+                    if (days < 30) return 'text-amber-700 dark:text-amber-400';
+                    return 'text-rose-600 dark:text-rose-400 font-semibold';
                 },
 
                 async changeUserRole(user, newRole) {
@@ -1513,6 +1710,58 @@
                         window.showToast(err.message || 'Failed to send reply', 'error');
                     } finally {
                         this.replySubmitting = false;
+                    }
+                },
+
+                openEditFeedbackModal(item) {
+                    this.feedbackEditForm = {
+                        id: item.id,
+                        message: item.message || '',
+                        feedback_type: item.feedback_type || 'SUGGESTION',
+                        status: item.status || 'PENDING',
+                        admin_reply: item.admin_reply || ''
+                    };
+                    this.showFeedbackEditModal = true;
+                },
+
+                async saveFeedbackEdit() {
+                    if (!this.feedbackEditForm.id || !this.feedbackEditForm.message.trim()) return;
+                    this.savingFeedbackEdit = true;
+                    try {
+                        const payload = {
+                            message: this.feedbackEditForm.message.trim(),
+                            feedback_type: this.feedbackEditForm.feedback_type,
+                            status: this.feedbackEditForm.status,
+                            admin_reply: this.feedbackEditForm.admin_reply ? this.feedbackEditForm.admin_reply.trim() : ''
+                        };
+                        const updated = await TourMateAPI.updateAdminFeedback(this.feedbackEditForm.id, payload);
+                        const idx = this.feedbacksList.findIndex(f => f.id === this.feedbackEditForm.id);
+                        if (idx !== -1) {
+                            this.feedbacksList[idx] = updated;
+                        }
+                        this.showFeedbackEditModal = false;
+                        window.showToast(this.lang === 'bn' ? 'ফিডব্যাক তথ্য সফলভাবে আপডেট হয়েছে!' : 'Feedback updated successfully!', 'success');
+                        this.loadMetrics();
+                    } catch (err) {
+                        window.showToast(err.message || 'Failed to update feedback', 'error');
+                    } finally {
+                        this.savingFeedbackEdit = false;
+                    }
+                },
+
+                async deleteFeedback(item) {
+                    const confirmMsg = this.lang === 'bn'
+                        ? `আপনি কি নিশ্চিত যে এই ${item.feedback_type === 'COMPLAINT' ? 'অভিযোগটি' : 'পরামর্শটি'} চিরতরে মুছে ফেলতে চান?`
+                        : `Are you sure you want to permanently delete this ${item.feedback_type.toLowerCase()}?`;
+                    if (!confirm(confirmMsg)) return;
+
+                    try {
+                        await TourMateAPI.deleteAdminFeedback(item.id);
+                        this.feedbacksList = this.feedbacksList.filter(f => f.id !== item.id);
+                        window.showToast(this.lang === 'bn' ? 'ফিডব্যাক সফলভাবে মুছে ফেলা হয়েছে।' : 'Feedback deleted successfully.', 'success');
+                        this.loadMetrics();
+                    } catch (err) {
+                        window.showToast(err.message || 'Failed to delete feedback', 'error');
                     }
                 }
             };

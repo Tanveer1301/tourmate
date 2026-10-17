@@ -242,3 +242,120 @@ class AdminConsoleTestCase(TestCase):
         self.assertEqual(item["status"], "RESOLVED")
         self.assertIn("অফলাইন ফিচার", item["admin_reply"])
         self.assertIsNotNone(item["replied_at"])
+
+    def test_super_admin_god_mode_tour_crud(self):
+        """Test Super Admin has God-mode access across tours even without explicit membership."""
+        # Super admin views tour dashboard (Read)
+        resp = self.client.get(
+            f"/api/v1/tours/{self.tour.id}/dashboard",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["tour"]["title"], "Bandarban Trekking 2026")
+
+        # Super admin edits tour (Edit)
+        edit_resp = self.client.put(
+            f"/api/v1/tours/{self.tour.id}",
+            data={"title": "Bandarban Trekking 2026 (Updated by Super Admin)"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(edit_resp.status_code, 200)
+        self.tour.refresh_from_db()
+        self.assertEqual(self.tour.title, "Bandarban Trekking 2026 (Updated by Super Admin)")
+
+        # Super admin deletes expense (Delete)
+        exp = Expense.objects.filter(tour=self.tour).first()
+        del_exp_resp = self.client.delete(
+            f"/api/v1/tours/{self.tour.id}/expenses/{exp.id}",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(del_exp_resp.status_code, 200)
+        self.assertFalse(Expense.objects.filter(id=exp.id).exists())
+
+    def test_demo_user_locked_from_admin_and_feedback(self):
+        """Test demo user Alex Rivers has zero admin rights and cannot submit feedback."""
+        # Demo login
+        demo_resp = self.client.post("/api/v1/auth/demo")
+        self.assertEqual(demo_resp.status_code, 200)
+        demo_data = demo_resp.json()
+        demo_token = demo_data["access_token"]
+        user_info = demo_data["user"]
+        self.assertEqual(user_info["admin_role"], "NONE")
+        self.assertFalse(user_info["is_staff"])
+        self.assertFalse(user_info["is_superuser"])
+
+        # Attempt to access admin console -> 403
+        admin_resp = self.client.get(
+            "/api/v1/admin/me",
+            HTTP_AUTHORIZATION=f"Bearer {demo_token}",
+        )
+        self.assertEqual(admin_resp.status_code, 403)
+
+        # Attempt to submit feedback -> 403
+        fb_resp = self.client.post(
+            "/api/v1/feedback/",
+            data={"feedback_type": "COMPLAINT", "message": "Demo complaint attempt"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {demo_token}",
+        )
+        self.assertEqual(fb_resp.status_code, 403)
+
+    def test_feedback_edit_and_delete_by_super_admin(self):
+        """Test Super Admin editing and deleting complaints/suggestions."""
+        fb = Feedback.objects.create(
+            user=self.regular_user,
+            user_name="Regular User",
+            user_email="user@tourmate.test",
+            feedback_type="COMPLAINT",
+            message="Original complaint message",
+        )
+
+        # Super admin edits feedback
+        update_resp = self.client.put(
+            f"/api/v1/admin/feedbacks/{fb.id}",
+            data={
+                "message": "Edited complaint message by Super Admin",
+                "status": "RESOLVED",
+                "admin_reply": "Under review by team.",
+            },
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(update_resp.status_code, 200)
+        fb.refresh_from_db()
+        self.assertEqual(fb.message, "Edited complaint message by Super Admin")
+        self.assertEqual(fb.status, "RESOLVED")
+        self.assertEqual(fb.admin_reply, "Under review by team.")
+
+        # Super admin deletes feedback
+        del_resp = self.client.delete(
+            f"/api/v1/admin/feedbacks/{fb.id}",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(del_resp.status_code, 200)
+        self.assertFalse(Feedback.objects.filter(id=fb.id).exists())
+
+    def test_user_inactivity_tracking_and_filtering(self):
+        """Test listing users with last_login and inactivity filters."""
+        # Regular user has not logged in yet (never)
+        resp_never = self.client.get(
+            "/api/v1/admin/users?activity=never",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(resp_never.status_code, 200)
+        emails = [u["email"] for u in resp_never.json()]
+        self.assertIn("user@tourmate.test", emails)
+
+        # Simulate last login on regular user
+        self.regular_user.last_login = django_tz.now() - timedelta(days=15)
+        self.regular_user.save(update_fields=["last_login"])
+
+        resp_inactive_7d = self.client.get(
+            "/api/v1/admin/users?activity=inactive_7d",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(resp_inactive_7d.status_code, 200)
+        inactive_emails = [u["email"] for u in resp_inactive_7d.json()]
+        self.assertIn("user@tourmate.test", inactive_emails)
+

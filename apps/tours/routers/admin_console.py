@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -17,6 +17,7 @@ from apps.tours.models import Deposit, Expense, Feedback, SiteConfig, Tour, Tour
 from apps.tours.schemas import (
     AdminFeedbackOut,
     AdminFeedbackReplyIn,
+    AdminFeedbackUpdateIn,
     AdminMetricsOut,
     AdminTourOut,
     AdminTourUpdateIn,
@@ -163,6 +164,7 @@ def list_users(
     search: Optional[str] = None,
     role: Optional[str] = None,
     status: Optional[str] = None,
+    activity: Optional[str] = None,
     limit: int = 150,
 ):
     _get_admin_user(request)
@@ -183,6 +185,25 @@ def list_users(
         qs = qs.filter(is_active=True)
     elif status == "inactive":
         qs = qs.filter(is_active=False)
+
+    now = django_tz.now()
+    if activity == "active_7d":
+        seven_days_ago = now - timedelta(days=7)
+        qs = qs.filter(last_login__gte=seven_days_ago)
+    elif activity == "inactive_7d":
+        seven_days_ago = now - timedelta(days=7)
+        qs = qs.filter(
+            Q(last_login__lt=seven_days_ago)
+            | (Q(last_login__isnull=True) & Q(date_joined__lt=seven_days_ago))
+        )
+    elif activity == "inactive_30d":
+        thirty_days_ago = now - timedelta(days=30)
+        qs = qs.filter(
+            Q(last_login__lt=thirty_days_ago)
+            | (Q(last_login__isnull=True) & Q(date_joined__lt=thirty_days_ago))
+        )
+    elif activity == "never":
+        qs = qs.filter(last_login__isnull=True)
 
     users_slice = list(qs[:limit])
 
@@ -216,6 +237,7 @@ def list_users(
                 is_staff=u.is_staff,
                 is_superuser=u.is_superuser,
                 date_joined=u.date_joined,
+                last_login=u.last_login,
                 tours_created_count=created_counts.get(u.id, 0),
                 tours_joined_count=joined_counts.get(u.id, 0),
             )
@@ -589,6 +611,64 @@ def reply_feedback(request, feedback_id: int, payload: AdminFeedbackReplyIn):
         replied_by_name=admin.full_name,
         created_at=feedback.created_at,
     )
+
+
+@router.put("/feedbacks/{feedback_id}", response={200: AdminFeedbackOut, 400: ErrorOut, 403: ErrorOut, 404: ErrorOut}, summary="Edit user complaint or suggestion")
+def update_feedback(request, feedback_id: int, payload: AdminFeedbackUpdateIn):
+    admin = _get_admin_user(request)
+    _ensure_can_manage_feedback(admin)
+
+    feedback = Feedback.objects.select_related("user", "replied_by").filter(id=feedback_id).first()
+    if not feedback:
+        raise HttpError(404, "ফিডব্যাক পাওয়া যায়নি (Feedback not found).")
+
+    updates = []
+    if payload.message is not None and payload.message.strip():
+        feedback.message = payload.message.strip()
+        updates.append("message")
+    if payload.feedback_type is not None and payload.feedback_type in {Feedback.FeedbackType.SUGGESTION, Feedback.FeedbackType.COMPLAINT}:
+        feedback.feedback_type = payload.feedback_type
+        updates.append("feedback_type")
+    if payload.status is not None and payload.status in {Feedback.FeedbackStatus.PENDING, Feedback.FeedbackStatus.RESOLVED, Feedback.FeedbackStatus.CLOSED}:
+        feedback.status = payload.status
+        updates.append("status")
+    if payload.admin_reply is not None:
+        feedback.admin_reply = payload.admin_reply.strip()
+        feedback.replied_at = django_tz.now()
+        feedback.replied_by = admin
+        updates.extend(["admin_reply", "replied_at", "replied_by"])
+
+    if updates:
+        feedback.save(update_fields=list(set(updates)))
+
+    replied_by_name = feedback.replied_by.full_name if feedback.replied_by else (admin.full_name if feedback.admin_reply else None)
+
+    return 200, AdminFeedbackOut(
+        id=feedback.id,
+        user_id=feedback.user_id,
+        user_name=feedback.user_name,
+        user_email=feedback.user_email,
+        feedback_type=feedback.feedback_type,
+        message=feedback.message,
+        status=feedback.status,
+        admin_reply=feedback.admin_reply or "",
+        replied_at=feedback.replied_at,
+        replied_by_name=replied_by_name,
+        created_at=feedback.created_at,
+    )
+
+
+@router.delete("/feedbacks/{feedback_id}", response={200: SuccessOut, 403: ErrorOut, 404: ErrorOut}, summary="Delete user complaint or suggestion")
+def delete_feedback(request, feedback_id: int):
+    admin = _get_admin_user(request)
+    _ensure_can_manage_feedback(admin)
+
+    feedback = Feedback.objects.filter(id=feedback_id).first()
+    if not feedback:
+        raise HttpError(404, "ফিডব্যাক পাওয়া যায়নি (Feedback not found).")
+
+    feedback.delete()
+    return 200, {"success": True, "message": "ফিডব্যাক বার্তাটি সফলভাবে ডিলিট করা হয়েছে।"}
 
 
 # ---------------------------------------------------------------------------

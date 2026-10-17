@@ -51,15 +51,34 @@ def google_token_exchange(request, payload: GoogleAuthIn):
 def demo_login(request):
     """
     Convenience endpoint for instant preview & testing without requiring Google OAuth credentials.
+    Demo user Alex Rivers is strictly a regular tour organizer with ZERO admin or staff privileges.
     """
+    from django.utils import timezone as django_tz
+
     user, _ = User.objects.get_or_create(
         email="alex@tourmate.test",
         defaults={
             "first_name": "Alex",
             "last_name": "Rivers",
-            "is_staff": True,
+            "is_staff": False,
+            "is_superuser": False,
+            "admin_role": "NONE",
         },
     )
+    updates = []
+    if user.is_staff:
+        user.is_staff = False
+        updates.append("is_staff")
+    if user.is_superuser:
+        user.is_superuser = False
+        updates.append("is_superuser")
+    if user.admin_role != "NONE":
+        user.admin_role = "NONE"
+        updates.append("admin_role")
+    user.last_login = django_tz.now()
+    updates.append("last_login")
+
+    user.save(update_fields=updates)
     access_token = generate_access_token(user)
 
     return 200, {

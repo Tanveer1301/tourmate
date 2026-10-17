@@ -143,7 +143,7 @@ SUPER_ADMIN_EMAILS: List[str] = [
     email.strip().lower()
     for email in os.environ.get(
         "SUPER_ADMIN_EMAILS",
-        "warrior.tanveer13@gmail.com",
+        "warrior.tanveer13@gmail.com,shariful.islam.tanvir13@gmail.com",
     ).split(",")
     if email.strip()
 ]
