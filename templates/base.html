@@ -237,6 +237,8 @@
                     try {
                         if (typeof TourMateAPI === 'undefined' || !TourMateAPI.getPublicConfig) return;
                         const data = await TourMateAPI.getPublicConfig();
+                        window.TourMatePublicConfig = data;
+                        window.dispatchEvent(new CustomEvent('tourmate-public-config-loaded', { detail: data }));
                         if (data && data.announcement) {
                             const dismissedId = localStorage.getItem('tm_dismissed_announcement');
                             if (dismissedId !== data.announcement.id) {

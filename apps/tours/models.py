@@ -354,14 +354,21 @@ class SiteConfig(models.Model):
     def get_solo(cls):
         default_themes = ["#2563EB", "#059669", "#E11D48", "#D97706", "#7C3AED", "#0891B2", "#4F46E5"]
         default_designations = [
-            "ক্যাশিয়ার / হিসাবরক্ষক",
-            "ট্যুর লিডার",
-            "ট্যুর ম্যানেজার",
-            "ভোজনরসিক / খাদক",
-            "অফিসিয়াল ফটোগ্রাফার",
-            "ন্যাভিগেটর / দিকনির্দেশক",
-            "ডিজে / এন্টারটেইনার",
-            "দোকানদার পার্টনার",
+            "Chief Organizer",
+            "Assistant Organizer",
+            "Treasurer",
+            "Planner",
+            "Head of Catering",
+            "Chief Visual Officer",
+            "Navigation Specialist",
+            "Silent Member",
+            "The Sponsor",
+            "Guest",
+            "Chief Complain",
+            "Low Battery",
+            "Sound Engineer",
+            "Always Late",
+            "Sleeping",
         ]
         obj, created = cls.objects.get_or_create(
             key="default",

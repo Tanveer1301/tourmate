@@ -886,7 +886,7 @@
                                     </div>
 
                                     <div class="flex items-center gap-2 max-w-md">
-                                        <input type="text" x-model="newDesignationText" :placeholder="lang === 'bn' ? 'নতুন পদবি (যেমন: ডিজে / এন্টারটেইনার)' : 'New designation title...'" class="flex-1 px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
+                                        <input type="text" x-model="newDesignationText" @keydown.enter.prevent="addDesignation()" :placeholder="lang === 'bn' ? 'নতুন পদবি (যেমন: Media Lead, Food Inspector)' : 'New designation title (e.g. Media Lead)...'" class="flex-1 px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium">
                                         <button type="button" @click="addDesignation()" class="px-3.5 py-2 bg-blue-600 text-white rounded-2xl text-xs font-bold hover:bg-blue-700 transition-colors">
                                             + <span x-text="lang === 'bn' ? 'যোগ করুন' : 'Add'"></span>
                                         </button>
