@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}ট্যুর ড্যাশবোর্ড - TourMate{% endblock %}
+{% block title %}Tour Details - TourMate{% endblock %}
 
 {% block content %}
 <div x-data="tourDetailPage('{{ tour_id }}')" class="flex-1 flex flex-col pb-28 relative">
@@ -1614,7 +1614,7 @@
                                                 <div class="flex items-center justify-between text-[10px]">
                                                     <span class="font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1">
                                                         <span>🛡️</span>
-                                                        <span x-text="lang === 'bn' ? 'অ্যাডমিনের উত্তর' : 'Admin Reply'"></span>
+                                                        <span x-text="lang === 'bn' ? 'ট্যুরমেট সাপোর্ট টিম' : 'TourMate Support Team'"></span>
                                                     </span>
                                                     <span class="text-slate-400 font-mono" x-text="item.replied_at ? new Date(item.replied_at).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''"></span>
                                                 </div>
@@ -2560,6 +2560,13 @@ function tourDetailPage(tourId) {
                 }
             } else {
                 if (!TourMateAPI.ensureAuth()) return;
+                try {
+                    const me = await TourMateAPI.getMe();
+                    if (me && me.is_active === false) {
+                        window.location.href = '/tours';
+                        return;
+                    }
+                } catch(e) {}
             }
 
             // Load custom designations from global config if available
@@ -3206,6 +3213,9 @@ function tourDetailPage(tourId) {
             try {
                 const data = await TourMateAPI.getDashboard(this.tourId);
                 this.tour = data.tour;
+                if (this.tour && this.tour.title) {
+                    document.title = `${this.tour.title} - TourMate`;
+                }
                 this.summary = data.summary;
                 this.members = data.members;
                 this.recentExpenses = data.recent_expenses;

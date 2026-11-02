@@ -1,13 +1,22 @@
 from django.contrib import admin
+from django.shortcuts import redirect
 from django.urls import path
 
 from apps.api import api
 from apps.web import views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # Seamlessly route /admin and /admin/ to TourMate Admin Console
+    path("admin/", lambda req: redirect("/admin-console", permanent=False)),
+    path("admin", lambda req: redirect("/admin-console", permanent=False)),
+    path("django-admin/", admin.site.urls),
     # Primary API Gateway mounted at /api/v1/
     path("api/v1/", api.urls),
+    # PWA Web App Manifest & Dynamic Icons (Chrome / Safari Add to Home Screen)
+    path("manifest.json", views.manifest_view, name="manifest"),
+    path("apple-touch-icon.png", views.apple_touch_icon_view, name="apple_touch_icon"),
+    path("apple-touch-icon-precomposed.png", views.apple_touch_icon_view, name="apple_touch_icon_precomposed"),
+    path("favicon.ico", views.favicon_view, name="favicon"),
     # Mobile-First Web Frontend Routes
     path("", views.index_view, name="index"),
     path("login", views.login_view, name="login"),

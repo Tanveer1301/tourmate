@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}আমার ট্যুরসমূহ - TourMate{% endblock %}
+{% block title %}My Tours - TourMate{% endblock %}
 
 {% block content %}
 <div x-data="dashboardPage()" class="flex-1 flex flex-col pb-24">
@@ -31,6 +31,7 @@
 
             <!-- Add Tour Button -->
             <button @click="openCreateModal()"
+                    x-show="!isAccountBlocked"
                     class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shadow-md shadow-blue-500/20 active:scale-95 transition-all">
 
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,145 +85,187 @@
             </div>
         </template>
 
-        <!-- Top Header: Simple Total Tours Count -->
-        <div class="flex items-center justify-between mb-4 px-1 pt-1">
-            <div>
-                <h2 class="text-lg font-bold text-slate-900" x-text="lang === 'bn' ? 'আপনার ট্যুরসমূহ' : 'Your Tours'"></h2>
-                <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'চলমান ও সম্পন্ন হওয়া সব ট্রিপ' : 'Active & completed trips'"></p>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-full text-xs font-bold"
-                      x-text="lang === 'bn' ? `মোট ${tours.length} টি ট্যুর` : `Total ${tours.length} Tour(s)`"></span>
-            </div>
-        </div>
-
-        <!-- Loading Skeleton -->
-        <template x-if="loading">
-            <div class="space-y-3">
-                <div class="h-28 bg-slate-200/70 rounded-3xl animate-pulse"></div>
-                <div class="h-28 bg-slate-200/70 rounded-3xl animate-pulse"></div>
+        <!-- Blocked / Suspended Notice Banner -->
+        <template x-if="isAccountBlocked">
+            <div class="mb-4 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white rounded-3xl p-5 shadow-lg shadow-rose-500/20 border border-rose-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fadeIn">
+                <div class="flex items-start gap-3.5">
+                    <div class="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-2xl flex-shrink-0">
+                        🚫
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-sm sm:text-base font-extrabold text-white" x-text="lang === 'bn' ? 'অ্যাকাউন্ট সাময়িকভাবে স্থগিত / ব্লক করা হয়েছে' : 'Account Temporarily Suspended / Blocked'"></h3>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/25 text-rose-100">Suspended</span>
+                        </div>
+                        <p class="text-xs text-rose-100 mt-1 leading-relaxed" x-text="lang === 'bn' ? 'কমিউনিটি নির্দেশিকা লঙ্ঘন বা অননুমোদিত কার্যকলাপের (Community guideline violation or unauthorized activity) কারণে আপনার অ্যাকাউন্টের অ্যাক্সেস সাময়িকভাবে স্থগিত করা হয়েছে। আপনি বর্তমানে কোনো ট্যুর দেখতে বা পরিচালনা করতে পারবেন না।' : 'Due to community guideline violations or unauthorized activities, your account access has been restricted. You cannot view or create tours at this time.'"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+                    <button @click="showBlockedAppealModal = true"
+                            class="px-4 py-2.5 bg-white text-rose-700 hover:bg-rose-50 active:scale-95 text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs transition-all">
+                        <span>🛡️</span>
+                        <span x-text="lang === 'bn' ? 'সাপোর্টে যোগাযোগ / আপিল' : 'Contact Support / Appeal'"></span>
+                    </button>
+                </div>
             </div>
         </template>
 
-        <!-- Empty State -->
-        <template x-if="!loading && tours.length === 0">
+        <!-- Blocked User Access Restricted Empty State -->
+        <template x-if="isAccountBlocked">
             <div class="flex-1 flex flex-col items-center justify-center text-center py-16 px-4">
-                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-3">
-                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                <div class="w-20 h-20 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-4xl mb-4 border border-rose-200">
+                    🔒
                 </div>
-                <h3 class="text-sm font-bold text-slate-800" x-text="lang === 'bn' ? 'কোনো ট্যুর নেই' : 'No tours yet'"></h3>
-                <p class="text-xs text-slate-400 mt-1 max-w-xs" x-text="lang === 'bn' ? 'নতুন ট্যুর তৈরি করে বন্ধুদের সাথে খরচ ট্র্যাকিং শুরু করুন।' : 'Create a tour to start tracking group expenses.'"></p>
-                <button @click="openCreateModal()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-2xl text-xs font-semibold shadow-md active:scale-95 transition-all">
-                    + <span x-text="lang === 'bn' ? 'প্রথম ট্যুর যোগ করুন' : 'Create First Tour'"></span>
+                <h3 class="text-base font-bold text-slate-800" x-text="lang === 'bn' ? 'ট্যুর অ্যাক্সেস বন্ধ রয়েছে' : 'Tour Access Is Restricted'"></h3>
+                <p class="text-xs text-slate-500 max-w-sm mt-1.5 leading-relaxed" x-text="lang === 'bn' ? 'অ্যাকাউন্টের স্ট্যাটাস সক্রিয় না হওয়া পর্যন্ত কোনো ট্যুর ডেটা দেখা সম্ভব নয়। ভুলবশত হয়ে থাকলে সাপোর্ট টিমের কাছে আপিল পেশ করুন।' : 'No tour data is accessible until your account status is restored. If this was a mistake, please reach out to support.'"></p>
+                <button @click="showBlockedAppealModal = true" class="mt-4 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold active:scale-95 transition-all">
+                    🛡️ <span x-text="lang === 'bn' ? 'আপিল ফর্ম খুলুন' : 'Open Appeal Form'"></span>
                 </button>
             </div>
         </template>
 
-        <!-- Tour Cards List -->
-        <template x-if="!loading && tours.length > 0">
-            <div class="space-y-3.5">
-                <template x-for="tour in tours" :key="tour.id">
-                    <div @click="goToTour(tour.id)"
-                         class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-blue-300 active:scale-[0.99] transition-all relative flex flex-col justify-between cursor-pointer group">
-                        
-                        <!-- Left Theme Color Stripe -->
-                        <div class="absolute left-0 top-0 bottom-0 w-2.5 rounded-l-3xl" :style="`background-color: ${tour.color_theme || '#2563EB'}`"></div>
+        <!-- Active User Tours Area -->
+        <div x-show="!isAccountBlocked" class="space-y-4">
+            <!-- Top Header: Simple Total Tours Count -->
+            <div class="flex items-center justify-between mb-4 px-1 pt-1">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900" x-text="lang === 'bn' ? 'আপনার ট্যুরসমূহ' : 'Your Tours'"></h2>
+                    <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'চলমান ও সম্পন্ন হওয়া সব ট্রিপ' : 'Active & completed trips'"></p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-full text-xs font-bold"
+                          x-text="lang === 'bn' ? `মোট ${tours.length} টি ট্যুর` : `Total ${tours.length} Tour(s)`"></span>
+                </div>
+            </div>
 
-                        <!-- Top Title & Quick Actions -->
-                        <div class="flex items-start justify-between gap-3 pl-1.5">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2">
-                                    <h3 class="text-sm font-bold text-slate-900 leading-snug hover:text-blue-600" x-text="tour.title"></h3>
-                                    <template x-if="tour.is_archived">
-                                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
-                                              x-text="lang === 'bn' ? '🔒 আর্কাইভড' : '🔒 Archived'"></span>
+            <!-- Loading Skeleton -->
+            <template x-if="loading">
+                <div class="space-y-3">
+                    <div class="h-28 bg-slate-200/70 rounded-3xl animate-pulse"></div>
+                    <div class="h-28 bg-slate-200/70 rounded-3xl animate-pulse"></div>
+                </div>
+            </template>
+
+            <!-- Empty State -->
+            <template x-if="!loading && tours.length === 0">
+                <div class="flex-1 flex flex-col items-center justify-center text-center py-16 px-4">
+                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-3">
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-800" x-text="lang === 'bn' ? 'কোনো ট্যুর নেই' : 'No tours yet'"></h3>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs" x-text="lang === 'bn' ? 'নতুন ট্যুর তৈরি করে বন্ধুদের সাথে খরচ ট্র্যাকিং শুরু করুন।' : 'Create a tour to start tracking group expenses.'"></p>
+                    <button @click="openCreateModal()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-2xl text-xs font-semibold shadow-md active:scale-95 transition-all">
+                        + <span x-text="lang === 'bn' ? 'প্রথম ট্যুর যোগ করুন' : 'Create First Tour'"></span>
+                    </button>
+                </div>
+            </template>
+
+            <!-- Tour Cards List -->
+            <template x-if="!loading && tours.length > 0">
+                <div class="space-y-3.5">
+                    <template x-for="tour in tours" :key="tour.id">
+                        <div @click="goToTour(tour.id)"
+                             class="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-blue-300 active:scale-[0.99] transition-all relative flex flex-col justify-between cursor-pointer group">
+                            
+                            <!-- Left Theme Color Stripe -->
+                            <div class="absolute left-0 top-0 bottom-0 w-2.5 rounded-l-3xl" :style="`background-color: ${tour.color_theme || '#2563EB'}`"></div>
+
+                            <!-- Top Title & Quick Actions -->
+                            <div class="flex items-start justify-between gap-3 pl-1.5">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-sm font-bold text-slate-900 leading-snug hover:text-blue-600" x-text="tour.title"></h3>
+                                        <template x-if="tour.is_archived">
+                                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200"
+                                                  x-text="lang === 'bn' ? '🔒 আর্কাইভড' : '🔒 Archived'"></span>
+                                        </template>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 mt-0.5" x-text="formatDate(tour.created_at)"></p>
+                                    <!-- Truncated Tour Description Preview -->
+                                    <template x-if="tour.description">
+                                        <p class="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed"
+                                           x-text="tour.description.length > 85 ? tour.description.slice(0, 85) + '...' : tour.description"></p>
                                     </template>
                                 </div>
-                                <p class="text-[11px] text-slate-400 mt-0.5" x-text="formatDate(tour.created_at)"></p>
-                                <!-- Truncated Tour Description Preview -->
-                                <template x-if="tour.description">
-                                    <p class="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed"
-                                       x-text="tour.description.length > 85 ? tour.description.slice(0, 85) + '...' : tour.description"></p>
-                                </template>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <template x-if="tour.is_archived">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200/80">
-                                        🔒 <span x-text="lang === 'bn' ? 'আর্কাইভড' : 'Archived'"></span>
+                                <div class="flex items-center gap-1.5">
+                                    <template x-if="tour.is_archived">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200/80">
+                                            🔒 <span x-text="lang === 'bn' ? 'আর্কাইভড' : 'Archived'"></span>
+                                        </span>
+                                    </template>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
+                                        <span x-text="lang === 'bn' ? `${tour.members_count} জন` : `${tour.members_count} members`"></span>
                                     </span>
-                                </template>
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
-                                    <span x-text="lang === 'bn' ? `${tour.members_count} জন` : `${tour.members_count} members`"></span>
-                                </span>
-                                <!-- 3-Dot Action Menu -->
-                                <div class="relative" x-data="{ openMenu: false }">
-                                    <button @click.stop="openMenu = !openMenu"
-                                            class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors active:scale-95"
-                                            :title="lang === 'bn' ? 'মেনু' : 'Menu'">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                            <circle cx="12" cy="5" r="2" />
-                                            <circle cx="12" cy="12" r="2" />
-                                            <circle cx="12" cy="19" r="2" />
-                                        </svg>
-                                    </button>
+                                    <!-- 3-Dot Action Menu -->
+                                    <div class="relative" x-data="{ openMenu: false }">
+                                        <button @click.stop="openMenu = !openMenu"
+                                                class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors active:scale-95"
+                                                :title="lang === 'bn' ? 'মেনু' : 'Menu'">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="5" r="2" />
+                                                <circle cx="12" cy="12" r="2" />
+                                                <circle cx="12" cy="19" r="2" />
+                                            </svg>
+                                        </button>
 
-                                    <!-- Dropdown Menu (No sliding, high z-index, clean visibility) -->
-                                    <div x-show="openMenu"
-                                         @click.away="openMenu = false"
-                                         class="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-50 text-left"
-                                         x-cloak>
-                                        <!-- Edit Tour Details -->
-                                        <button @click.stop="openMenu = false; openEditTour(tour)"
-                                                class="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
-                                            <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                            </svg>
-                                            <span x-text="lang === 'bn' ? 'ট্যুর এডিট করুন' : 'Edit Tour Details'"></span>
-                                        </button>
-                                        <!-- Archive / Unarchive Tour -->
-                                        <button @click.stop="openMenu = false; toggleArchiveTour(tour)"
-                                                class="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50 flex items-center gap-2.5 transition-colors">
-                                            <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                            </svg>
-                                            <span x-text="tour.is_archived ? (lang === 'bn' ? 'আন-আর্কাইভ করুন' : 'Unarchive Tour') : (lang === 'bn' ? 'ট্যুর আর্কাইভ করুন' : 'Archive Tour')"></span>
-                                        </button>
-                                        <div class="my-1 border-t border-slate-100"></div>
-                                        <!-- Delete Tour -->
-                                        <button @click.stop="openMenu = false; confirmDeleteTour(tour)"
-                                                class="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors">
-                                            <svg class="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            <span x-text="lang === 'bn' ? 'ট্যুর মুছে ফেলুন' : 'Delete Tour'"></span>
-                                        </button>
+                                        <!-- Dropdown Menu (No sliding, high z-index, clean visibility) -->
+                                        <div x-show="openMenu"
+                                             @click.away="openMenu = false"
+                                             class="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-2xl shadow-2xl border border-slate-200 py-1.5 z-50 text-left"
+                                             x-cloak>
+                                            <!-- Edit Tour Details -->
+                                            <button @click.stop="openMenu = false; openEditTour(tour)"
+                                                    class="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors">
+                                                <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                </svg>
+                                                <span x-text="lang === 'bn' ? 'ট্যুর এডিট করুন' : 'Edit Tour Details'"></span>
+                                            </button>
+                                            <!-- Archive / Unarchive Tour -->
+                                            <button @click.stop="openMenu = false; toggleArchiveTour(tour)"
+                                                    class="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50 flex items-center gap-2.5 transition-colors">
+                                                <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                                </svg>
+                                                <span x-text="tour.is_archived ? (lang === 'bn' ? 'আন-আর্কাইভ করুন' : 'Unarchive Tour') : (lang === 'bn' ? 'ট্যুর আর্কাইভ করুন' : 'Archive Tour')"></span>
+                                            </button>
+                                            <div class="my-1 border-t border-slate-100"></div>
+                                            <!-- Delete Tour -->
+                                            <button @click.stop="openMenu = false; confirmDeleteTour(tour)"
+                                                    class="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors">
+                                                <svg class="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                <span x-text="lang === 'bn' ? 'ট্যুর মুছে ফেলুন' : 'Delete Tour'"></span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Financial Summary Badges -->
-                        <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-slate-100 pl-1.5 text-center">
-                            <div class="bg-slate-50 p-1.5 rounded-2xl">
-                                <span class="text-[9px] font-semibold uppercase text-slate-400 block" x-text="lang === 'bn' ? 'মোট জমা' : 'Credit'"></span>
-                                <span class="text-xs font-bold text-emerald-600 block mt-0.5" x-text="`৳ ${formatMoney(tour.total_credit)}`"></span>
+                            <!-- Financial Summary Badges -->
+                            <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-slate-100 pl-1.5 text-center">
+                                <div class="bg-slate-50 p-1.5 rounded-2xl">
+                                    <span class="text-[9px] font-semibold uppercase text-slate-400 block" x-text="lang === 'bn' ? 'মোট জমা' : 'Credit'"></span>
+                                    <span class="text-xs font-bold text-emerald-600 block mt-0.5" x-text="`৳ ${formatMoney(tour.total_credit)}`"></span>
+                                </div>
+                                <div class="bg-slate-50 p-1.5 rounded-2xl">
+                                    <span class="text-[9px] font-semibold uppercase text-slate-400 block" x-text="lang === 'bn' ? 'মোট খরচ' : 'Debit'"></span>
+                                    <span class="text-xs font-bold text-rose-500 block mt-0.5" x-text="`৳ ${formatMoney(tour.total_debit)}`"></span>
+                                </div>
+                                <div class="bg-blue-50/80 p-1.5 rounded-2xl border border-blue-100/60">
+                                    <span class="text-[9px] font-semibold uppercase text-blue-500 block" x-text="lang === 'bn' ? 'অবশিষ্ট' : 'Remaining'"></span>
+                                    <span class="text-xs font-bold text-blue-700 block mt-0.5" x-text="`৳ ${formatMoney(tour.remaining_balance)}`"></span>
+                                </div>
                             </div>
-                            <div class="bg-slate-50 p-1.5 rounded-2xl">
-                                <span class="text-[9px] font-semibold uppercase text-slate-400 block" x-text="lang === 'bn' ? 'মোট খরচ' : 'Debit'"></span>
-                                <span class="text-xs font-bold text-rose-500 block mt-0.5" x-text="`৳ ${formatMoney(tour.total_debit)}`"></span>
-                            </div>
-                            <div class="bg-blue-50/80 p-1.5 rounded-2xl border border-blue-100/60">
-                                <span class="text-[9px] font-semibold uppercase text-blue-500 block" x-text="lang === 'bn' ? 'অবশিষ্ট' : 'Remaining'"></span>
-                                <span class="text-xs font-bold text-blue-700 block mt-0.5" x-text="`৳ ${formatMoney(tour.remaining_balance)}`"></span>
-                            </div>
-                        </div>
 
-                    </div>
-                </template>
-            </div>
-        </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
 
     </div>
 
@@ -753,7 +796,7 @@
                                                 <div class="flex items-center justify-between text-[10px]">
                                                     <span class="font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1">
                                                         <span>🛡️</span>
-                                                        <span x-text="lang === 'bn' ? 'অ্যাডমিনের উত্তর' : 'Admin Reply'"></span>
+                                                        <span x-text="lang === 'bn' ? 'ট্যুরমেট সাপোর্ট টিম' : 'TourMate Support Team'"></span>
                                                     </span>
                                                     <span class="text-slate-400 font-mono" x-text="item.replied_at ? new Date(item.replied_at).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''"></span>
                                                 </div>
@@ -1162,6 +1205,35 @@
         </div>
     </div>
 
+    <!-- Blocked User Support / Appeal Modal -->
+    <div x-show="showBlockedAppealModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="if (!blockedAppealSending) showBlockedAppealModal = false" class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-scaleUp">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400 flex items-center justify-center text-xl font-bold">
+                        🛡️
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white" x-text="lang === 'bn' ? 'অ্যাকাউন্ট পুনর্বহালের আবেদন' : 'Account Reinstatement Appeal'"></h3>
+                        <p class="text-xs text-slate-400" x-text="lang === 'bn' ? 'ট্যুরমেট সাপোর্ট টিমের কাছে আপনার বক্তব্য পেশ করুন' : 'Submit your statement to TourMate Support Team'"></p>
+                    </div>
+                </div>
+                <button @click="showBlockedAppealModal = false" :disabled="blockedAppealSending" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold">✕</button>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" x-text="lang === 'bn' ? 'আপনার বক্তব্য বা কারণ লিখুন:' : 'Explain your appeal:'"></label>
+                <textarea x-model="blockedAppealText" rows="4" class="w-full px-3 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" :placeholder="lang === 'bn' ? 'কী কারণে মনে করেন আপনার অ্যাকাউন্ট ভুলবশত স্থগিত করা হয়েছে তা বিস্তারিত লিখুন...' : 'Explain in detail why you believe your account was restricted by mistake...'"></textarea>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button @click="showBlockedAppealModal = false" :disabled="blockedAppealSending" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" x-text="lang === 'bn' ? 'বাতিল' : 'Cancel'"></button>
+                <button @click="submitBlockedAppeal()" :disabled="blockedAppealSending || !blockedAppealText.trim()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all">
+                    <span x-show="blockedAppealSending" class="animate-spin text-xs">⏳</span>
+                    <span x-text="blockedAppealSending ? (lang === 'bn' ? 'পাঠানো হচ্ছে...' : 'Submitting...') : (lang === 'bn' ? 'আবেদন পাঠান' : 'Submit Appeal')"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -1175,6 +1247,11 @@ function dashboardPage() {
             try { return localStorage.getItem('tourmate_lang') || 'en'; } catch(e) { return 'en'; }
         })(),
         tours: [],
+        isAccountBlocked: false,
+        blockedReason: '',
+        showBlockedAppealModal: false,
+        blockedAppealText: '',
+        blockedAppealSending: false,
         userName: 'User',
         userInitials: 'TM',
         showCreateModal: false,
@@ -1233,13 +1310,17 @@ function dashboardPage() {
             color_theme: '#2563EB'
         },
 
-        init() {
+        async init() {
             if (!TourMateAPI.ensureAuth()) return;
 
             const user = TourMateAPI.getUser();
             if (user) {
+                if (user.is_active === false) {
+                    this.isAccountBlocked = true;
+                    this.blockedReason = 'কমিউনিটি নির্দেশিকা লঙ্ঘন বা অননুমোদিত কার্যকলাপের কারণে আপনার অ্যাকাউন্টের অ্যাক্সেস সাময়িকভাবে স্থগিত করা হয়েছে।';
+                }
                 this.userName = user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.email;
-                this.userInitials = (user.first_name ? user.first_name[0] : user.email[0]).toUpperCase();
+                this.userInitials = (user.first_name ? user.first_name[0] : (user.email ? user.email[0] : 'U')).toUpperCase();
                 if (user.email === 'alex@tourmate.test') {
                     this.adminRole = 'NONE';
                     this.isAdminUser = false;
@@ -1253,38 +1334,49 @@ function dashboardPage() {
                         'CONTENT_MANAGER': 'UI Manager',
                         'SUPPORT': 'Support'
                     };
-                    this.adminRoleBadge = badges[user.admin_role] || (user.is_superuser ? 'Super Admin' : 'Admin');
+                    this.adminRoleBadge = badges[user.admin_role] || (user.is_superuser ? 'Super Admin' : (this.isAdminUser ? 'Admin' : ''));
                 }
             }
 
-            // Verify live admin credentials in background (strictly skipped for demo user)
-            if (!this.isDemoUser) {
-                this.checkAdminStatus();
-            }
-
-            // SWR Instant Paint: Render cached tours in 0ms
-            try {
-                const cached = localStorage.getItem('tm_cache_tours');
-                if (cached) {
-                    const parsed = JSON.parse(cached);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        this.tours = parsed;
-                        this.loading = false;
+            // SWR Instant Paint: Render cached tours in 0ms (if not blocked)
+            if (!this.isAccountBlocked) {
+                try {
+                    const cached = localStorage.getItem('tm_cache_tours');
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            this.tours = parsed;
+                            this.loading = false;
+                        }
                     }
-                }
-            } catch (e) {}
+                } catch (e) {}
+            }
 
-            this.loadTours();
+            // Verify live credentials immediately (strictly skipped for demo user)
+            if (!this.isDemoUser) {
+                await this.checkAdminStatus();
+            }
 
+            if (!this.isAccountBlocked) {
+                this.loadTours();
+            }
 
             window.addEventListener('tourmate-synced-refresh', () => {
-                this.loadTours();
+                if (!this.isAccountBlocked) this.loadTours();
             });
 
-            // Silent Smart Sync: Updates tour cards on focus or gentle 15s interval
+            window.addEventListener('tourmate-user-blocked', (e) => {
+                this.isAccountBlocked = true;
+                this.blockedReason = (e && e.detail && e.detail.message) || '';
+                this.tours = [];
+                try { localStorage.removeItem('tm_cache_tours'); } catch(ex) {}
+            });
+
+            // Silent Smart Sync: Updates tour cards and live role on focus or gentle 15s interval
             const silentToursSync = () => {
                 if (!document.hidden && navigator.onLine) {
-                    this.loadTours();
+                    if (!this.isDemoUser) this.checkAdminStatus();
+                    if (!this.isAccountBlocked) this.loadTours();
                 }
             };
             setInterval(silentToursSync, 15000);
@@ -1304,20 +1396,36 @@ function dashboardPage() {
                 return;
             }
             try {
-                const me = await TourMateAPI.getAdminMe();
+                const me = await TourMateAPI.getMe();
                 if (me && me.id) {
-                    this.isAdminUser = true;
-                    this.adminRole = me.admin_role;
+                    if (me.is_active === false) {
+                        this.isAccountBlocked = true;
+                        this.blockedReason = 'কমিউনিটি নির্দেশিকা লঙ্ঘন বা অননুমোদিত কার্যকলাপের কারণে আপনার অ্যাকাউন্টের অ্যাক্সেস সাময়িকভাবে স্থগিত করা হয়েছে।';
+                        this.tours = [];
+                        try { localStorage.removeItem('tm_cache_tours'); } catch(ex) {}
+                    } else if (this.isAccountBlocked) {
+                        // User unblocked by admin
+                        this.isAccountBlocked = false;
+                        this.blockedReason = '';
+                        this.loadTours();
+                    }
+                    this.adminRole = me.admin_role || 'NONE';
+                    this.isAdminUser = !!(me.admin_role && me.admin_role !== 'NONE') || !!me.is_staff || !!me.is_superuser;
                     const badges = {
                         'SUPER_ADMIN': 'Super Admin',
                         'SUB_ADMIN': 'Sub-Admin',
                         'CONTENT_MANAGER': 'UI Manager',
                         'SUPPORT': 'Support'
                     };
-                    this.adminRoleBadge = badges[me.admin_role] || (me.is_super_admin ? 'Super Admin' : 'Admin');
+                    this.adminRoleBadge = badges[me.admin_role] || (me.is_superuser ? 'Super Admin' : (this.isAdminUser ? 'Admin' : ''));
+                    if (me.first_name) {
+                        this.userName = `${me.first_name} ${me.last_name || ''}`.trim();
+                        this.userInitials = me.first_name[0].toUpperCase();
+                    }
+                    TourMateAPI.setAuth(null, me);
                 }
             } catch(e) {
-                // Not an admin user, keep default
+                // If not authenticated or error, leave existing state
             }
         },
 
@@ -1470,6 +1578,7 @@ function dashboardPage() {
         },
 
         async loadTours() {
+            if (this.isAccountBlocked) return;
             if (this.tours.length === 0) {
                 this.loading = true;
             }
@@ -1480,8 +1589,32 @@ function dashboardPage() {
                     localStorage.setItem('tm_cache_tours', JSON.stringify(data));
                 } catch (e) {}
             } catch (err) {
+                if (err && (err.message?.includes('USER_BLOCKED') || err.message?.includes('স্থগিত') || err.message?.includes('ব্লক'))) {
+                    this.isAccountBlocked = true;
+                    this.blockedReason = err.message;
+                    this.tours = [];
+                    try { localStorage.removeItem('tm_cache_tours'); } catch (e) {}
+                }
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async submitBlockedAppeal() {
+            if (!this.blockedAppealText.trim()) return;
+            this.blockedAppealSending = true;
+            try {
+                await TourMateAPI.submitFeedback({
+                    feedback_type: 'COMPLAINT',
+                    message: `[Account Appeal / অ্যাকাউন্ট পুনর্বহাল আবেদন]: ${this.blockedAppealText.trim()}`
+                });
+                this.blockedAppealText = '';
+                this.showBlockedAppealModal = false;
+                window.showToast(this.lang === 'bn' ? 'আপনার আপিল জমা নেওয়া হয়েছে। সাপোর্ট টিম শীঘ্রই তা পর্যালোচনা করবে।' : 'Your appeal has been submitted. Support team will review it shortly.', 'success');
+            } catch (err) {
+                window.showToast(err.message || 'Error submitting appeal', 'error');
+            } finally {
+                this.blockedAppealSending = false;
             }
         },
 

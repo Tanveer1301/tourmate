@@ -308,6 +308,11 @@ class SiteConfig(models.Model):
 
     # Live Text & Language CMS
     app_name = models.CharField(max_length=100, default="TourMate")
+    app_logo_url = models.TextField(
+        blank=True,
+        default="",
+        help_text="Custom App Logo / PWA Home Screen Icon URL or Base64 Data URI"
+    )
     slogan_bn = models.CharField(max_length=255, default="ট্যুর হোক সহজ, হিসাব থাকুক নির্ভুল")
     slogan_en = models.CharField(max_length=255, default="Smart Tour Expense Tracker")
     welcome_title_bn = models.CharField(max_length=255, default="স্বাগতম")

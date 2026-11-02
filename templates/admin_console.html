@@ -186,6 +186,7 @@
                     <!-- Tab 1: Overview & Metrics -->
                     <button type="button"
                             id="tab-btn-overview"
+                            x-show="adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin)"
                             @click="setTab('overview')"
                             :class="activeTab === 'overview' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
                             class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
@@ -196,6 +197,7 @@
                     <!-- Tab 2: User & Role Manager -->
                     <button type="button"
                             id="tab-btn-users"
+                            x-show="adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin)"
                             @click="setTab('users')"
                             :class="activeTab === 'users' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
                             class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
@@ -211,6 +213,7 @@
                     <!-- Tab 3: Tours Explorer -->
                     <button type="button"
                             id="tab-btn-tours"
+                            x-show="adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin)"
                             @click="setTab('tours')"
                             :class="activeTab === 'tours' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
                             class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
@@ -226,6 +229,7 @@
                     <!-- Tab 4: Appearance & CMS -->
                     <button type="button"
                             id="tab-btn-cms"
+                            x-show="adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin || adminUser.is_content_manager)"
                             @click="setTab('cms')"
                             :class="activeTab === 'cms' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
                             class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
@@ -236,6 +240,7 @@
                     <!-- Tab 5: Complaints & Suggestions Desk -->
                     <button type="button"
                             id="tab-btn-feedback"
+                            x-show="adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin || adminUser.is_content_manager || adminUser.is_support)"
                             @click="setTab('feedback')"
                             :class="activeTab === 'feedback' ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'"
                             class="px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 flex-shrink-0 cursor-pointer transition-all">
@@ -251,7 +256,7 @@
 
 
                 <!-- TAB 1: OVERVIEW & METRICS -->
-                <div x-show="activeTab === 'overview'" class="space-y-6">
+                <div x-show="activeTab === 'overview' && adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin)" class="space-y-6">
                     
                     <!-- Metrics Cards Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -391,7 +396,7 @@
                 </div>
 
                 <!-- TAB 2: USER & ROLE MANAGER -->
-                <div x-show="activeTab === 'users'" class="space-y-4">
+                <div x-show="activeTab === 'users' && adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin)" class="space-y-4">
                     
                     <!-- Search & Filter Controls -->
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col gap-3">
@@ -555,18 +560,40 @@
 
                                                 <!-- Admin Role Dropdown -->
                                                 <td class="py-3 px-4">
-                                                    <template x-if="adminUser.is_super_admin">
+                                                    <!-- Super Admin view: can assign all roles including SUPER_ADMIN -->
+                                                    <template x-if="adminUser && adminUser.is_super_admin">
                                                         <select :value="user.admin_role"
                                                                 @change="changeUserRole(user, $event.target.value)"
                                                                 class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none">
-                                                            <option value="NONE" x-text="lang === 'bn' ? 'সাধারণ ইউজার' : 'Regular User'"></option>
-                                                            <option value="SUPER_ADMIN">👑 Super Admin</option>
-                                                            <option value="SUB_ADMIN">🛡️ Sub-Admin / Moderator</option>
-                                                            <option value="CONTENT_MANAGER">🎨 UI & Content Manager</option>
-                                                            <option value="SUPPORT">🎧 Support Executive</option>
+                                                            <option value="NONE" :selected="user.admin_role === 'NONE'" x-text="lang === 'bn' ? 'সাধারণ ইউজার' : 'Regular User'"></option>
+                                                            <option value="SUPER_ADMIN" :selected="user.admin_role === 'SUPER_ADMIN'">👑 Super Admin</option>
+                                                            <option value="SUB_ADMIN" :selected="user.admin_role === 'SUB_ADMIN'">🛡️ Sub-Admin / Moderator</option>
+                                                            <option value="CONTENT_MANAGER" :selected="user.admin_role === 'CONTENT_MANAGER'">🎨 UI & Content Manager</option>
+                                                            <option value="SUPPORT" :selected="user.admin_role === 'SUPPORT'">🎧 Support Executive</option>
                                                         </select>
                                                     </template>
-                                                    <template x-if="!adminUser.is_super_admin">
+
+                                                    <!-- Sub-Admin view: cannot touch Super Admin; can assign others but NO SUPER_ADMIN option -->
+                                                    <template x-if="adminUser && !adminUser.is_super_admin && adminUser.is_sub_admin">
+                                                        <div>
+                                                            <template x-if="user.admin_role === 'SUPER_ADMIN'">
+                                                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">👑 Super Admin</span>
+                                                            </template>
+                                                            <template x-if="user.admin_role !== 'SUPER_ADMIN'">
+                                                                <select :value="user.admin_role"
+                                                                        @change="changeUserRole(user, $event.target.value)"
+                                                                        class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none">
+                                                                    <option value="NONE" :selected="user.admin_role === 'NONE'" x-text="lang === 'bn' ? 'সাধারণ ইউজার' : 'Regular User'"></option>
+                                                                    <option value="SUB_ADMIN" :selected="user.admin_role === 'SUB_ADMIN'">🛡️ Sub-Admin / Moderator</option>
+                                                                    <option value="CONTENT_MANAGER" :selected="user.admin_role === 'CONTENT_MANAGER'">🎨 UI & Content Manager</option>
+                                                                    <option value="SUPPORT" :selected="user.admin_role === 'SUPPORT'">🎧 Support Executive</option>
+                                                                </select>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- Read-only fallback for other roles -->
+                                                    <template x-if="adminUser && !adminUser.is_super_admin && !adminUser.is_sub_admin">
                                                         <span class="px-2.5 py-1 rounded-full text-[10px] font-bold"
                                                               :class="user.admin_role === 'SUPER_ADMIN' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'"
                                                               x-text="getRoleName(user.admin_role)"></span>
@@ -589,13 +616,21 @@
                                                                 :title="lang === 'bn' ? 'ইউজারের ট্যুরসমূহ দেখুন' : 'View User Tours'">
                                                             <span x-text="lang === 'bn' ? 'ট্যুরসমূহ' : 'Tours'"></span>
                                                         </button>
-                                                        <template x-if="adminUser.is_super_admin || adminUser.is_sub_admin">
-                                                            <button @click="toggleUserActive(user)"
-                                                                    :disabled="user.id === adminUser.id"
-                                                                    :class="user.is_active ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'"
-                                                                    class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all disabled:opacity-40">
-                                                                <span x-text="user.is_active ? (lang === 'bn' ? 'ব্লক' : 'Block') : (lang === 'bn' ? 'আনব্লক' : 'Unblock')"></span>
-                                                            </button>
+                                                        <template x-if="adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin)">
+                                                            <div class="inline-flex items-center gap-1">
+                                                                <button @click="toggleUserActive(user)"
+                                                                        :disabled="user.id === adminUser?.id || user.admin_role === 'SUPER_ADMIN'"
+                                                                        :class="user.is_active ? 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40' : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'"
+                                                                        class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all disabled:opacity-30 disabled:pointer-events-none">
+                                                                    <span x-text="user.is_active ? (lang === 'bn' ? 'ব্লক' : 'Block') : (lang === 'bn' ? 'আনব্লক' : 'Unblock')"></span>
+                                                                </button>
+                                                                <button @click="deleteUser(user)"
+                                                                        :disabled="user.id === adminUser?.id || user.admin_role === 'SUPER_ADMIN'"
+                                                                        class="px-2 py-1 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                                                                        :title="lang === 'bn' ? 'ইউজার মুছে ফেলুন' : 'Delete User'">
+                                                                    <span x-text="lang === 'bn' ? 'মুছুন' : 'Delete'"></span>
+                                                                </button>
+                                                            </div>
                                                         </template>
                                                     </div>
                                                 </td>
@@ -612,7 +647,7 @@
                 </div>
 
                 <!-- TAB 3: TOURS EXPLORER (GOD-MODE) -->
-                <div x-show="activeTab === 'tours'" class="space-y-4">
+                <div x-show="activeTab === 'tours' && adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin)" class="space-y-4">
                     
                     <!-- Search & Filter Bar -->
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
@@ -762,7 +797,7 @@
                 </div>
 
                 <!-- TAB 4: APPEARANCE & CMS CUSTOMIZER -->
-                <div x-show="activeTab === 'cms'" class="space-y-6">
+                <div x-show="activeTab === 'cms' && adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin || adminUser.is_content_manager)" class="space-y-6">
                     
                     <form @submit.prevent="saveSiteConfig()" class="space-y-6">
 
@@ -840,6 +875,101 @@
 
                             </div>
 
+                        </div>
+
+                        <!-- SECTION A-2: APP LOGO & PWA HOME SCREEN ICON (CHROME / SAFARI) -->
+                        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+                            <div class="border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span>📱</span>
+                                        <span x-text="lang === 'bn' ? 'হোম স্ক্রিন অ্যাপ লোগো (Add to Home Screen Icon)' : 'App Logo & Home Screen Icon'"></span>
+                                    </h3>
+                                    <p class="text-xs text-slate-400 mt-0.5" x-text="lang === 'bn' ? 'Chrome বা Safari থেকে \'Add to Home Screen\' করলে ফোনে যে লোগোটি ভেসে উঠবে তা এখান থেকে পরিবর্তন করুন।' : 'Customize the app logo shown on iOS Safari and Android Chrome Home Screen.'"></p>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                                    iOS + Android PWA
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                                <!-- Phone Homescreen Live Preview Card -->
+                                <div class="flex flex-col items-center justify-center p-5 rounded-2xl bg-gradient-to-b from-slate-100 to-slate-200/70 dark:from-slate-800/60 dark:to-slate-900 border border-slate-200 dark:border-slate-700/80 text-center">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-3" x-text="lang === 'bn' ? 'ফোনের স্ক্রিনে যেমন দেখাবে:' : 'Mobile Homescreen Preview:'"></span>
+                                    
+                                    <!-- App Icon Mockup -->
+                                    <div class="relative group">
+                                        <div class="w-20 h-20 rounded-[22px] overflow-hidden shadow-xl shadow-blue-500/15 border-2 border-white/60 dark:border-slate-700 flex items-center justify-center bg-white dark:bg-slate-800 transition-transform group-hover:scale-105">
+                                            <template x-if="configForm.app_logo_url">
+                                                <img :src="configForm.app_logo_url" alt="App Logo" class="w-full h-full object-cover">
+                                            </template>
+                                            <template x-if="!configForm.app_logo_url">
+                                                <img src="/static/icons/icon-192.png" alt="Default Logo" class="w-full h-full object-cover">
+                                            </template>
+                                        </div>
+                                    </div>
+                                    
+                                    <span class="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200 truncate max-w-[120px]" x-text="configForm.app_name || 'TourMate'"></span>
+                                    <span class="text-[10px] text-slate-400 mt-0.5" x-text="configForm.app_logo_url ? (lang === 'bn' ? '✓ কাস্টম লোগো সক্রিয়' : '✓ Custom Logo Active') : (lang === 'bn' ? 'ডিফল্ট লোগো' : 'Default Logo')"></span>
+                                </div>
+
+                                <!-- Logo Controls (Upload & URL) -->
+                                <div class="md:col-span-2 space-y-4">
+                                    <!-- Upload Image File Button -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" x-text="lang === 'bn' ? 'ডিভাইস থেকে ছবি আপলোড করুন:' : 'Upload Image from Device:'"></label>
+                                        <div class="flex items-center gap-3">
+                                            <label class="cursor-pointer px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-md shadow-blue-500/20 flex items-center gap-2 transition-all">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span x-text="lang === 'bn' ? '📁 লোগো ছবি নির্বাচন করুন' : '📁 Choose Image File'"></span>
+                                                <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" @change="handleLogoUpload($event)">
+                                            </label>
+
+                                            <button type="button"
+                                                    x-show="configForm.app_logo_url"
+                                                    @click="configForm.app_logo_url = ''"
+                                                    class="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">
+                                                <span x-text="lang === 'bn' ? '🗑️ ডিফল্টে ফিরুন' : '🗑️ Reset to Default'"></span>
+                                            </button>
+                                        </div>
+                                        <p class="text-[11px] text-slate-400 mt-1" x-text="lang === 'bn' ? 'PNG, JPG, WebP বা SVG ফরম্যাট (বর্গাকার স্কয়ার সাইজ ৫০০×৫০০ পিক্সেল সুপারিশকৃত)।' : 'PNG, JPG, WebP, or SVG format (Square 512x512 recommended).'"></p>
+                                    </div>
+
+                                    <!-- Direct Image URL Input -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" x-text="lang === 'bn' ? 'অথবা সরাসরি লোগো ইমেজ লিংক (URL):' : 'Or Direct Image URL:'"></label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="url" x-model="configForm.app_logo_url" placeholder="https://example.com/logo.png" class="flex-1 px-3 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:ring-2 focus:ring-blue-500">
+                                            <button type="button" @click="configForm.app_logo_url = ''" x-show="configForm.app_logo_url" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold">&times;</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Icon Presets -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" x-text="lang === 'bn' ? 'রেডিমেড আইকন থিম প্রিসেট:' : 'One-Click Preset Icons:'"></label>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <button type="button" @click="setPresetLogo('mountain')" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 hover:border-blue-500 transition-all">
+                                                <span>🏔️</span>
+                                                <span x-text="lang === 'bn' ? 'মাউন্টেন পিক' : 'Mountain Peak'"></span>
+                                            </button>
+                                            <button type="button" @click="setPresetLogo('compass')" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 hover:border-blue-500 transition-all">
+                                                <span>🧭</span>
+                                                <span x-text="lang === 'bn' ? 'কম্পাস ভয়েজার' : 'Compass'"></span>
+                                            </button>
+                                            <button type="button" @click="setPresetLogo('airplane')" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 hover:border-blue-500 transition-all">
+                                                <span>✈️</span>
+                                                <span x-text="lang === 'bn' ? 'গ্লোবাল ট্রাভেলার' : 'Airplane'"></span>
+                                            </button>
+                                            <button type="button" @click="setPresetLogo('backpack')" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 hover:border-blue-500 transition-all">
+                                                <span>🎒</span>
+                                                <span x-text="lang === 'bn' ? 'ব্যাকপ্যাকার' : 'Backpack'"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- SECTION B: COLORS & THEME CONTROLLER -->
@@ -993,7 +1123,7 @@
                 </div>
 
                 <!-- TAB 5: COMPLAINTS & SUGGESTIONS DESK -->
-                <div x-show="activeTab === 'feedback'" class="space-y-4">
+                <div x-show="activeTab === 'feedback' && adminUser && (adminUser.is_super_admin || adminUser.is_sub_admin || adminUser.is_content_manager || adminUser.is_support)" class="space-y-4">
                     
                     <!-- Filter & Tabs Header -->
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
@@ -1424,9 +1554,9 @@
     <script>
         function adminConsolePage() {
             return {
-                lang: localStorage.getItem('tourmate_lang') || 'bn',
+                lang: localStorage.getItem('tourmate_lang') || 'en',
                 theme: localStorage.getItem('tourmate_theme') || 'light',
-                activeTab: 'overview',
+                activeTab: '',
                 isAuthorized: false,
                 loading: true,
                 adminUser: null,
@@ -1462,6 +1592,7 @@
 
                 configForm: {
                     app_name: 'TourMate',
+                    app_logo_url: '',
                     slogan_bn: '',
                     slogan_en: '',
                     welcome_title_bn: '',
@@ -1509,12 +1640,24 @@
                 async init() {
                     if (!TourMateAPI.ensureAuth()) return;
                     await this.checkAuthAndRole();
-                    if (this.isAuthorized) {
-                        this.loadMetrics();
-                        this.loadUsers();
-                        this.loadTours();
-                        this.loadConfig();
-                        this.loadFeedbacks();
+                    if (this.isAuthorized && this.adminUser) {
+                        if (this.adminUser.is_support) {
+                            this.activeTab = 'feedback';
+                            this.loadFeedbacks();
+                        } else if (this.adminUser.is_content_manager) {
+                            this.activeTab = 'cms';
+                            this.loadConfig();
+                            this.loadFeedbacks();
+                        } else if (this.adminUser.is_super_admin || this.adminUser.is_sub_admin) {
+                            this.activeTab = 'overview';
+                            this.loadMetrics();
+                            this.loadUsers();
+                            this.loadTours();
+                            this.loadConfig();
+                            this.loadFeedbacks();
+                        } else {
+                            this.isAuthorized = false;
+                        }
                     }
                 },
 
@@ -1523,7 +1666,20 @@
                     try {
                         const me = await TourMateAPI.getAdminMe();
                         this.adminUser = me;
-                        this.isAuthorized = !!me.id;
+                        this.isAuthorized = !!(me && me.id && (me.is_super_admin || me.is_sub_admin || me.is_content_manager || me.is_support));
+                        if (me && me.id) {
+                            TourMateAPI.setAuth(null, {
+                                id: me.id,
+                                email: me.email,
+                                first_name: me.name ? me.name.split(' ')[0] : '',
+                                last_name: me.name && me.name.includes(' ') ? me.name.split(' ').slice(1).join(' ') : '',
+                                avatar_url: me.avatar_url,
+                                admin_role: me.admin_role,
+                                is_staff: me.admin_role !== 'NONE',
+                                is_superuser: !!me.is_super_admin,
+                                is_active: true
+                            });
+                        }
                     } catch (err) {
                         console.warn('Admin check error:', err);
                         this.isAuthorized = false;
@@ -1533,6 +1689,13 @@
                 },
 
                 setTab(tab) {
+                    if (!this.adminUser) return;
+                    if (tab === 'overview' && !(this.adminUser.is_super_admin || this.adminUser.is_sub_admin)) return;
+                    if (tab === 'users' && !(this.adminUser.is_super_admin || this.adminUser.is_sub_admin)) return;
+                    if (tab === 'tours' && !(this.adminUser.is_super_admin || this.adminUser.is_sub_admin)) return;
+                    if (tab === 'cms' && !(this.adminUser.is_super_admin || this.adminUser.is_sub_admin || this.adminUser.is_content_manager)) return;
+                    if (tab === 'feedback' && !(this.adminUser.is_super_admin || this.adminUser.is_sub_admin || this.adminUser.is_content_manager || this.adminUser.is_support)) return;
+
                     this.activeTab = tab;
                     if (tab === 'overview') this.loadMetrics();
                     else if (tab === 'users') this.loadUsers();
@@ -1699,6 +1862,25 @@
                     }
                 },
 
+                async deleteUser(user) {
+                    if (user.admin_role === 'SUPER_ADMIN') {
+                        window.showToast(this.lang === 'bn' ? 'সুপার অ্যাডমিন অ্যাকাউন্ট মুছে ফেলা সম্ভব নয়।' : 'Super Admin cannot be deleted.', 'error');
+                        return;
+                    }
+                    const confirmMsg = this.lang === 'bn'
+                        ? `⚠️ আপনি কি নিশ্চিতভাবে ইউজার '${user.email}' কে মুছে ফেলতে চান?`
+                        : `Are you sure you want to permanently delete user '${user.email}'?`;
+                    if (!confirm(confirmMsg)) return;
+
+                    try {
+                        await TourMateAPI.deleteAdminUser(user.id);
+                        window.showToast(this.lang === 'bn' ? 'ইউজার সফলভাবে মুছে ফেলা হয়েছে।' : 'User deleted successfully.', 'success');
+                        this.loadUsers();
+                    } catch (err) {
+                        window.showToast(err.message || 'Failed to delete user', 'error');
+                    }
+                },
+
                 async openUserToursModal(user) {
                     this.selectedUserForTours = user;
                     this.userToursData = null;
@@ -1794,6 +1976,7 @@
                         const cfg = await TourMateAPI.getAdminConfig();
                         this.configForm = {
                             app_name: cfg.app_name || 'TourMate',
+                            app_logo_url: cfg.app_logo_url || '',
                             slogan_bn: cfg.slogan_bn || '',
                             slogan_en: cfg.slogan_en || '',
                             welcome_title_bn: cfg.welcome_title_bn || '',
@@ -1839,6 +2022,45 @@
 
                 removeDesignation(index) {
                     this.configForm.custom_designations.splice(index, 1);
+                },
+
+                handleLogoUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) {
+                        window.showToast(this.lang === 'bn' ? 'ছবি ২ মেগাবাইটের বেশি হতে পারবে না।' : 'Image size cannot exceed 2MB.', 'error');
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const targetSize = 512;
+                            canvas.width = targetSize;
+                            canvas.height = targetSize;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, targetSize, targetSize);
+                            const dataUrl = canvas.toDataURL('image/png', 0.92);
+                            this.configForm.app_logo_url = dataUrl;
+                            window.showToast(this.lang === 'bn' ? 'লোগো সফলভাবে লোড হয়েছে। সংরক্ষণ করতে বাটনে চাপুন।' : 'Logo loaded! Click Save to apply.', 'info');
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                },
+
+                setPresetLogo(type) {
+                    const svgMap = {
+                        mountain: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%232563EB"/><stop offset="100%" stop-color="%231D4ED8"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(%23bg)"/><polygon points="120,400 240,180 360,400" fill="%23FFFFFF"/><polygon points="240,180 270,240 240,300 260,400 360,400" fill="%23DBEAFE"/><polygon points="220,400 330,220 440,400" fill="%2393C5FD"/><circle cx="370" cy="140" r="35" fill="%23F59E0B"/><polygon points="210,400 225,340 245,340 260,400" fill="%23FBBF24"/></svg>',
+                        compass: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23059669"/><stop offset="100%" stop-color="%23047857"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(%23bg)"/><circle cx="256" cy="256" r="160" fill="none" stroke="%23A7F3D0" stroke-width="20"/><polygon points="256,120 290,256 256,230 222,256" fill="%23EF4444"/><polygon points="256,392 290,256 256,282 222,256" fill="%23FFFFFF"/><circle cx="256" cy="256" r="18" fill="%23F59E0B"/></svg>',
+                        airplane: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%237C3AED"/><stop offset="100%" stop-color="%236D28D9"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(%23bg)"/><path d="M256 120 L270 230 L380 270 L380 300 L270 275 L270 350 L300 375 L300 400 L256 390 L212 400 L212 375 L242 350 L242 275 L132 300 L132 270 L242 230 Z" fill="%23FFFFFF"/><circle cx="256" cy="256" r="180" fill="none" stroke="%23DDD6FE" stroke-width="8" stroke-dasharray="16 12"/></svg>',
+                        backpack: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23EA580C"/><stop offset="100%" stop-color="%23C2410C"/></linearGradient></defs><rect width="512" height="512" rx="110" fill="url(%23bg)"/><rect x="150" y="160" width="212" height="240" rx="40" fill="%23FFFFFF"/><rect x="180" y="270" width="152" height="110" rx="20" fill="%23FED7AA"/><path d="M210 160 C210 110, 302 110, 302 160" fill="none" stroke="%23FFFFFF" stroke-width="24"/><rect x="190" y="210" width="132" height="30" rx="10" fill="%23F97316"/></svg>'
+                    };
+                    if (svgMap[type]) {
+                        this.configForm.app_logo_url = svgMap[type];
+                        window.showToast(this.lang === 'bn' ? 'প্রিসেট লোগো নির্বাচিত হয়েছে।' : 'Preset icon selected!', 'info');
+                    }
                 },
 
                 async saveSiteConfig() {

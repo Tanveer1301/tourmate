@@ -35,6 +35,7 @@ class UserOut(Schema):
     last_name: str
     avatar_url: Optional[str] = None
     admin_role: str = "NONE"
+    is_active: bool = True
     is_staff: bool = False
     is_superuser: bool = False
 
@@ -432,6 +433,7 @@ class AdminTourUpdateIn(Schema):
 
 class SiteConfigOut(Schema):
     app_name: str
+    app_logo_url: Optional[str] = ""
     slogan_bn: str
     slogan_en: str
     welcome_title_bn: str
@@ -457,6 +459,7 @@ class SiteConfigOut(Schema):
 
 class SiteConfigIn(Schema):
     app_name: Optional[str] = None
+    app_logo_url: Optional[str] = None
     slogan_bn: Optional[str] = None
     slogan_en: Optional[str] = None
     welcome_title_bn: Optional[str] = None

@@ -24,6 +24,9 @@ def require_tour_access(
     Returns a tuple of (Tour, TourMember).
     Raises HttpError(404) if tour not found, or HttpError(403) if access denied.
     """
+    if not getattr(user, "is_active", True):
+        raise HttpError(403, "USER_BLOCKED: কমিউনিটি গাইডলাইন লঙ্ঘন বা অননুমোদিত কার্যকলাপের কারণে আপনার অ্যাকাউন্টটি স্থগিত বা ব্লক করা হয়েছে। দয়া করে সহায়তার জন্য সাপোর্টে যোগাযোগ করুন।")
+
     # Fast path: query membership with joined tour in a single SQL round-trip
     membership = (
         TourMember.objects.select_related("tour")

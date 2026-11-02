@@ -5,8 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="theme-color" content="#f8fafc">
-    <title>{% block title %}TourMate - ট্যুর হোক সহজ, হিসাব থাকুক নির্ভুল{% endblock %}</title>
+    <title>{% block title %}TourMate - Smart Tour & Expense Tracker{% endblock %}</title>
+
+    <!-- Progressive Web App (PWA) & Add to Home Screen Icons (Chrome & Safari) -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ app_name|default:'TourMate' }}">
+    <link rel="apple-touch-icon" id="app-apple-touch-icon" href="{{ app_logo_url|default:'/static/icons/apple-touch-icon.png' }}">
+    <link rel="apple-touch-icon" sizes="180x180" id="app-apple-touch-icon-180" href="{{ app_logo_url|default:'/static/icons/apple-touch-icon.png' }}">
+    <link rel="icon" type="image/png" id="app-favicon" href="{{ app_logo_url|default:'/static/icons/icon-192.png' }}">
 
     <!-- Google Fonts: Plus Jakarta Sans & Hind Siliguri for Bengali -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -232,13 +240,21 @@
         <div x-data="{
                 showModal: false,
                 announcement: null,
-                lang: localStorage.getItem('tourmate_lang') || 'bn',
+                lang: localStorage.getItem('tourmate_lang') || 'en',
                 async init() {
                     try {
                         if (typeof TourMateAPI === 'undefined' || !TourMateAPI.getPublicConfig) return;
                         const data = await TourMateAPI.getPublicConfig();
                         window.TourMatePublicConfig = data;
                         window.dispatchEvent(new CustomEvent('tourmate-public-config-loaded', { detail: data }));
+                        if (data && data.app_logo_url) {
+                            const icon1 = document.getElementById('app-apple-touch-icon');
+                            const icon2 = document.getElementById('app-apple-touch-icon-180');
+                            const fav = document.getElementById('app-favicon');
+                            if (icon1) icon1.href = data.app_logo_url;
+                            if (icon2) icon2.href = data.app_logo_url;
+                            if (fav) fav.href = data.app_logo_url;
+                        }
                         if (data && data.announcement) {
                             const dismissedId = localStorage.getItem('tm_dismissed_announcement');
                             if (dismissedId !== data.announcement.id) {

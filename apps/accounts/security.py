@@ -48,16 +48,17 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-_USER_CACHE: Dict[int, Any] = {}
-_USER_CACHE_TTL = 300  # 5 minutes
+def clear_user_cache(user_id: Optional[int] = None) -> None:
+    """No-op retained for backwards-compatibility; user cache has been removed for live consistency."""
+    pass
 
 
 class JWTAuth(HttpBearer):
     """
     Custom Django Ninja Bearer token security scheme.
     Extracts Bearer token from the 'Authorization' header, validates the JWT,
-    and sets request.auth to the active authenticated User instance.
-    Cached in memory to eliminate cross-continent round-trip latency on every API hit.
+    and returns the live authenticated User instance directly from the database.
+    Ensures 0ms latency on role changes, deactivations, and permissions.
     """
 
     def authenticate(self, request, token: str) -> Optional[Any]:
@@ -69,17 +70,7 @@ class JWTAuth(HttpBearer):
         if not user_id:
             return None
 
-        now = datetime.now(timezone.utc).timestamp()
-        try:
-            uid_int = int(user_id)
-            if uid_int in _USER_CACHE:
-                cached_user, cache_time = _USER_CACHE[uid_int]
-                if (now - cache_time) < _USER_CACHE_TTL:
-                    return cached_user
-        except (ValueError, TypeError):
-            pass
-
-        user = User.objects.filter(pk=user_id, is_active=True).first()
+        user = User.objects.filter(pk=user_id).first()
         if user:
             # Auto-backup Super Admin status from .env setting
             super_admin_emails = getattr(settings, "SUPER_ADMIN_EMAILS", [])
@@ -93,17 +84,13 @@ class JWTAuth(HttpBearer):
 
             # Track activity timestamp (throttled to 1 hr to avoid high SQL load)
             from django.utils import timezone as django_tz
-            if not user.last_login or (django_tz.now() - user.last_login).total_seconds() > 3600:
+            if user.is_active and (not user.last_login or (django_tz.now() - user.last_login).total_seconds() > 3600):
                 user.last_login = django_tz.now()
                 save_fields.append("last_login")
 
             if save_fields:
                 user.save(update_fields=list(set(save_fields)))
 
-            try:
-                _USER_CACHE[int(user_id)] = (user, now)
-            except (ValueError, TypeError):
-                pass
         return user
 
 

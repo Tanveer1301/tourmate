@@ -398,4 +398,228 @@ class AdminConsoleTestCase(TestCase):
         self.assertEqual(connected_tour["role"], "EDITOR")
         self.assertEqual(connected_tour["designation"], "Treasurer")
 
+    def test_support_role_restrictions(self):
+        """Test Support can only access feedback desk and gets 403 on metrics, users, tours, config."""
+        support_user = User.objects.create_user(
+            email="support@tourmate.test",
+            first_name="Support",
+            admin_role=AdminRole.SUPPORT,
+            is_staff=True,
+        )
+        support_token = generate_access_token(support_user)
 
+        # Allowed: /me and /feedbacks
+        me_resp = self.client.get("/api/v1/admin/me", HTTP_AUTHORIZATION=f"Bearer {support_token}")
+        self.assertEqual(me_resp.status_code, 200)
+        self.assertTrue(me_resp.json()["is_support"])
+        self.assertTrue(me_resp.json()["can_manage_feedback"])
+        self.assertFalse(me_resp.json()["can_view_metrics"])
+        self.assertFalse(me_resp.json()["can_manage_users"])
+
+        fb_resp = self.client.get("/api/v1/admin/feedbacks", HTTP_AUTHORIZATION=f"Bearer {support_token}")
+        self.assertEqual(fb_resp.status_code, 200)
+
+        # Denied: metrics, users, tours, config
+        self.assertEqual(self.client.get("/api/v1/admin/metrics", HTTP_AUTHORIZATION=f"Bearer {support_token}").status_code, 403)
+        self.assertEqual(self.client.get("/api/v1/admin/users", HTTP_AUTHORIZATION=f"Bearer {support_token}").status_code, 403)
+        self.assertEqual(self.client.get("/api/v1/admin/tours", HTTP_AUTHORIZATION=f"Bearer {support_token}").status_code, 403)
+        self.assertEqual(self.client.get("/api/v1/admin/config", HTTP_AUTHORIZATION=f"Bearer {support_token}").status_code, 403)
+
+    def test_content_manager_role_access(self):
+        """Test Content Manager can only access CMS and feedback desk, denied from users, metrics, tours."""
+        cm_user = User.objects.create_user(
+            email="content@tourmate.test",
+            first_name="Content",
+            admin_role=AdminRole.CONTENT_MANAGER,
+            is_staff=True,
+        )
+        cm_token = generate_access_token(cm_user)
+
+        # Allowed: /config and /feedbacks
+        cfg_resp = self.client.get("/api/v1/admin/config", HTTP_AUTHORIZATION=f"Bearer {cm_token}")
+        self.assertEqual(cfg_resp.status_code, 200)
+        fb_resp = self.client.get("/api/v1/admin/feedbacks", HTTP_AUTHORIZATION=f"Bearer {cm_token}")
+        self.assertEqual(fb_resp.status_code, 200)
+
+        # Denied: metrics, users, tours
+        self.assertEqual(self.client.get("/api/v1/admin/metrics", HTTP_AUTHORIZATION=f"Bearer {cm_token}").status_code, 403)
+        self.assertEqual(self.client.get("/api/v1/admin/users", HTTP_AUTHORIZATION=f"Bearer {cm_token}").status_code, 403)
+        self.assertEqual(self.client.get("/api/v1/admin/tours", HTTP_AUTHORIZATION=f"Bearer {cm_token}").status_code, 403)
+
+    def test_sub_admin_role_assignment_and_protections(self):
+        """Test Sub-Admin can assign non-super roles, cannot assign SUPER_ADMIN, and cannot delete/block Super Admin."""
+        # 1. Sub-Admin assigns SUPPORT to regular user -> Allowed
+        resp_promote = self.client.put(
+            f"/api/v1/admin/users/{self.regular_user.id}/role",
+            data={"admin_role": "SUPPORT"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.sub_token}",
+        )
+        self.assertEqual(resp_promote.status_code, 200)
+        self.regular_user.refresh_from_db()
+        self.assertEqual(self.regular_user.admin_role, "SUPPORT")
+
+        # 2. Sub-Admin tries to assign SUPER_ADMIN -> 403 Forbidden
+        resp_super_assign = self.client.put(
+            f"/api/v1/admin/users/{self.regular_user.id}/role",
+            data={"admin_role": "SUPER_ADMIN"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.sub_token}",
+        )
+        self.assertEqual(resp_super_assign.status_code, 403)
+
+        # 3. Sub-Admin tries to modify Super Admin's role -> 403 Forbidden
+        resp_modify_super = self.client.put(
+            f"/api/v1/admin/users/{self.super_admin.id}/role",
+            data={"admin_role": "NONE"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.sub_token}",
+        )
+        self.assertEqual(resp_modify_super.status_code, 403)
+
+        # 4. Sub-Admin tries to block Super Admin -> 403 Forbidden
+        resp_block_super = self.client.put(
+            f"/api/v1/admin/users/{self.super_admin.id}/status",
+            data={"is_active": False},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.sub_token}",
+        )
+        self.assertEqual(resp_block_super.status_code, 403)
+
+        # 5. Sub-Admin tries to delete Super Admin -> 403 Forbidden
+        resp_del_super = self.client.delete(
+            f"/api/v1/admin/users/{self.super_admin.id}",
+            HTTP_AUTHORIZATION=f"Bearer {self.sub_token}",
+        )
+        self.assertEqual(resp_del_super.status_code, 403)
+
+        # 6. Sub-Admin deletes regular user -> 200 OK
+        resp_del_user = self.client.delete(
+            f"/api/v1/admin/users/{self.regular_user.id}",
+            HTTP_AUTHORIZATION=f"Bearer {self.sub_token}",
+        )
+        self.assertEqual(resp_del_user.status_code, 200)
+        self.assertFalse(User.objects.filter(id=self.regular_user.id).exists())
+
+    def test_blocked_member_remains_authenticated_and_can_appeal(self):
+        """
+        Test that an inactive/blocked member:
+        1. Does NOT get 401 (token remains authenticated so they aren't logged out).
+        2. Gets 403 USER_BLOCKED when attempting to list or create tours.
+        3. CAN submit an appeal via /api/v1/feedback/.
+        """
+        blocked_user = User.objects.create_user(
+            email="blocked@tourmate.test",
+            first_name="Blocked",
+            last_name="Member",
+            is_active=False,
+        )
+        token = generate_access_token(blocked_user)
+
+        # 1. Listing tours -> 403 with USER_BLOCKED
+        resp_list = self.client.get(
+            "/api/v1/tours/",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        self.assertEqual(resp_list.status_code, 403)
+        self.assertIn("USER_BLOCKED", resp_list.json()["detail"])
+
+        # 2. Creating a tour -> 403 with USER_BLOCKED
+        resp_create = self.client.post(
+            "/api/v1/tours/",
+            data={"title": "Blocked Tour Attempt"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        self.assertEqual(resp_create.status_code, 403)
+        self.assertIn("USER_BLOCKED", resp_create.json()["detail"])
+
+        # 3. Submitting an appeal / feedback -> 201 Created (allowed!)
+        resp_appeal = self.client.post(
+            "/api/v1/feedback/",
+            data={"feedback_type": "COMPLAINT", "message": "[Account Appeal]: Please review my ban"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {token}",
+        )
+        self.assertEqual(resp_appeal.status_code, 201)
+        self.assertTrue(Feedback.objects.filter(user=blocked_user).exists())
+
+    def test_added_member_sees_correct_total_member_count(self):
+        """
+        Verify that when a member is added to a tour, they see the accurate total member count
+        (e.g., 3 members) in /api/v1/tours/ and not just 1.
+        """
+        user2 = User.objects.create_user(
+            email="user2@tourmate.test",
+            first_name="Member",
+            last_name="Two",
+        )
+        user3 = User.objects.create_user(
+            email="user3@tourmate.test",
+            first_name="Member",
+            last_name="Three",
+        )
+        TourMember.objects.create(
+            tour=self.tour,
+            user=user2,
+            name="Member Two",
+            role=TourMember.Role.VIEWER,
+        )
+        TourMember.objects.create(
+            tour=self.tour,
+            user=user3,
+            name="Member Three",
+            role=TourMember.Role.VIEWER,
+        )
+
+        self.assertEqual(self.tour.members.count(), 3)
+
+        token2 = generate_access_token(user2)
+        resp2 = self.client.get(
+            "/api/v1/tours/",
+            HTTP_AUTHORIZATION=f"Bearer {token2}",
+        )
+        self.assertEqual(resp2.status_code, 200)
+        tours2 = resp2.json()
+        self.assertEqual(len(tours2), 1)
+        self.assertEqual(tours2[0]["members_count"], 3)
+
+        resp_creator = self.client.get(
+            "/api/v1/tours/",
+            HTTP_AUTHORIZATION=f"Bearer {self.regular_token}",
+        )
+        self.assertEqual(resp_creator.status_code, 200)
+        self.assertEqual(resp_creator.json()[0]["members_count"], 3)
+
+    def test_app_logo_url_cms_and_manifest(self):
+        """
+        Test that app_logo_url can be updated via Admin Console CMS,
+        is exposed in public config, and is reflected in /manifest.json.
+        """
+        custom_logo = "https://example.com/custom-logo.png"
+
+        resp_put = self.client.put(
+            "/api/v1/admin/config",
+            data={
+                "app_name": "TourMate Pro",
+                "app_logo_url": custom_logo,
+            },
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.super_token}",
+        )
+        self.assertEqual(resp_put.status_code, 200)
+        self.assertEqual(resp_put.json()["app_logo_url"], custom_logo)
+
+        resp_pub = self.client.get("/api/v1/public/config")
+        self.assertEqual(resp_pub.status_code, 200)
+        self.assertEqual(resp_pub.json()["app_logo_url"], custom_logo)
+
+        resp_manifest = self.client.get("/manifest.json")
+        self.assertEqual(resp_manifest.status_code, 200)
+        manifest_data = resp_manifest.json()
+        self.assertEqual(manifest_data["name"], "TourMate Pro")
+        self.assertEqual(manifest_data["icons"][0]["src"], custom_logo)
+
+        resp_apple = self.client.get("/apple-touch-icon.png")
+        self.assertEqual(resp_apple.status_code, 302)
+        self.assertEqual(resp_apple["Location"], custom_logo)

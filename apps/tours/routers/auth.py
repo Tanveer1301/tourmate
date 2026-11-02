@@ -88,6 +88,23 @@ def demo_login(request):
     }
 
 
+@router.get(
+    "/me",
+    response={200: UserOut, 401: ErrorOut},
+    auth=JWTAuth(),
+    summary="Get currently authenticated user details",
+)
+def get_current_user(request):
+    """
+    Returns current authenticated user details (role, name, active status).
+    Live from DB so role promotions or block states take effect immediately.
+    """
+    user = request.auth
+    if not user:
+        raise HttpError(401, "Authentication required.")
+    return 200, user
+
+
 @router.put(
     "/profile",
     response={200: UserOut, 400: ErrorOut},

@@ -12,7 +12,7 @@ from ninja import Query, Router
 from ninja.errors import HttpError
 
 from apps.accounts.models import AdminRole
-from apps.accounts.security import JWTAuth
+from apps.accounts.security import JWTAuth, clear_user_cache
 from apps.tours.models import Deposit, Expense, Feedback, SiteConfig, Tour, TourMember
 from apps.tours.schemas import (
     AdminFeedbackOut,
@@ -64,12 +64,12 @@ def _ensure_super_admin(user: Any) -> None:
 
 
 def _ensure_can_manage_cms(user: Any) -> None:
-    if user.admin_role not in {AdminRole.SUPER_ADMIN, AdminRole.CONTENT_MANAGER} and not user.is_superuser:
-        raise HttpError(403, "শুধুমাত্র Super Admin বা UI & Content Manager সাইট কনফিগারেশন পরিবর্তন করতে পারেন।")
+    if user.admin_role not in {AdminRole.SUPER_ADMIN, AdminRole.SUB_ADMIN, AdminRole.CONTENT_MANAGER} and not user.is_superuser:
+        raise HttpError(403, "শুধুমাত্র Super Admin, Sub-Admin বা UI & Content Manager সাইট কনফিগারেশন পরিবর্তন করতে পারেন।")
 
 
 def _ensure_can_manage_feedback(user: Any) -> None:
-    if user.admin_role not in {AdminRole.SUPER_ADMIN, AdminRole.SUB_ADMIN, AdminRole.SUPPORT} and not user.is_superuser:
+    if user.admin_role not in {AdminRole.SUPER_ADMIN, AdminRole.SUB_ADMIN, AdminRole.CONTENT_MANAGER, AdminRole.SUPPORT} and not user.is_superuser:
         raise HttpError(403, "শুধুমাত্র Support বা Admin টিম অভিযোগ ও পরামর্শ ডেস্কে অ্যাক্সেস করতে পারেন।")
 
 
@@ -85,20 +85,26 @@ def _ensure_can_moderate(user: Any) -> None:
 @router.get("/me", summary="Get authenticated admin status and capabilities")
 def get_admin_me(request):
     admin = _get_admin_user(request)
+    is_super = admin.is_super_admin
+    is_sub = admin.admin_role == AdminRole.SUB_ADMIN
+    is_cm = admin.admin_role == AdminRole.CONTENT_MANAGER
+    is_sup = admin.admin_role == AdminRole.SUPPORT
+
     return {
         "id": admin.id,
         "email": admin.email,
         "name": admin.full_name,
         "avatar_url": admin.avatar_url,
         "admin_role": admin.admin_role,
-        "is_super_admin": admin.is_super_admin,
-        "is_sub_admin": admin.admin_role == AdminRole.SUB_ADMIN,
-        "is_content_manager": admin.admin_role == AdminRole.CONTENT_MANAGER,
-        "is_support": admin.admin_role == AdminRole.SUPPORT,
-        "can_manage_users": admin.is_super_admin,
-        "can_manage_cms": admin.is_super_admin or admin.admin_role == AdminRole.CONTENT_MANAGER,
-        "can_manage_feedback": admin.is_super_admin or admin.admin_role in {AdminRole.SUB_ADMIN, AdminRole.SUPPORT},
-        "can_moderate_tours": admin.is_super_admin or admin.admin_role == AdminRole.SUB_ADMIN,
+        "is_super_admin": is_super,
+        "is_sub_admin": is_sub,
+        "is_content_manager": is_cm,
+        "is_support": is_sup,
+        "can_view_metrics": is_super or is_sub,
+        "can_manage_users": is_super or is_sub,
+        "can_manage_tours": is_super or is_sub,
+        "can_manage_cms": is_super or is_sub or is_cm,
+        "can_manage_feedback": is_super or is_sub or is_cm or is_sup,
     }
 
 
@@ -108,7 +114,8 @@ def get_admin_me(request):
 
 @router.get("/metrics", response={200: AdminMetricsOut}, summary="Live platform metrics for Overview tab")
 def get_metrics(request):
-    _get_admin_user(request)
+    admin = _get_admin_user(request)
+    _ensure_can_moderate(admin)
     now = django_tz.now()
 
     # User stats
@@ -169,7 +176,8 @@ def list_users(
     activity: Optional[str] = None,
     limit: int = 150,
 ):
-    _get_admin_user(request)
+    admin = _get_admin_user(request)
+    _ensure_can_moderate(admin)
     qs = User.objects.all().order_by("-date_joined")
 
     if search:
@@ -352,7 +360,7 @@ def get_user_tours(request, user_id: int):
 @router.put("/users/{user_id}/role", response={200: AdminUserOut, 400: ErrorOut, 403: ErrorOut}, summary="Change a user's admin role")
 def update_user_role(request, user_id: int, payload: AdminUserRoleIn):
     admin = _get_admin_user(request)
-    _ensure_super_admin(admin)
+    _ensure_can_moderate(admin)
 
     target_user = User.objects.filter(pk=user_id).first()
     if not target_user:
@@ -362,6 +370,15 @@ def update_user_role(request, user_id: int, payload: AdminUserRoleIn):
     valid_roles = {choice[0] for choice in AdminRole.choices}
     if new_role not in valid_roles:
         raise HttpError(400, f"অবৈধ রোল। প্রযোজ্য রোলসমূহ: {', '.join(valid_roles)}")
+
+    # Sub-admin permissions & protections
+    if not admin.is_super_admin:
+        # Sub-Admin cannot assign SUPER_ADMIN to anyone
+        if new_role == AdminRole.SUPER_ADMIN:
+            raise HttpError(403, "সাব-অ্যাডমিন কাউকে সুপার অ্যাডমিন বানাতে পারবেন না। শুধুমাত্র সুপার অ্যাডমিন এই পরিবর্তন করতে পারেন।")
+        # Sub-Admin cannot modify a Super Admin's role
+        if target_user.is_super_admin:
+            raise HttpError(403, "সাব-অ্যাডমিন কোনো সুপার অ্যাডমিনের রোল পরিবর্তন করতে পারবেন না।")
 
     # Guard: .env super admin backup protection
     super_admin_emails = getattr(settings, "SUPER_ADMIN_EMAILS", [])
@@ -383,6 +400,7 @@ def update_user_role(request, user_id: int, payload: AdminUserRoleIn):
         target_user.is_superuser = False
 
     target_user.save(update_fields=["admin_role", "is_staff", "is_superuser"])
+    clear_user_cache(target_user.id)
 
     created_cnt = Tour.objects.filter(created_by=target_user).count()
     joined_cnt = TourMember.objects.filter(user=target_user).count()
@@ -413,9 +431,9 @@ def update_user_status(request, user_id: int, payload: AdminUserStatusIn):
     if not target_user:
         raise HttpError(404, "ইউজার পাওয়া যায়নি (User not found).")
 
-    # Sub-admin cannot block a Super Admin
-    if target_user.is_super_admin and not admin.is_super_admin:
-        raise HttpError(403, "Sub-Admin কোনো Super Admin কে ব্লক করতে পারবেন না।")
+    # Super Admin cannot be blocked or deactivated
+    if target_user.is_super_admin:
+        raise HttpError(403, "সুপার অ্যাডমিন অ্যাকাউন্ট ব্লক বা নিষ্ক্রিয় করা সম্ভব নয়।")
 
     # Caller cannot block themselves
     if target_user.id == admin.id:
@@ -423,16 +441,41 @@ def update_user_status(request, user_id: int, payload: AdminUserStatusIn):
 
     target_user.is_active = payload.is_active
     target_user.save(update_fields=["is_active"])
+    clear_user_cache(target_user.id)
 
     status_str = "সক্রিয়" if payload.is_active else "ব্লক / নিষ্ক্রিয়"
     return 200, {"success": True, "message": f"ইউজার {target_user.email} সফলভাবে {status_str} করা হয়েছে।"}
+
+
+@router.delete("/users/{user_id}", response={200: SuccessOut, 400: ErrorOut, 403: ErrorOut, 404: ErrorOut}, summary="Delete a user")
+def delete_admin_user(request, user_id: int):
+    admin = _get_admin_user(request)
+    _ensure_can_moderate(admin)
+
+    target_user = User.objects.filter(pk=user_id).first()
+    if not target_user:
+        raise HttpError(404, "ইউজার পাওয়া যায়নি (User not found).")
+
+    super_admin_emails = getattr(settings, "SUPER_ADMIN_EMAILS", [])
+    if target_user.email.lower() in super_admin_emails or target_user.is_super_admin:
+        raise HttpError(403, "সুপার অ্যাডমিন অ্যাকাউন্ট মুছে ফেলা বা ডিলিট করা সম্ভব নয়।")
+
+    if target_user.id == admin.id:
+        raise HttpError(400, "আপনি নিজের অ্যাকাউন্ট মুছে ফেলতে পারবেন না।")
+
+    email = target_user.email
+    clear_user_cache(target_user.id)
+    Tour.objects.filter(created_by=target_user).delete()
+    Expense.objects.filter(created_by=target_user).delete()
+    target_user.delete()
+    return 200, {"success": True, "message": f"ইউজার '{email}' সফলভাবে মুছে ফেলা হয়েছে।"}
 
 
 # ---------------------------------------------------------------------------
 # 4. Tour Explorer & God-Mode CRUD
 # ---------------------------------------------------------------------------
 
-@router.get("/tours", response={200: List[AdminTourOut]}, summary="Explore and filter all tours (God-mode)")
+@router.get("/tours", response={200: List[AdminTourOut], 403: ErrorOut}, summary="Explore and filter all tours (God-mode)")
 def list_admin_tours(
     request,
     search: Optional[str] = None,
@@ -440,7 +483,8 @@ def list_admin_tours(
     filter_status: str = "all",  # all, active, archived
     limit: int = 100,
 ):
-    _get_admin_user(request)
+    admin = _get_admin_user(request)
+    _ensure_can_moderate(admin)
     qs = Tour.objects.select_related("created_by").prefetch_related("members", "deposits", "expenses").all()
 
     if search:
@@ -591,9 +635,10 @@ def delete_admin_tour(request, tour_id: UUID):
 # 5. No-Code Site Customizer (Appearance & CMS)
 # ---------------------------------------------------------------------------
 
-@router.get("/config", response={200: SiteConfigOut}, summary="Get full site configuration")
+@router.get("/config", response={200: SiteConfigOut, 403: ErrorOut}, summary="Get full site configuration")
 def get_site_config(request):
-    _get_admin_user(request)
+    admin = _get_admin_user(request)
+    _ensure_can_manage_cms(admin)
     cfg = SiteConfig.get_solo()
     return 200, cfg
 
@@ -607,7 +652,7 @@ def update_site_config(request, payload: SiteConfigIn):
     updates = []
 
     fields = [
-        "app_name", "slogan_bn", "slogan_en", "welcome_title_bn", "welcome_title_en",
+        "app_name", "app_logo_url", "slogan_bn", "slogan_en", "welcome_title_bn", "welcome_title_en",
         "welcome_msg_bn", "welcome_msg_en", "footer_text_bn", "footer_text_en",
         "primary_color", "bg_shade", "custom_themes", "custom_designations",
         "announcement_enabled", "announcement_id", "announcement_title_bn",
@@ -631,7 +676,7 @@ def update_site_config(request, payload: SiteConfigIn):
 # 6. Complaints & Suggestions Desk
 # ---------------------------------------------------------------------------
 
-@router.get("/feedbacks", response={200: List[AdminFeedbackOut]}, summary="List complaints & suggestions for admin desk")
+@router.get("/feedbacks", response={200: List[AdminFeedbackOut], 403: ErrorOut}, summary="List complaints & suggestions for admin desk")
 def list_admin_feedbacks(
     request,
     feedback_type: Optional[str] = None,
@@ -639,7 +684,8 @@ def list_admin_feedbacks(
     search: Optional[str] = None,
     limit: int = 100,
 ):
-    _get_admin_user(request)
+    admin = _get_admin_user(request)
+    _ensure_can_manage_feedback(admin)
     qs = Feedback.objects.select_related("user", "replied_by").all().order_by("-created_at")
 
     if feedback_type and feedback_type != "ALL":
@@ -806,6 +852,7 @@ def get_public_config(request):
 
     return {
         "app_name": cfg.app_name,
+        "app_logo_url": cfg.app_logo_url or "",
         "slogan_bn": cfg.slogan_bn,
         "slogan_en": cfg.slogan_en,
         "welcome_title_bn": cfg.welcome_title_bn,

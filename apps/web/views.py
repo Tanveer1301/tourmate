@@ -155,7 +155,7 @@ def google_oauth_callback(request):
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TourMate - প্রবেশ করা হচ্ছে...</title>
+    <title>TourMate - Signing in...</title>
 </head>
 <body style="background:#f8fafc;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;">
     <div style="text-align:center;background:#ffffff;border:1px solid #e2e8f0;border-radius:24px;padding:32px 24px;max-width:360px;width:100%;box-shadow:0 10px 25px -5px rgba(0,0,0,0.05);">
@@ -199,3 +199,83 @@ def google_oauth_callback(request):
     except Exception as err:
         logger.error("Google OAuth callback exception: %s", err, exc_info=True)
         return redirect("/login?error=auth_failed")
+
+
+def manifest_view(request):
+    """
+    Dynamically generates the Web App Manifest (PWA) with the configured
+    App Name, Theme Color, and Home Screen Icon set in the Admin Console.
+    """
+    try:
+        from apps.tours.models import SiteConfig
+        cfg = SiteConfig.get_solo()
+        app_name = cfg.app_name or "TourMate"
+        slogan = cfg.slogan_en or "Smart Tour Expense Tracker"
+        theme_color = cfg.primary_color or "#2563EB"
+        bg_color = cfg.bg_shade or "#ffffff"
+        icon_url = cfg.app_logo_url.strip() if (cfg.app_logo_url and cfg.app_logo_url.strip()) else "/static/icons/icon-192.png"
+    except Exception:
+        app_name = "TourMate"
+        slogan = "Smart Tour Expense Tracker"
+        theme_color = "#2563EB"
+        bg_color = "#ffffff"
+        icon_url = "/static/icons/icon-192.png"
+
+    manifest_data = {
+        "name": app_name,
+        "short_name": app_name,
+        "description": slogan,
+        "start_url": "/tours",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": bg_color,
+        "theme_color": theme_color,
+        "orientation": "portrait",
+        "icons": [
+            {
+                "src": icon_url,
+                "sizes": "192x192",
+                "type": "image/png" if not icon_url.startswith("data:image/svg") else "image/svg+xml",
+                "purpose": "any maskable"
+            },
+            {
+                "src": icon_url,
+                "sizes": "512x512",
+                "type": "image/png" if not icon_url.startswith("data:image/svg") else "image/svg+xml",
+                "purpose": "any maskable"
+            }
+        ]
+    }
+    return HttpResponse(
+        json.dumps(manifest_data, ensure_ascii=False),
+        content_type="application/manifest+json; charset=utf-8"
+    )
+
+
+def apple_touch_icon_view(request):
+    """
+    Serves the Apple Touch Icon for iOS Safari Add to Home Screen.
+    Redirects or returns custom logo if configured, or serves default icon.
+    """
+    try:
+        from apps.tours.models import SiteConfig
+        cfg = SiteConfig.get_solo()
+        if cfg.app_logo_url and cfg.app_logo_url.strip():
+            logo = cfg.app_logo_url.strip()
+            if logo.startswith("data:"):
+                import base64
+                header, encoded = logo.split(",", 1)
+                content_type = header.split(";")[0].split(":")[1]
+                data = base64.b64decode(encoded)
+                return HttpResponse(data, content_type=content_type)
+            return redirect(logo)
+    except Exception:
+        pass
+    return redirect("/static/icons/apple-touch-icon.png")
+
+
+def favicon_view(request):
+    """
+    Serves favicon.ico.
+    """
+    return apple_touch_icon_view(request)

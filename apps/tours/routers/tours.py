@@ -41,6 +41,9 @@ router = Router(tags=["Tours"])
 )
 def list_tours(request):
     user = request.auth
+    if not getattr(user, "is_active", True):
+        raise HttpError(403, "USER_BLOCKED: কমিউনিটি গাইডলাইন লঙ্ঘন বা অননুমোদিত কার্যকলাপের কারণে আপনার অ্যাকাউন্টটি স্থগিত বা ব্লক করা হয়েছে। দয়া করে সহায়তার জন্য আমাদের সাপোর্ট টিমের সাথে যোগাযোগ করুন।")
+
     if user.email:
         TourMember.objects.filter(email__iexact=user.email, user__isnull=True).update(user=user)
 
@@ -48,7 +51,6 @@ def list_tours(request):
     if user.email == "alex@tourmate.test":
         tours = list(
             Tour.objects.filter(id="6c718b10-c0e7-4ca7-9c71-66b320f94a8d")
-            .annotate(members_count_annotated=Count("members", distinct=True))
             .order_by("-created_at")
         )
     else:
@@ -59,7 +61,6 @@ def list_tours(request):
             )
             .exclude(id="6c718b10-c0e7-4ca7-9c71-66b320f94a8d")
             .distinct()
-            .annotate(members_count_annotated=Count("members", distinct=True))
             .order_by("-created_at")
         )
 
@@ -67,6 +68,13 @@ def list_tours(request):
         return []
 
     tour_ids = [t.id for t in tours]
+
+    member_counts = {
+        row["tour_id"]: row["total"]
+        for row in TourMember.objects.filter(tour_id__in=tour_ids)
+        .values("tour_id")
+        .annotate(total=Count("id"))
+    }
 
     deposit_totals = {
         row["tour_id"]: round_currency(row["total"])
@@ -87,7 +95,7 @@ def list_tours(request):
         credit = deposit_totals.get(t.id, Decimal("0.00"))
         debit = expense_totals.get(t.id, Decimal("0.00"))
         remaining = round_currency(credit - debit)
-        count = getattr(t, "members_count_annotated", 0)
+        count = member_counts.get(t.id, 0)
 
         results.append({
             "id": t.id,
@@ -113,6 +121,8 @@ def list_tours(request):
 )
 def create_tour(request, payload: TourCreateIn):
     user = request.auth
+    if not getattr(user, "is_active", True):
+        raise HttpError(403, "USER_BLOCKED: কমিউনিটি গাইডলাইন লঙ্ঘন বা অননুমোদিত কার্যকলাপের কারণে আপনার অ্যাকাউন্টটি স্থগিত বা ব্লক করা হয়েছে।")
 
     with transaction.atomic():
         tour = Tour.objects.create(

@@ -134,6 +134,9 @@ const TourMateAPI = {
 
         if (!response.ok) {
             const message = data.detail || (data.errors && data.errors[0]?.msg) || 'অনাকাঙ্ক্ষিত সমস্যা হয়েছে!';
+            if (response.status === 403 && (message.includes('USER_BLOCKED') || message.includes('স্থগিত') || message.includes('ব্লক'))) {
+                window.dispatchEvent(new CustomEvent('tourmate-user-blocked', { detail: { message } }));
+            }
             throw new Error(message);
         }
 
@@ -161,6 +164,10 @@ const TourMateAPI = {
         try {
             return await this.rawRequest(path, options);
         } catch (error) {
+            // Suppress toast if blocked notice is already handled by UI
+            if (error.message && (error.message.includes('USER_BLOCKED') || error.message.includes('স্থগিত') || error.message.includes('ব্লক'))) {
+                throw error;
+            }
             // If network fetch fails on mutating actions, queue for background sync
             if (isMutating && (!navigator.onLine || error.name === 'TypeError' || (error.message && error.message.includes('fetch')))) {
                 TourMateSync.addToQueue({ path, options });
@@ -209,6 +216,18 @@ const TourMateAPI = {
         });
         this.setAuth(null, user);
         return user;
+    },
+
+    async getMe() {
+        try {
+            const user = await this.rawRequest('/auth/me');
+            if (user && user.id) {
+                this.setAuth(null, user);
+            }
+            return user;
+        } catch (e) {
+            return null;
+        }
     },
 
     // Tours Endpoints
@@ -375,6 +394,12 @@ const TourMateAPI = {
         return this.request(`/admin/users/${userId}/status`, {
             method: 'PUT',
             body: JSON.stringify({ is_active: isActive })
+        });
+    },
+
+    async deleteAdminUser(userId) {
+        return this.request(`/admin/users/${userId}`, {
+            method: 'DELETE'
         });
     },
 
