@@ -1299,6 +1299,12 @@
                             x-text="settingsView === 'profile' ? (lang === 'bn' ? 'প্রোফাইল সেটিংস' : 'Profile Settings') : (settingsView === 'feedback' ? (lang === 'bn' ? 'পরামর্শ ও অভিযোগ' : 'Send Suggestions / Complaints') : (lang === 'bn' ? 'সেটিংস' : 'Settings'))"></h3>
                         <p class="text-[11px] text-slate-400"
                             x-text="settingsView === 'profile' ? (lang === 'bn' ? 'নাম ও ব্যক্তিগত তথ্য পরিবর্তন করুন' : 'Edit name & details') : (settingsView === 'feedback' ? (lang === 'bn' ? 'পরামর্শ বা অভিযোগ পাঠান' : 'Send Suggestions / Complaints') : (lang === 'bn' ? 'ভাষা, থিম ও অ্যাকাউন্ট নিয়ন্ত্রণ' : 'Preferences & account controls'))"></p>
+                        <template x-if="settingsView === 'main' && userEmail">
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1.5 mt-0.5 truncate max-w-[210px] sm:max-w-[280px]">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block flex-shrink-0 animate-pulse"></span>
+                                <span class="truncate" x-text="userEmail"></span>
+                            </p>
+                        </template>
                     </div>
                 </div>
 
@@ -2458,6 +2464,7 @@ function tourDetailPage(tourId) {
         settlementData: null,
         showLedgerModal: false,
         selectedLedgerMember: null,
+        userEmail: '',
 
         // Designation Preset List (100% English)
         designationPresets: [
@@ -2644,6 +2651,7 @@ function tourDetailPage(tourId) {
         openSettingsModal(tab = 'main') {
             this.settingsView = tab;
             const user = TourMateAPI.getUser() || {};
+            this.userEmail = user.email || '';
             this.profileForm.name = [user.first_name, user.last_name].filter(Boolean).join(' ') || '';
             this.profileForm.email = user.email || '';
             this.profileForm.is_staff = !!(user.is_staff || user.is_superuser);
