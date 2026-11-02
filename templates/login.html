@@ -18,14 +18,24 @@
     <!-- Top Branding & Mascot / Icon -->
     <div class="pt-4 flex flex-col items-center text-center">
         <!-- Logo Emblem -->
-        <div class="w-20 h-20 bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 rounded-3xl flex items-center justify-center shadow-xl shadow-blue-500/25 mb-6 ring-4 ring-blue-50">
-            <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        <div class="w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl shadow-blue-500/25 mb-6 ring-4 ring-blue-50 overflow-hidden relative group bg-white">
+            <template x-if="appLogoUrl">
+                <img :src="appLogoUrl"
+                     :alt="appName"
+                     class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                     @error="appLogoUrl = ''">
+            </template>
+            <template x-if="!appLogoUrl">
+                <div class="w-full h-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </template>
         </div>
 
-        <h1 class="text-3xl font-extrabold font-display tracking-tight text-slate-900">TourMate</h1>
-        <p class="text-slate-500 text-sm mt-1.5 font-medium" x-text="lang === 'bn' ? 'ট্যুর হোক সহজ, হিসাব থাকুক নির্ভুল' : 'Effortless group trips, flawless math'"></p>
+        <h1 class="text-3xl font-extrabold font-display tracking-tight text-slate-900" x-text="appName || 'TourMate'">{{ app_name|default:'TourMate' }}</h1>
+        <p class="text-slate-500 text-sm mt-1.5 font-medium" x-text="slogan || (lang === 'bn' ? 'ট্যুর হোক সহজ, হিসাব থাকুক নির্ভুল' : 'Effortless group trips, flawless math')">{{ site_config.slogan_en|default:'Effortless group trips, flawless math' }}</p>
 
         <!-- Feature Highlights Badges -->
         <div class="mt-8 flex flex-wrap justify-center gap-2">
@@ -126,6 +136,9 @@ function loginPage() {
             try { return localStorage.getItem('tourmate_lang') || 'en'; } catch(e) { return 'en'; }
         })(),
         googleClientId: "{{ google_client_id|default:'' }}",
+        appLogoUrl: "{{ site_config.app_logo_url|default:''|escapejs }}",
+        appName: "{{ app_name|default:'TourMate'|escapejs }}",
+        slogan: "",
 
         getNextUrl() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -134,6 +147,19 @@ function loginPage() {
         },
 
         init() {
+            // Live synchronizer: fetches public config to dynamically update logo & slogans
+            TourMateAPI.getPublicConfig().then(cfg => {
+                if (cfg) {
+                    if (cfg.app_logo_url !== undefined) {
+                        this.appLogoUrl = cfg.app_logo_url || '';
+                    }
+                    if (cfg.app_name) {
+                        this.appName = cfg.app_name;
+                    }
+                    this.slogan = this.lang === 'bn' ? (cfg.slogan_bn || '') : (cfg.slogan_en || '');
+                }
+            }).catch(() => {});
+
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('logout') === '1') {
                 TourMateAPI.clearAuth();
@@ -166,6 +192,11 @@ function loginPage() {
         toggleLang() {
             this.lang = this.lang === 'bn' ? 'en' : 'bn';
             localStorage.setItem('tourmate_lang', this.lang);
+            TourMateAPI.getPublicConfig().then(cfg => {
+                if (cfg) {
+                    this.slogan = this.lang === 'bn' ? (cfg.slogan_bn || '') : (cfg.slogan_en || '');
+                }
+            }).catch(() => {});
         },
 
         initGoogleGIS() {
