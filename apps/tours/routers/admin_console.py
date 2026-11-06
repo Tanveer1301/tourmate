@@ -53,6 +53,9 @@ def _get_admin_user(request) -> Any:
             user.is_superuser = True
             user.save(update_fields=["admin_role", "is_staff", "is_superuser"])
 
+    if not getattr(user, "is_active", True):
+        raise HttpError(403, "অ্যাকাউন্টটি ব্লক বা নিষ্ক্রিয় রয়েছে।")
+
     if not user.is_any_admin:
         raise HttpError(403, "অ্যাডমিন অ্যাক্সেস নেই (Admin access required).")
     return user

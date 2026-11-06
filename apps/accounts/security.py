@@ -35,7 +35,12 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
     """Decode and validate a JWT access token."""
     secret_key = getattr(settings, "JWT_SECRET_KEY", settings.SECRET_KEY)
     try:
-        payload = jwt.decode(token, secret_key, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(
+            token,
+            secret_key,
+            algorithms=[JWT_ALGORITHM],
+            options={"require": ["sub", "exp", "iat"]},
+        )
         if payload.get("type") != "access":
             logger.warning("JWT validation failed: Invalid token type %s", payload.get("type"))
             return None

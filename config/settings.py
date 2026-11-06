@@ -10,37 +10,54 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Automatically load environment variables from .env file if it exists
 load_dotenv(BASE_DIR / ".env", override=True)
 
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-tourmate-production-key-change-in-env-secret-89a12c4",
-)
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    import secrets
+    # In local debug, use a predictable key; in production, generate an ephemeral cryptographic key
+    SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-tourmate-local-dev-key-change-in-env-secret-89a12c4")
 
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("true", "1", "t")
+# Automatically disable DEBUG on production (Vercel) unless explicitly set to True
+IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"))
+default_debug = "False" if IS_VERCEL else "True"
+DEBUG = os.environ.get("DJANGO_DEBUG", default_debug).lower() in ("true", "1", "t")
 
-ALLOWED_HOSTS: List[str] = [
-    host.strip()
-    for host in os.environ.get(
-        "DJANGO_ALLOWED_HOSTS",
-        "localhost,127.0.0.1,0.0.0.0,.vercel.app,.now.sh,*",
-    ).split(",")
-    if host.strip()
-]
-if ".vercel.app" not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(".vercel.app")
-if "*" not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append("*")
+# Strict, non-wildcard ALLOWED_HOSTS to prevent Host Header Injection attacks
+raw_allowed = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS",
+    "localhost,127.0.0.1,0.0.0.0,.vercel.app,.now.sh,tourmate-hazel.vercel.app",
+).split(",")
+ALLOWED_HOSTS: List[str] = [h.strip() for h in raw_allowed if h.strip() and h.strip() != "*"]
+for standard_host in ("localhost", "127.0.0.1", "0.0.0.0", ".vercel.app", ".now.sh", "tourmate-hazel.vercel.app"):
+    if standard_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(standard_host)
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
     "https://*.now.sh",
+    "https://tourmate-hazel.vercel.app",
     "http://localhost:8008",
     "http://127.0.0.1:8008",
 ]
 
-# Allow popups from Google OAuth to postMessage back without being isolated by COOP
+# Security Headers & Clickjacking Hardening
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = "DENY"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
+
+# Production Cookie & HSTS Enforcement
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SAMESITE = "Lax"
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Custom User Model
 AUTH_USER_MODEL = "accounts.User"
@@ -62,6 +79,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "apps.web.middleware.SecurityRateLimitMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

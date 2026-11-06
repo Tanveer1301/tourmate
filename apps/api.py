@@ -14,7 +14,10 @@ from apps.tours.routers import (
     tours_router,
 )
 
+from django.conf import settings
+
 # Initialize primary API instance with global JWT bearer authentication
+# In production, OpenAPI /docs and /openapi.json are disabled to prevent automated scanner reconnaissance
 api = NinjaAPI(
     title="TourMate Backend API",
     version="1.0.0",
@@ -23,7 +26,8 @@ api = NinjaAPI(
         "Tour Manager / Common Fund (Deposit) architecture with automated settlement balancing."
     ),
     auth=JWTAuth(),
-    docs_url="/docs",
+    docs_url="/docs" if getattr(settings, "DEBUG", False) else None,
+    openapi_url="/openapi.json" if getattr(settings, "DEBUG", False) else None,
 )
 
 
